@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="280dp"
+    android:height="280dp"
+    android:viewportWidth="280"
+    android:viewportHeight="280">
+
+    <group android:pivotX="140" android:pivotY="140">
+        <!-- Outer ring -->
+        <path
+            android:fillColor="#FFD700"
+            android:pathData="M140,20 A120,120 0 1,1 139.9,20 Z" />
+
+        <!-- Inner segments (simplified roulette design) -->
+        <path
+            android:fillColor="#FF0000"
+            android:pathData="M140,140 L140,40 A100,100 0 0,1 200,90 Z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M140,140 L200,90 A100,100 0 0,1 200,190 Z" />
+        <path
+            android:fillColor="#FF0000"
+            android:pathData="M140,140 L200,190 A100,100 0 0,1 140,240 Z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M140,140 L140,240 A100,100 0 0,1 80,190 Z" />
+        <path
+            android:fillColor="#FF0000"
+            android:pathData="M140,140 L80,190 A100,100 0 0,1 80,90 Z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M140,140 L80,90 A100,100 0 0,1 140,40 Z" />
+
+        <!-- Center circle usando path en lugar de circle -->
+        <path
+            android:fillColor="#FFD700"
+            android:pathData="M140,120 A20,20 0 1,1 139.9,120 Z" />
+    </group>
+
+    <!-- Pointer -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M140,10 L130,30 L150,30 Z" />
+</vector>

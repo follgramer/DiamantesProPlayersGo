@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary">#6A1B9A</color>
+    <color name="primary_dark">#4A148C</color>
+    <color name="secondary">#FF7043</color>
+    <color name="secondary_dark">#BF360C</color>
+    <color name="accent">#4CAF50</color>
+
+    <!-- Game Colors -->
+    <color name="diamond_color">#00E5FF</color>
+    <color name="pass_color">#FF9800</color>
+    <color name="ticket_color">#8BC34A</color>
+    <color name="reward_color">#FF5722</color>
+    <color name="countdown_color">#F44336</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="text_color">#212121</color>
+    <color name="text_muted">#757575</color>
+
+    <!-- Background Colors -->
+    <color name="background_primary">#F5F5F5</color>
+    <color name="background_secondary">#FFFFFF</color>
+    <color name="card_background">#FAFAFA</color>
+    <color name="primary_bg">#F5F5F5</color>
+    <color name="secondary_bg">#FFFFFF</color>
+
+    <!-- Navigation Colors -->
+    <color name="nav_item_selected">#6A1B9A</color>
+    <color name="nav_item_unselected">#757575</color>
+
+    <!-- Rank Colors -->
+    <color name="rank_gold">#FFD700</color>
+    <color name="rank_silver">#C0C0C0</color>
+    <color name="rank_bronze">#CD7F32</color>
+    <color name="rank_default">#9E9E9E</color>
+
+    <!-- Highlight Colors -->
+    <color name="current_player_highlight">#FFE0B2</color>
+    <color name="winner_highlight">#C8E6C9</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#6A1B9A</color>
+    <color name="gradient_middle">#8E24AA</color>
+    <color name="gradient_end">#AB47BC</color>
+
+    <!-- Colores adicionales para themes.xml -->
+    <color name="accent_color">#6A1B9A</color>
+    <color name="purple_accent">#8E24AA</color>
+    <color name="gold_accent">#FFD700</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

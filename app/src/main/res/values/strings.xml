@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">Diamantes Pro Players Go</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_game">Juego</string>
+    <string name="nav_leaderboard">Ranking</string>
+    <string name="nav_winners">Ganadores</string>
+
+    <!-- Home Screen -->
+    <string name="welcome_message">¡Bienvenido a Diamantes Pro Players Go!</string>
+    <string name="player_stats">Estadísticas del Jugador</string>
+    <string name="diamonds">Diamantes</string>
+    <string name="passes">Pases</string>
+    <string name="tickets">Tickets</string>
+    <string name="next_draw">Próximo Sorteo</string>
+    <string name="play_button">🎮 Jugar</string>
+    <string name="roulette_button">🎰 Ruleta</string>
+    <string name="watch_ad_button">📺 Ver Anuncio</string>
+    <string name="latest_winners">🏆 Últimos Ganadores</string>
+
+    <!-- Roulette Screen -->
+    <string name="spin_wheel">🎰 GIRAR RULETA</string>
+    <string name="buy_ticket">💎 Comprar Ticket</string>
+    <string name="buy_ticket_cost">💎 Comprar Ticket (%d Diamantes)</string>
+    <string name="insufficient_diamonds">No tienes suficientes diamantes</string>
+    <string name="no_tickets">No tienes tickets disponibles</string>
+    <string name="congratulations">¡Felicitaciones!</string>
+    <string name="you_won">¡Ganaste %s!</string>
+
+    <!-- Leaderboard Screen -->
+    <string name="your_rank">Tu Clasificación</string>
+    <string name="your_position">Tu posición: #%d</string>
+    <string name="top_players">🥇 Top 100 Jugadores</string>
+    <string name="level_format">Nivel %d</string>
+    <string name="score_format">%,d puntos</string>
+
+    <!-- Errors -->
+    <string name="error_network">Error de conexión. Verifica tu internet.</string>
+    <string name="error_generic">Ha ocurrido un error. Inténtalo de nuevo.</string>
+    <string name="error_ad_not_ready">Anuncio no disponible. Inténtalo más tarde.</string>
+    <string name="error_insufficient_funds">Fondos insuficientes</string>
+
+    <!-- AdMob Messages -->
+    <string name="ad_loading">Cargando anuncio...</string>
+    <string name="ad_not_available">Anuncio no disponible</string>
+    <string name="reward_earned">¡Recompensa obtenida!</string>
+</resources>

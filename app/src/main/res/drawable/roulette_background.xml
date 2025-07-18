@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background circle -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/accent_color" />
+            <stroke
+                android:width="4dp"
+                android:color="@color/gold_accent" />
+        </shape>
+    </item>
+
+    <!-- Inner circle -->
+    <item android:inset="20dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/secondary_bg" />
+            <stroke
+                android:width="2dp"
+                android:color="@color/accent_color" />
+        </shape>
+    </item>
+
+    <!-- Center circle -->
+    <item android:inset="100dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/gold_accent" />
+        </shape>
+    </item>
+
+</layer-list>

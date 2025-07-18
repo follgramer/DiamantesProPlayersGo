@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+
+    <item
+        android:id="@+id/rouletteFragment"
+        android:icon="@drawable/ic_casino"
+        android:title="@string/nav_game" />
+
+    <item
+        android:id="@+id/leaderboardFragment"
+        android:icon="@drawable/ic_leaderboard"
+        android:title="@string/nav_leaderboard" />
+
+    <item
+        android:id="@+id/winnersFragment"
+        android:icon="@drawable/ic_trophy"
+        android:title="@string/nav_winners" />
+
+</menu>
