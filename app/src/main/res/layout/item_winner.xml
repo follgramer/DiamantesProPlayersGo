@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/background_container"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- ANUNCIO NATIVO - Este es un ejemplo de cómo podrías intercalar anuncios nativos -->
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adViewWinnerItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        app:adSize="MEDIUM_RECTANGLE"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+
+    <LinearLayout
+        android:id="@+id/winner_content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/background_winner_card"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/montserrat_regular"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp"
+            tools:text="Sorteo del 18 de julio de 2025" />
+
+        <TextView
+            android:id="@+id/prize"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/montserrat_extrabold"
+            android:textColor="@color/gold_accent"
+            android:textSize="16sp"
+            tools:text="Pase Élite o 1,000 Diamantes 💎" />
+
+        <TextView
+            android:id="@+id/winner_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/montserrat_semibold"
+            android:textColor="@color/text_color"
+            android:textSize="14sp"
+            tools:text="Ganador ID: 123***89" />
+    </LinearLayout>
+</LinearLayout>
+    

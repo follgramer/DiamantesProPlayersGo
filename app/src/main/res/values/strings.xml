@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Diamantes pro players Go</string>
+    <string name="header_title">Club de Recompensas</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Textos Legales -->
+    <string name="privacy_policy_content">
+        Esta Política de Privacidad describe cómo se recopila, usa y comparte su información personal.
+        \n\n<b>1. Información que Recopilamos</b>\n
+        Recopilamos el ID de jugador que nos proporcionas voluntariamente para poder entregar los premios.
+        También utilizamos servicios de terceros como Google AdMob y Firebase que pueden recopilar datos de uso y del dispositivo para su funcionamiento.
+        \n\n<b>2. Cómo Usamos Su Información</b>\n
+        Usamos tu ID para identificarte en los sorteos, tablas de clasificación y para enviarte los premios.
+        Los datos recopilados por terceros se usan para mostrar anuncios y analizar el rendimiento de la app.
+        \n\n<b>(Añade aquí el resto del texto completo de tu política de privacidad)</b>
+    </string>
+    <string name="terms_content">
+        Al usar esta aplicación, aceptas estos términos y condiciones.
+        \n\n<b>1. Aceptación de los Términos</b>\n
+        El uso de la app implica la aceptación de todas las reglas aquí descritas.
+        \n\n<b>2. Reglas de Uso</b>\n
+        Está prohibido el uso de bots, scripts o cualquier método fraudulento para obtener ventajas.
+        Las cuentas que infrinjan esta norma serán descalificadas sin previo aviso.
+        \n\n<b>(Añade aquí el resto del texto completo de tus términos y condiciones)</b>
+    </string>
+</resources>

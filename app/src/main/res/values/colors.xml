@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores principales del tema -->
+    <color name="primary_bg">#0A0F14</color>
+    <color name="secondary_bg">#161B22</color>
+    <color name="container_bg">#1F2937</color>
+    <color name="accent_color">#00A8FF</color>
+    <color name="text_color">#E6EDF3</color>
+    <color name="text_muted">#9CA3AF</color>
+
+    <!-- Colores de acento -->
+    <color name="gold_accent">#FFD700</color>
+    <color name="green_accent">#2ecc71</color>
+    <color name="purple_accent">#8B5CF6</color>
+    <color name="pass_color">#F97316</color>
+    <color name="danger_color">#e74c3c</color>
+
+    <!-- Colores básicos -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="border_color">#374151</color>
+
+    <!-- Colores adicionales que podrían estar siendo referenciados -->
+    <color name="winner_accent">#FFD700</color>
+
+    <!-- Colores para navegación -->
+    <color name="nav_item_text_color">#CCCCCC</color>
+    <color name="nav_item_selected_color">#FFD700</color> <!-- dorado por ejemplo -->
+</resources>

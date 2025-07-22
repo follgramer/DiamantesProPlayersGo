@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary_bg"
+    android:fitsSystemWindows="true"
+    tools:context=".MainActivity"
+    tools:openDrawer="start">
+
+    <!-- Contenido Principal de la App -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Barra Superior -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_alignParentTop="true"
+            android:background="@color/secondary_bg"
+            android:elevation="4dp">
+
+            <TextView
+                android:id="@+id/toolbar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:fontFamily="@font/montserrat_extrabold"
+                android:text="@string/header_title"
+                android:textColor="@color/accent_color"
+                android:textSize="20sp" />
+
+        </androidx.appcompat.widget.Toolbar>
+
+        <!-- Banner Ad Fijo en la parte inferior -->
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adViewBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            app:adSize="BANNER"
+            app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+
+        <!-- Contenedor para las secciones (ocupa el espacio restante) -->
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/adViewBottom"
+            android:layout_below="@id/toolbar">
+
+            <include
+                android:id="@+id/section_home"
+                layout="@layout/section_home" />
+            <include
+                android:id="@+id/section_tasks"
+                layout="@layout/section_tasks" />
+            <include
+                android:id="@+id/section_leaderboard"
+                layout="@layout/section_leaderboard" />
+            <include
+                android:id="@+id/section_winners"
+                layout="@layout/section_winners" />
+            <include
+                android:id="@+id/section_legal"
+                layout="@layout/section_legal" />
+
+        </FrameLayout>
+
+    </RelativeLayout>
+
+    <!-- Menú de Navegación Lateral -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/secondary_bg"
+        app:headerLayout="@layout/nav_header"
+        app:itemIconTint="@color/accent_color"
+        app:itemTextColor="@color/nav_item_colors"
+        app:menu="@menu/navigation_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

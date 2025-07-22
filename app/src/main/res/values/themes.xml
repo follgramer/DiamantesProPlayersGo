@@ -1,0 +1,24 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.Diamantesproplayersgo" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/accent_color</item>
+        <item name="android:windowBackground">@color/primary_bg</item>
+        <item name="android:statusBarColor">@color/secondary_bg</item>
+    </style>
+
+    <style name="Theme.Diamantesproplayersgo" parent="Base.Theme.Diamantesproplayersgo" />
+
+    <!-- Estilo para el texto del menú de navegación -->
+    <style name="NavigationMenuTextStyle" parent="@android:style/TextAppearance.Medium">
+        <item name="android:textColor">@color/text_color</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Estilo para los subheaders del menú -->
+    <style name="NavigationSubheaderStyle" parent="@android:style/TextAppearance.Small">
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+</resources>

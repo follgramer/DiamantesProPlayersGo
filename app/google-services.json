@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "371023569477",
+    "firebase_url": "https://diamantes-pro-players-go-f3510-default-rtdb.firebaseio.com",
+    "project_id": "diamantes-pro-players-go-f3510",
+    "storage_bucket": "diamantes-pro-players-go-f3510.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371023569477:android:ec3996923bc704f4b2b92c",
+        "android_client_info": {
+          "package_name": "com.follgramer.diamantesproplayersgo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMNlXsw3yq_gb90vZZLywvNn3OY8-cwlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
