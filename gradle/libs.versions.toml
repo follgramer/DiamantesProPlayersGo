@@ -4,7 +4,7 @@
 
 [versions]
 # --- Plugins ---
-androidGradlePlugin = "8.4.1"
+androidGradlePlugin = "8.11.1"
 jetbrainsKotlin = "1.9.22"
 googleServices = "4.4.2"
 
