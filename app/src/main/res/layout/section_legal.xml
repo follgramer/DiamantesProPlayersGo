@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="12dp"
+    android:scrollbars="vertical"
     android:visibility="gone">
 
     <LinearLayout
@@ -13,6 +14,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Título de la sección legal -->
         <TextView
             android:id="@+id/legal_title"
             android:layout_width="wrap_content"
@@ -20,20 +22,59 @@
             android:fontFamily="@font/montserrat_bold"
             android:text="Política de Privacidad"
             android:textColor="@color/accent_color"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
+        <!-- Línea decorativa -->
+        <View
+            android:layout_width="60dp"
+            android:layout_height="2dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/accent_color"
+            android:alpha="0.6" />
+
+        <!-- Contenido legal -->
         <TextView
             android:id="@+id/legal_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
             android:fontFamily="@font/montserrat_regular"
-            android:lineSpacingExtra="4dp"
+            android:lineSpacingExtra="6dp"
             android:text="Cargando texto legal..."
-            android:textColor="@color/text_muted"
-            android:textSize="14sp" />
+            android:textColor="@color/text_color"
+            android:textSize="14sp"
+            android:justificationMode="inter_word" />
+
+        <!-- Footer informativo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/background_spins_section"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/montserrat_regular"
+                android:text="¿Tienes preguntas?"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/montserrat_semibold"
+                android:text="Contáctanos a través de la app"
+                android:textColor="@color/accent_color"
+                android:textSize="13sp"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
 </ScrollView>
-    

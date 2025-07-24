@@ -1,6 +1,11 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// ==============================================================================
+//      Buildscript a Nivel de Proyecto: Solo declara los plugins
+// ==============================================================================
+
 plugins {
-    alias(libs.plugins.androidApplication) apply false
-    alias(libs.plugins.jetbrainsKotlinAndroid) apply false
-    alias(libs.plugins.googleGmsGoogleServices) apply false
+    // Usa los alias del archivo libs.versions.toml
+    // El "apply false" indica que la configuración se hará en el módulo de la app
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.jetbrains.kotlin.android) apply false
+    alias(libs.plugins.google.gms.services) apply false
 }

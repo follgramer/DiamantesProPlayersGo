@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#B0000000">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="40dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_modal_rounded"
+        android:elevation="12dp">
+
+        <!-- Header con título y X -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1976D2"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvTituloLegal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Políticas de Privacidad"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/btnCerrarModal"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:tint="#FFFFFF" />
+
+        </LinearLayout>
+
+        <!-- Contenido scrolleable -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/tvContenidoLegal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:lineSpacingExtra="6dp"
+                android:padding="20dp"
+                android:text="Contenido legal aquí..."
+                android:textColor="#212121"
+                android:textSize="14sp" />
+
+        </ScrollView>
+
+        <!-- Footer con botón cerrar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F5F5F5"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnEntendido"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#1976D2"
+                android:fontFamily="sans-serif-medium"
+                android:text="Entendido"
+                android:textColor="#FFFFFF"
+                android:minWidth="120dp"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="12dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

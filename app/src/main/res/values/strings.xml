@@ -4,24 +4,135 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <!-- Textos Legales -->
+    <!-- Textos Legales EXACTOS del index.html -->
     <string name="privacy_policy_content">
-        Esta Política de Privacidad describe cómo se recopila, usa y comparte su información personal.
-        \n\n<b>1. Información que Recopilamos</b>\n
-        Recopilamos el ID de jugador que nos proporcionas voluntariamente para poder entregar los premios.
-        También utilizamos servicios de terceros como Google AdMob y Firebase que pueden recopilar datos de uso y del dispositivo para su funcionamiento.
-        \n\n<b>2. Cómo Usamos Su Información</b>\n
-        Usamos tu ID para identificarte en los sorteos, tablas de clasificación y para enviarte los premios.
-        Los datos recopilados por terceros se usan para mostrar anuncios y analizar el rendimiento de la app.
-        \n\n<b>(Añade aquí el resto del texto completo de tu política de privacidad)</b>
+        <![CDATA[
+        <b>POLÍTICA DE PRIVACIDAD</b><br><br>
+
+        <b>Última actualización:</b> Enero 2025<br><br>
+
+        En Club de Recompensas, nos tomamos muy en serio la protección de tu privacidad. Esta política explica qué información recopilamos y cómo la utilizamos.<br><br>
+
+        <b>1. INFORMACIÓN QUE RECOPILAMOS</b><br><br>
+
+        • <b>ID de Jugador:</b> Recopilamos únicamente el ID numérico de Free Fire que nos proporcionas voluntariamente para participar en los sorteos y recibir premios.<br><br>
+
+        • <b>Datos de Juego:</b> Registramos tus tickets ganados, pases acumulados y participación en actividades dentro de la aplicación.<br><br>
+
+        • <b>Datos de Dispositivo:</b> Utilizamos servicios de terceros como Google AdMob y Firebase Analytics que pueden recopilar información sobre tu dispositivo para mejorar el rendimiento de la app y mostrar anuncios relevantes.<br><br>
+
+        <b>2. CÓMO USAMOS TU INFORMACIÓN</b><br><br>
+
+        • <b>Participación en Sorteos:</b> Usamos tu ID para identificarte en las clasificaciones, sorteos semanales y para el envío de premios.<br><br>
+
+        • <b>Mejora del Servicio:</b> Los datos de uso nos ayudan a mejorar la experiencia de usuario y el funcionamiento de la aplicación.<br><br>
+
+        • <b>Comunicación de Premios:</b> Te contactaremos únicamente para informarte sobre premios ganados y coordinar la entrega.<br><br>
+
+        <b>3. SERVICIOS DE TERCEROS</b><br><br>
+
+        • <b>Google AdMob:</b> Muestra anuncios personalizados. Puedes revisar su política de privacidad en policies.google.com/privacy<br><br>
+
+        • <b>Firebase:</b> Almacena datos de usuario y analíticas. Información disponible en firebase.google.com/support/privacy<br><br>
+
+        <b>4. PROTECCIÓN DE DATOS</b><br><br>
+
+        • Implementamos medidas de seguridad para proteger tu información personal.<br>
+        • No vendemos ni compartimos tu información con terceros no autorizados.<br>
+        • Los datos se almacenan de forma segura en servidores protegidos.<br><br>
+
+        <b>5. TUS DERECHOS</b><br><br>
+
+        • Puedes solicitar la eliminación de tu cuenta y datos en cualquier momento.<br>
+        • Tienes derecho a acceder y corregir tu información personal.<br>
+        • Puedes optar por no recibir comunicaciones promocionales.<br><br>
+
+        <b>6. CONTACTO</b><br><br>
+
+        Si tienes preguntas sobre esta política de privacidad, contáctanos a través de los canales oficiales de la aplicación.<br><br>
+
+        <b>7. CAMBIOS EN ESTA POLÍTICA</b><br><br>
+
+        Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios importantes a través de la aplicación.
+        ]]>
     </string>
+
     <string name="terms_content">
-        Al usar esta aplicación, aceptas estos términos y condiciones.
-        \n\n<b>1. Aceptación de los Términos</b>\n
-        El uso de la app implica la aceptación de todas las reglas aquí descritas.
-        \n\n<b>2. Reglas de Uso</b>\n
-        Está prohibido el uso de bots, scripts o cualquier método fraudulento para obtener ventajas.
-        Las cuentas que infrinjan esta norma serán descalificadas sin previo aviso.
-        \n\n<b>(Añade aquí el resto del texto completo de tus términos y condiciones)</b>
+        <![CDATA[
+        <b>TÉRMINOS Y CONDICIONES</b><br><br>
+
+        <b>Última actualización:</b> Enero 2025<br><br>
+
+        Al usar Club de Recompensas, aceptas estos términos y condiciones. Por favor, léelos cuidadosamente.<br><br>
+
+        <b>1. ACEPTACIÓN DE LOS TÉRMINOS</b><br><br>
+
+        • El uso de esta aplicación implica la aceptación total de estos términos.<br>
+        • Si no estás de acuerdo con algún punto, no uses la aplicación.<br>
+        • Debes tener al menos 13 años para usar esta aplicación.<br><br>
+
+        <b>2. REGLAS DE USO Y CONDUCTA</b><br><br>
+
+        • <b>Prohibido el Fraude:</b> Está estrictamente prohibido el uso de bots, scripts, trucos o cualquier método automatizado para obtener ventajas injustas.<br><br>
+
+        • <b>Una Cuenta por Persona:</b> Solo puedes tener una cuenta activa. Las cuentas múltiples serán eliminadas.<br><br>
+
+        • <b>ID Válido:</b> Debes proporcionar un ID de Free Fire real y verificable. IDs falsos resultarán en descalificación.<br><br>
+
+        • <b>Comportamiento Respetuoso:</b> No se toleran insultos, spam ni comportamientos que afecten negativamente a otros usuarios.<br><br>
+
+        <b>3. SISTEMA DE PREMIOS Y SORTEOS</b><br><br>
+
+        • <b>Elegibilidad:</b> Solo usuarios con ID válido pueden participar en sorteos.<br><br>
+
+        • <b>Sorteos Semanales:</b> Se realizan cada domingo a las 23:59 (hora del servidor).<br><br>
+
+        • <b>Entrega de Premios:</b> Los premios se entregan dentro de 24-48 horas después del sorteo. El ganador será contactado para coordinar la entrega.<br><br>
+
+        • <b>Premios No Transferibles:</b> Los premios son personales e intransferibles.<br><br>
+
+        <b>4. SANCIONES Y SUSPENSIONES</b><br><br>
+
+        • <b>Advertencias:</b> Primera infracción menor resulta en advertencia.<br><br>
+
+        • <b>Suspensión Temporal:</b> Infracciones repetidas pueden resultar en suspensión de 7 a 30 días.<br><br>
+
+        • <b>Ban Permanente:</b> Uso de trampas, fraude o comportamiento abusivo resulta en eliminación permanente sin previo aviso.<br><br>
+
+        • <b>Pérdida de Premios:</b> Usuarios sancionados pierden derecho a premios pendientes.<br><br>
+
+        <b>5. LIMITACIONES DE RESPONSABILIDAD</b><br><br>
+
+        • La aplicación se proporciona "tal como está" sin garantías.<br>
+        • No somos responsables de pérdidas de datos por fallos técnicos.<br>
+        • Los premios están sujetos a disponibilidad.<br>
+        • No garantizamos la disponibilidad 24/7 del servicio.<br><br>
+
+        <b>6. PROPIEDAD INTELECTUAL</b><br><br>
+
+        • Todo el contenido de la aplicación es propiedad de sus respectivos dueños.<br>
+        • No puedes copiar, reproducir o distribuir el contenido sin autorización.<br>
+        • Free Fire es marca registrada de Garena International.<br><br>
+
+        <b>7. MODIFICACIONES</b><br><br>
+
+        • Nos reservamos el derecho de modificar estos términos en cualquier momento.<br>
+        • Los cambios importantes serán notificados a través de la aplicación.<br>
+        • El uso continuado implica aceptación de las modificaciones.<br><br>
+
+        <b>8. TERMINACIÓN</b><br><br>
+
+        • Puedes dejar de usar la aplicación en cualquier momento.<br>
+        • Podemos terminar tu acceso por violación de estos términos.<br>
+        • Al terminar, pierdes acceso a todos los beneficios acumulados.<br><br>
+
+        <b>9. CONTACTO Y SOPORTE</b><br><br>
+
+        Para reportar problemas, hacer consultas o solicitar soporte, utiliza los canales oficiales disponibles en la aplicación.<br><br>
+
+        <b>10. LEY APLICABLE</b><br><br>
+
+        Estos términos se rigen por las leyes aplicables y cualquier disputa será resuelta mediante los mecanismos legales correspondientes.
+        ]]>
     </string>
 </resources>

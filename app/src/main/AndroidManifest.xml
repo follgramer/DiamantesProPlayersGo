@@ -2,8 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- =================================================================
+         PERMISOS
+         ================================================================= -->
     <!-- Permiso para acceder a Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permisos para notificaciones -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Para notificaciones en Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
 
     <application
         android:allowBackup="true"
@@ -37,7 +46,41 @@
             android:resource="@xml/gma_ad_services_config"
             tools:replace="android:resource" />
 
+        <!--
+         ================================================================
+         CONFIGURACIÓN DE FIREBASE MESSAGING (NOTIFICACIONES)
+         ================================================================
+        -->
+        <!-- Servicio de Firebase Messaging -->
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
+        <!-- Ícono de notificación predeterminado -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
+        <!-- Color de notificación predeterminado -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/accent_color" />
+
+        <!-- Canal de notificación predeterminado -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="general_notifications" />
+
+
+        <!--
+         ================================================================
+         ACTIVITIES
+         ================================================================
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

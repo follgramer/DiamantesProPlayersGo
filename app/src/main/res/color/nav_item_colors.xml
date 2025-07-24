@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Color cuando el item está seleccionado -->
-    <item android:color="@color/white" android:state_checked="true" />
-    <!-- Color normal cuando no está seleccionado -->
-    <item android:color="@color/nav_item_text_color" />
+    <!-- Texto cuando está seleccionado: NEGRO sobre fondo azul -->
+    <item android:color="@color/black" android:state_checked="true"/>
+    <!-- Texto normal: Gris claro profesional -->
+    <item android:color="#C0C0C0"/>
 </selector>

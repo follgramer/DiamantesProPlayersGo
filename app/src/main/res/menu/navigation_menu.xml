@@ -10,38 +10,20 @@
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_home"
-            android:title="Inicio" />
+            android:title="Inicio"
+            android:checked="true" />
         <item
             android:id="@+id/nav_tasks"
             android:icon="@drawable/ic_tasks"
-            android:title="Tareas (Ver anuncios para ganar)" />
+            android:title="Tareas" />
         <item
             android:id="@+id/nav_leaderboard"
             android:icon="@drawable/ic_leaderboard"
-            android:title="Ranking (Leaderboard)" />
+            android:title="Ranking" />
         <item
             android:id="@+id/nav_winners"
             android:icon="@drawable/ic_winners"
             android:title="Ganadores" />
     </group>
-
-    <!-- Separador visual -->
-    <item android:title="_________" />
-
-    <!-- Sección legal al final -->
-    <item android:title="Información Legal">
-        <menu>
-            <group
-                android:id="@+id/group_legal"
-                android:checkableBehavior="none">
-                <item
-                    android:id="@+id/nav_privacy"
-                    android:title="Políticas de Privacidad" />
-                <item
-                    android:id="@+id/nav_terms"
-                    android:title="Términos y Condiciones" />
-            </group>
-        </menu>
-    </item>
 
 </menu>

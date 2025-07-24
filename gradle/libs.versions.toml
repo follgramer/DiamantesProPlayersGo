@@ -1,47 +1,73 @@
+# ==============================================================================
+#      Catálogo de Versiones: Define todas las dependencias y plugins aquí
+# ==============================================================================
+
 [versions]
-# CORRECCIÓN: Actualizadas las versiones para resolver la recomendación de Android Studio
-androidApplication = "8.5.1"
-jetbrainsKotlinAndroid = "1.9.22"
+# --- Plugins ---
+androidGradlePlugin = "8.4.1"
+jetbrainsKotlin = "1.9.22"
+googleServices = "4.4.2"
+
+# --- SDKs y Herramientas ---
+compileSdk = "34"
+minSdk = "24"
+targetSdk = "34"
+
+# --- Librerías AndroidX ---
 coreKtx = "1.13.1"
-junit = "4.13.2"
-androidxJunit = "1.2.1"
-espressoCore = "3.6.1"
+activityKtx = "1.9.1"
 appcompat = "1.7.0"
 material = "1.12.0"
 constraintlayout = "2.1.4"
 drawerlayout = "1.2.0"
+
+# --- Firebase ---
 firebaseBom = "33.1.2"
+
+# --- Google Services (Ads & UMP) ---
 playServicesAds = "23.2.0"
+userMessagingPlatform = "2.2.0"
+
+# --- Librerías de Terceros ---
 sweetalert = "1.6.2"
-googleServices = "4.4.2"
-# NUEVO: Añadido para corregir el onBackPressed deprecado
-activityKtx = "1.9.1"
+
+# --- Test ---
+junit = "4.13.2"
+androidxJunit = "1.2.1"
+espressoCore = "3.6.1"
+
 
 [libraries]
+# --- AndroidX ---
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-drawerlayout = { group = "androidx.drawerlayout", name = "drawerlayout", version.ref = "drawerlayout" }
-# NUEVO: Añadido para el nuevo sistema de OnBackPressed
-androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 
-# Firebase
+# --- Firebase (usa el Bill of Materials, por eso no tienen versión aquí) ---
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 firebase-database = { group = "com.google.firebase", name = "firebase-database-ktx" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
 
-# AdMob
-play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+# --- Google Ads y Consentimiento (UMP) ---
+google-play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+google-user-messaging-platform = { group = "com.google.android.ump", name = "user-messaging-platform", version.ref = "userMessagingPlatform" }
 
-# SweetAlert
+# --- SweetAlert ---
 sweetalert = { group = "com.github.f0ris.sweetalert", name = "library", version.ref = "sweetalert" }
 
+# --- Librerías de Test ---
+test-junit = { group = "junit", name = "junit", version.ref = "junit" }
+test-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+test-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+
 [plugins]
-androidApplication = { id = "com.android.application", version.ref = "androidApplication" }
-jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "jetbrainsKotlinAndroid" }
-googleGmsGoogleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+# --- Plugins de Gradle ---
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "jetbrainsKotlin" }
+google-gms-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

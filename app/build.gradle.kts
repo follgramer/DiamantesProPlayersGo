@@ -1,20 +1,23 @@
+// ==============================================================================
+//       Buildscript a Nivel de App: Aplica plugins y define dependencias
+// ==============================================================================
+
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
-    alias(libs.plugins.googleGmsGoogleServices)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.gms.services)
 }
 
 android {
     namespace = "com.follgramer.diamantesproplayersgo"
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.follgramer.diamantesproplayersgo"
-        minSdk = 24
-        targetSdk = 34
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,44 +31,46 @@ android {
         }
     }
 
-    // CORRECCIÓN: Actualizar a Java 11 para eliminar warnings de compilación
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildFeatures {
         viewBinding = true
+        dataBinding = true
     }
 }
 
 dependencies {
+    // --- AndroidX Core ---
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    implementation(libs.androidx.material)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.drawerlayout)
 
-    // CORRECCIÓN: Añadida para el nuevo OnBackPressedDispatcher
-    implementation(libs.androidx.activity.ktx)
-
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-
-    // Firebase
+    // --- Firebase (Importa la plataforma BOM primero)---
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.database)
-    // CORRECCIÓN: Añadida la dependencia de Autenticación
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.messaging)
 
-    // AdMob
-    implementation(libs.play.services.ads)
+    // --- Google Services ---
+    implementation(libs.google.play.services.ads)
+    implementation(libs.google.user.messaging.platform)
 
-    // SweetAlert
+    // --- Librerías de Terceros ---
     implementation(libs.sweetalert)
+
+    // --- Dependencias de Test ---
+    testImplementation(libs.test.junit)
+    androidTestImplementation(libs.test.androidx.junit)
+    androidTestImplementation(libs.test.androidx.espresso.core)
 }

@@ -1,26 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Estado seleccionado -->
+    <!-- Estado seleccionado con color azul profesional -->
     <item android:state_checked="true">
         <shape android:shape="rectangle">
-            <solid android:color="@color/container_bg" />
-            <corners android:radius="8dp" />
+            <solid android:color="@color/accent_color" />
+            <corners android:radius="6dp" />
         </shape>
     </item>
 
     <!-- Estado presionado -->
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="@color/border_color" />
-            <corners android:radius="8dp" />
+            <solid android:color="#1A000000" />
+            <corners android:radius="6dp" />
         </shape>
     </item>
 
-    <!-- Estado normal -->
+    <!-- Estado normal transparente -->
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@android:color/transparent" />
-            <corners android:radius="8dp" />
         </shape>
     </item>
 </selector>

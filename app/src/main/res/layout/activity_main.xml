@@ -75,15 +75,70 @@
     </RelativeLayout>
 
     <!-- Menú de Navegación Lateral -->
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/secondary_bg"
-        app:headerLayout="@layout/nav_header"
-        app:itemIconTint="@color/accent_color"
-        app:itemTextColor="@color/nav_item_colors"
-        app:menu="@menu/navigation_menu" />
+        android:orientation="vertical">
+
+        <!-- Header del Navigation -->
+        <include layout="@layout/nav_header" />
+
+        <!-- NavigationView principal -->
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/nav_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/secondary_bg"
+            app:itemIconTint="@color/accent_color"
+            app:itemTextColor="@color/nav_item_colors"
+            app:menu="@menu/navigation_menu" />
+
+        <!-- Footer con opciones legales -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/secondary_bg"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border_color"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/nav_privacy"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="Políticas de Privacidad"
+                android:textColor="#C0C0C0"
+                android:textSize="14sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/nav_terms"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="Términos y Condiciones"
+                android:textColor="#C0C0C0"
+                android:textSize="14sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

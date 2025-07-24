@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#B0000000">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="@drawable/bg_modal_rounded"
+        android:elevation="12dp">
+
+        <!-- Título -->
+        <TextView
+            android:id="@+id/tvTituloConsentimiento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔐 Consentimiento de Privacidad"
+            android:textColor="#1976D2"
+            android:textSize="22sp"
+            android:layout_gravity="center"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="bold"
+            android:paddingBottom="16dp"/>
+
+        <!-- Contenido -->
+        <TextView
+            android:id="@+id/tvContenidoConsentimiento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Para ofrecerte recompensas y mantener esta app gratuita, necesitamos tu consentimiento para:\n\n• Mostrar anuncios personalizados\n• Analizar el uso de la app\n• Mejorar la experiencia del usuario\n\nTus datos están protegidos según nuestras políticas de privacidad."
+            android:textColor="#212121"
+            android:textSize="15sp"
+            android:lineSpacingExtra="6dp"
+            android:fontFamily="sans-serif"
+            android:paddingBottom="16dp" />
+
+        <!-- Enlaces legales - TODO EN UNA LÍNEA -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="20dp"
+            android:textColor="#666666"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif"
+            android:lineSpacingExtra="2dp"
+            android:text="Al aceptar, también aceptas nuestras Políticas de Privacidad y Términos y Condiciones."
+            android:id="@+id/textoLegalCompleto" />
+
+        <!-- Botones apilados verticalmente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Botón ACEPTAR (arriba, verde) -->
+            <Button
+                android:id="@+id/btnAceptarConsentimiento"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Aceptar y continuar"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#4CAF50"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:elevation="3dp"
+                android:layout_marginBottom="2dp" />
+
+            <!-- Botón NO ACEPTAR (abajo, rojo) -->
+            <Button
+                android:id="@+id/btnRechazarConsentimiento"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="No aceptar"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#F44336"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:elevation="3dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

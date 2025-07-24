@@ -5,8 +5,15 @@
     <color name="secondary_bg">#161B22</color>
     <color name="container_bg">#1F2937</color>
     <color name="accent_color">#00A8FF</color>
-    <color name="text_color">#E6EDF3</color>
-    <color name="text_muted">#9CA3AF</color>
+
+    <!-- ✅ TEXTOS MEJORADOS PARA MEJOR CONTRASTE -->
+    <color name="text_color">#FFFFFF</color>          <!-- Antes: #E6EDF3 → Ahora: Blanco puro -->
+    <color name="text_muted">#CCCCCC</color>          <!-- Antes: #9CA3AF → Ahora: Gris más claro -->
+
+    <!-- ✅ TEXTOS ADICIONALES PARA DIFERENTES NIVELES -->
+    <color name="text_primary">#FFFFFF</color>        <!-- Texto principal - Blanco puro -->
+    <color name="text_secondary">#E6EDF3</color>      <!-- Texto secundario - Tu color original -->
+    <color name="text_tertiary">#B0BEC5</color>       <!-- Texto terciario - Gris claro -->
 
     <!-- Colores de acento -->
     <color name="gold_accent">#FFD700</color>
@@ -23,7 +30,11 @@
     <!-- Colores adicionales que podrían estar siendo referenciados -->
     <color name="winner_accent">#FFD700</color>
 
-    <!-- Colores para navegación -->
-    <color name="nav_item_text_color">#CCCCCC</color>
-    <color name="nav_item_selected_color">#FFD700</color> <!-- dorado por ejemplo -->
+    <!-- ✅ NAVEGACIÓN MEJORADA -->
+    <color name="nav_item_text_color">#FFFFFF</color>           <!-- Antes: #B0B0B0 → Ahora: Blanco -->
+    <color name="nav_item_selected_color">#FFD700</color>       <!-- Dorado - perfecto -->
+    <color name="nav_item_background">#212121</color>           <!-- Fondo oscuro -->
+    <color name="nav_item_selected_background">#2A2A2A</color>  <!-- Fondo gris oscuro cuando se selecciona -->
+
+
 </resources>
