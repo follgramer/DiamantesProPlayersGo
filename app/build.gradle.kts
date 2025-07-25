@@ -19,6 +19,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Configuración multiDex si es necesaria
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -29,6 +32,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isDebuggable = true
+            isMinifyEnabled = false
+        }
     }
 
     compileOptions {
@@ -38,11 +45,30 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlin.RequiresOptIn"
+        )
     }
 
     buildFeatures {
         viewBinding = true
         dataBinding = true
+        buildConfig = true
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    // Configuración para evitar conflictos de dependencias
+    configurations.all {
+        resolutionStrategy {
+            force("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
+            force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.0")
+        }
     }
 }
 

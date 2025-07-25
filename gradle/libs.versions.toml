@@ -4,29 +4,29 @@
 
 [versions]
 # --- Plugins ---
-androidGradlePlugin = "8.11.1"
-jetbrainsKotlin = "1.9.22"
+androidGradlePlugin = "8.7.3"
+jetbrainsKotlin = "2.1.0"
 googleServices = "4.4.2"
 
 # --- SDKs y Herramientas ---
-compileSdk = "34"
+compileSdk = "35"
 minSdk = "24"
-targetSdk = "34"
+targetSdk = "35"
 
 # --- Librerías AndroidX ---
-coreKtx = "1.13.1"
-activityKtx = "1.9.1"
+coreKtx = "1.15.0"
+activityKtx = "1.9.3"
 appcompat = "1.7.0"
 material = "1.12.0"
-constraintlayout = "2.1.4"
+constraintlayout = "2.2.0"
 drawerlayout = "1.2.0"
 
 # --- Firebase ---
-firebaseBom = "33.1.2"
+firebaseBom = "33.7.0"
 
 # --- Google Services (Ads & UMP) ---
-playServicesAds = "23.2.0"
-userMessagingPlatform = "2.2.0"
+playServicesAds = "23.6.0"
+userMessagingPlatform = "3.1.0"
 
 # --- Librerías de Terceros ---
 sweetalert = "1.6.2"

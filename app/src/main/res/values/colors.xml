@@ -1,40 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Colores principales del tema -->
+    <!-- COLORES PRINCIPALES DEL TEMA -->
     <color name="primary_bg">#0A0F14</color>
     <color name="secondary_bg">#161B22</color>
     <color name="container_bg">#1F2937</color>
     <color name="accent_color">#00A8FF</color>
 
-    <!-- ✅ TEXTOS MEJORADOS PARA MEJOR CONTRASTE -->
-    <color name="text_color">#FFFFFF</color>          <!-- Antes: #E6EDF3 → Ahora: Blanco puro -->
-    <color name="text_muted">#CCCCCC</color>          <!-- Antes: #9CA3AF → Ahora: Gris más claro -->
+    <!-- TEXTOS MEJORADOS PARA MEJOR CONTRASTE -->
+    <color name="text_color">#FFFFFF</color>
+    <color name="text_muted">#CCCCCC</color>
 
-    <!-- ✅ TEXTOS ADICIONALES PARA DIFERENTES NIVELES -->
-    <color name="text_primary">#FFFFFF</color>        <!-- Texto principal - Blanco puro -->
-    <color name="text_secondary">#E6EDF3</color>      <!-- Texto secundario - Tu color original -->
-    <color name="text_tertiary">#B0BEC5</color>       <!-- Texto terciario - Gris claro -->
+    <!-- TEXTOS JERARQUICOS PARA DIFERENTES NIVELES -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#E6EDF3</color>
+    <color name="text_tertiary">#B0BEC5</color>
+    <color name="text_quaternary">#9CA3AF</color>
 
-    <!-- Colores de acento -->
+    <!-- COLORES DE ACENTO Y ESTADO -->
     <color name="gold_accent">#FFD700</color>
     <color name="green_accent">#2ecc71</color>
     <color name="purple_accent">#8B5CF6</color>
     <color name="pass_color">#F97316</color>
     <color name="danger_color">#e74c3c</color>
+    <color name="success_color">#22c55e</color>
+    <color name="warning_color">#f59e0b</color>
 
-    <!-- Colores básicos -->
+    <!-- COLORES ESPECIFICOS PARA TICKETS Y PASES -->
+    <color name="ticket_color">#FFD700</color>
+    <color name="ticket_background">#2A1810</color>
+    <color name="pass_background">#1F1611</color>
+
+    <!-- NAVEGACION MEJORADA -->
+    <color name="nav_item_text_color">#FFFFFF</color>
+    <color name="nav_item_text_inactive">#B0BEC5</color>
+    <color name="nav_item_selected_color">#FFD700</color>
+    <color name="nav_item_background">#212121</color>
+    <color name="nav_item_selected_background">#2A2A2A</color>
+    <color name="nav_divider">#374151</color>
+
+    <!-- BOTONES Y ELEMENTOS INTERACTIVOS -->
+    <color name="button_primary">#00A8FF</color>
+    <color name="button_primary_pressed">#0080CC</color>
+    <color name="button_secondary">#374151</color>
+    <color name="button_success">#22c55e</color>
+    <color name="button_danger">#e74c3c</color>
+    <color name="button_warning">#f59e0b</color>
+
+    <!-- ELEMENTOS DE LA RULETA Y JUEGO -->
+    <color name="grid_item_bg">#2D3748</color>
+    <color name="grid_item_selected">#8B5CF6</color>
+    <color name="grid_item_border">#4A5568</color>
+    <color name="spinner_active">#00a8ff</color>
+    <color name="spinner_disabled">#424242</color>
+
+    <!-- LEADERBOARD Y RANKINGS -->
+    <color name="rank_first">#FFD700</color>
+    <color name="rank_second">#C0C0C0</color>
+    <color name="rank_third">#CD7F32</color>
+    <color name="rank_other">#B0BEC5</color>
+
+    <!-- MODALES Y NOTIFICACIONES -->
+    <color name="modal_background">#1F2937</color>
+    <color name="modal_overlay">#80000000</color>
+    <color name="notification_success">#22c55e</color>
+    <color name="notification_error">#e74c3c</color>
+    <color name="notification_info">#00A8FF</color>
+
+    <!-- COLORES BASICOS Y BORDES -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
     <color name="border_color">#374151</color>
+    <color name="border_light">#4A5568</color>
+    <color name="border_dark">#2D3748</color>
 
-    <!-- Colores adicionales que podrían estar siendo referenciados -->
+    <!-- COLORES LEGACY PARA COMPATIBILIDAD -->
     <color name="winner_accent">#FFD700</color>
 
-    <!-- ✅ NAVEGACIÓN MEJORADA -->
-    <color name="nav_item_text_color">#FFFFFF</color>           <!-- Antes: #B0B0B0 → Ahora: Blanco -->
-    <color name="nav_item_selected_color">#FFD700</color>       <!-- Dorado - perfecto -->
-    <color name="nav_item_background">#212121</color>           <!-- Fondo oscuro -->
-    <color name="nav_item_selected_background">#2A2A2A</color>  <!-- Fondo gris oscuro cuando se selecciona -->
+    <!-- COLORES PARA PROGRESS BARS Y INDICADORES -->
+    <color name="progress_background">#374151</color>
+    <color name="progress_primary">#00A8FF</color>
+    <color name="progress_secondary">#F97316</color>
+    <color name="progress_success">#22c55e</color>
 
+    <!-- COLORES PARA ESTADOS DE CONEXION -->
+    <color name="status_online">#22c55e</color>
+    <color name="status_offline">#6B7280</color>
+    <color name="status_loading">#f59e0b</color>
 
 </resources>

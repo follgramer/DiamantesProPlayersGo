@@ -2,6 +2,7 @@ package com.follgramer.diamantesproplayersgo
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -37,6 +38,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -77,26 +79,38 @@ class MainActivity : AppCompatActivity() {
         Log.d("SESSION", "Jugador: $playerId - Sesión: $sessionId")
 
         // ✅ MANEJAR NOTIFICACIONES AL ABRIR LA APP
-        handleNotificationIntent()
+        handleNotificationIntent(intent)
 
         // Iniciar el flujo de consentimiento SIMPLE
         checkConsentSimple()
     }
 
-    // ✅ NUEVA FUNCIÓN PARA MANEJAR NOTIFICACIONES AL ABRIR LA APP
-    private fun handleNotificationIntent() {
-        val notificationType = intent.getStringExtra("notification_type")
-        val message = intent.getStringExtra("message")
+
+    // ✅ AÑADE ESTE MÉTODO NUEVO A TU CLASE
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Es crucial actualizar el intent de la actividad y manejarlo
+        setIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+
+    // ✅ REEMPLAZA CON ESTA NUEVA VERSIÓN
+    private fun handleNotificationIntent(intent: Intent?) {
+        val notificationType = intent?.getStringExtra("notification_type")
+        val message = intent?.getStringExtra("message")
 
         if (notificationType != null && message != null) {
-            // Esperar a que la app esté completamente cargada antes de mostrar el modal
             binding.root.postDelayed({
                 when (notificationType) {
-                    "winner" -> showWinnerModal(message)
-                    "loser" -> showLoserModal(message)
+                    "win", "winner" -> showWinnerModal(message)
+                    "loss", "loser" -> showLoserModal(message)
                     else -> showGeneralModal("Notificación", message)
                 }
-            }, 1000) // Esperar 1 segundo para que todo esté listo
+                // Limpiar los extras del intent para no volver a mostrar el modal si la actividad se recrea
+                intent?.removeExtra("notification_type")
+                intent?.removeExtra("message")
+            }, 1000)
         }
     }
 
@@ -299,8 +313,44 @@ class MainActivity : AppCompatActivity() {
             if (playerId.isNotEmpty()) {
                 createFirebaseSession(playerId)
                 obtenerTop5Firebase()
+                // ✅ NUEVO: Configurar token FCM
+                setupFCMToken(playerId)
             }
         }
+    }
+
+    // ✅ NUEVA FUNCIÓN: CONFIGURAR TOKEN FCM
+    private fun setupFCMToken(playerId: String) {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM_TOKEN", "Error obteniendo token FCM", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            Log.d("FCM_TOKEN", "Token FCM obtenido: $token")
+
+            // Guardar el token en Firebase Database
+            saveTokenToDatabase(playerId, token)
+        }
+    }
+
+    // ✅ NUEVA FUNCIÓN: GUARDAR TOKEN EN DATABASE
+    private fun saveTokenToDatabase(playerId: String, token: String) {
+        val tokenData = mapOf(
+            "token" to token,
+            "timestamp" to ServerValue.TIMESTAMP,
+            "deviceInfo" to android.os.Build.MODEL
+        )
+
+        database.child("playerTokens").child(playerId)
+            .setValue(tokenData)
+            .addOnSuccessListener {
+                Log.d("FCM_TOKEN", "Token guardado exitosamente para $playerId")
+            }
+            .addOnFailureListener { error ->
+                Log.e("FCM_TOKEN", "Error guardando token: ${error.message}")
+            }
     }
 
     // ✅ NUEVA FUNCIÓN SIMPLE PARA ARREGLAR TODOS LOS TEXTOS QUE NO SE VEN BIEN
@@ -874,6 +924,9 @@ class MainActivity : AppCompatActivity() {
 
             // ✅ ESCUCHAR MENSAJES PRIVADOS DEL ADMINISTRADOR
             checkForPrivateMessages(savedPlayerId)
+
+            // ✅ CONFIGURAR TOKEN FCM
+            setupFCMToken(savedPlayerId)
         } else {
             binding.sectionHome.myPlayerId.text = "Toca para configurar ✏️"
             binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#CCCCCC")) // Gris claro
@@ -976,7 +1029,7 @@ class MainActivity : AppCompatActivity() {
             Log.e("LOSER_MODAL", "Error mostrando modal de sorteo: ${e.message}")
             // Fallback con AlertDialog simple
             androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("� Sorteo Finalizado")
+                .setTitle("📢 Sorteo Finalizado")
                 .setMessage(message)
                 .setPositiveButton("Entendido") { dialog, _ -> dialog.dismiss() }
                 .show()
@@ -1077,6 +1130,9 @@ class MainActivity : AppCompatActivity() {
 
         // ✅ ESCUCHAR MENSAJES PARA EL NUEVO USUARIO
         checkForPrivateMessages(playerId)
+
+        // ✅ CONFIGURAR TOKEN FCM PARA EL NUEVO USUARIO
+        setupFCMToken(playerId)
     }
 
     private fun fetchAllData() {
