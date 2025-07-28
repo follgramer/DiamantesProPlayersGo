@@ -1,11 +1,20 @@
 package com.follgramer.diamantesproplayersgo
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
-import android.content.res.ColorStateList
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,15 +24,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.children
 import androidx.recyclerview.widget.LinearLayoutManager
-import cn.pedant.SweetAlert.SweetAlertDialog
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.input.input
 import com.follgramer.diamantesproplayersgo.databinding.ActivityMainBinding
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
@@ -71,46 +81,31 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ⚠️ OBLIGATORIO: Inicializar SessionManager
         SessionManager.init(this)
 
         val playerId = SessionManager.getPlayerId(this)
         val sessionId = SessionManager.getSessionId(this)
         Log.d("SESSION", "Jugador: $playerId - Sesión: $sessionId")
 
-        // ✅ MANEJAR NOTIFICACIONES AL ABRIR LA APP
         handleNotificationIntent(intent)
 
-        // Iniciar el flujo de consentimiento SIMPLE
         checkConsentSimple()
     }
 
-
-    // ✅ AÑADE ESTE MÉTODO NUEVO A TU CLASE
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Es crucial actualizar el intent de la actividad y manejarlo
         setIntent(intent)
         handleNotificationIntent(intent)
     }
 
-
-    // ✅ REEMPLAZA CON ESTA NUEVA VERSIÓN
     private fun handleNotificationIntent(intent: Intent?) {
-        val notificationType = intent?.getStringExtra("notification_type")
-        val message = intent?.getStringExtra("message")
+        val redirectTo = intent?.getStringExtra("redirect_to")
 
-        if (notificationType != null && message != null) {
+        if (redirectTo == "winners") {
+            // Redirigir a ganadores después de un pequeño delay
             binding.root.postDelayed({
-                when (notificationType) {
-                    "win", "winner" -> showWinnerModal(message)
-                    "loss", "loser" -> showLoserModal(message)
-                    else -> showGeneralModal("Notificación", message)
-                }
-                // Limpiar los extras del intent para no volver a mostrar el modal si la actividad se recrea
-                intent?.removeExtra("notification_type")
-                intent?.removeExtra("message")
-            }, 1000)
+                redirectToWinnersSection()
+            }, 500)
         }
     }
 
@@ -249,7 +244,7 @@ class MainActivity : AppCompatActivity() {
 
         titleView.text = title
 
-        contentView.text = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+        contentView.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             android.text.Html.fromHtml(content, android.text.Html.FROM_HTML_MODE_COMPACT)
         } else {
             @Suppress("DEPRECATION")
@@ -305,21 +300,19 @@ class MainActivity : AppCompatActivity() {
             startWeeklyCountdown()
             setupBackPressedHandler()
             signInAnonymously()
-
-            // ✅ ARREGLAR COLORES DE TEXTOS QUE NO SE VEN BIEN
             arreglarColoresDeTextos()
+
+            checkNotificationPermissions()
 
             val playerId = SessionManager.getPlayerId(this@MainActivity)
             if (playerId.isNotEmpty()) {
                 createFirebaseSession(playerId)
                 obtenerTop5Firebase()
-                // ✅ NUEVO: Configurar token FCM
                 setupFCMToken(playerId)
             }
         }
     }
 
-    // ✅ NUEVA FUNCIÓN: CONFIGURAR TOKEN FCM
     private fun setupFCMToken(playerId: String) {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
@@ -330,17 +323,15 @@ class MainActivity : AppCompatActivity() {
             val token = task.result
             Log.d("FCM_TOKEN", "Token FCM obtenido: $token")
 
-            // Guardar el token en Firebase Database
             saveTokenToDatabase(playerId, token)
         }
     }
 
-    // ✅ NUEVA FUNCIÓN: GUARDAR TOKEN EN DATABASE
     private fun saveTokenToDatabase(playerId: String, token: String) {
         val tokenData = mapOf(
             "token" to token,
             "timestamp" to ServerValue.TIMESTAMP,
-            "deviceInfo" to android.os.Build.MODEL
+            "deviceInfo" to Build.MODEL
         )
 
         database.child("playerTokens").child(playerId)
@@ -353,10 +344,8 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    // ✅ NUEVA FUNCIÓN SIMPLE PARA ARREGLAR TODOS LOS TEXTOS QUE NO SE VEN BIEN
     private fun arreglarColoresDeTextos() {
         try {
-            // ✅ SOLO aplicar colores a todas las secciones usando la función recursiva
             aplicarColoresATodosLosTextos(binding.sectionHome.root)
             aplicarColoresATodosLosTextos(binding.sectionTasks.root)
             aplicarColoresATodosLosTextos(binding.sectionLeaderboard.root)
@@ -368,30 +357,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ FUNCIÓN RECURSIVA PARA APLICAR COLORES A TODOS LOS TEXTOS
     private fun aplicarColoresATodosLosTextos(view: View) {
         try {
             when (view) {
                 is TextView -> {
-                    // Aplicar color según el tipo de texto
                     val currentColor = view.currentTextColor
-
-                    // Si el texto es muy oscuro o tiene baja opacidad, mejorarlo
                     if (Color.alpha(currentColor) < 200 ||
                         (Color.red(currentColor) + Color.green(currentColor) + Color.blue(currentColor)) < 400) {
 
-                        // Determinar el color apropiado según el contexto
                         val newColor = when {
-                            view.textSize >= 18f -> Color.WHITE  // Títulos en blanco
-                            view.textSize >= 14f -> Color.parseColor("#CCCCCC")  // Texto normal en gris claro
-                            else -> Color.parseColor("#B0B0B0")  // Texto pequeño en gris medio
+                            view.textSize >= 18f -> Color.WHITE
+                            view.textSize >= 14f -> Color.parseColor("#CCCCCC")
+                            else -> Color.parseColor("#B0B0B0")
                         }
-
                         view.setTextColor(newColor)
                     }
                 }
                 is android.view.ViewGroup -> {
-                    // Aplicar recursivamente a todos los hijos
                     for (i in 0 until view.childCount) {
                         aplicarColoresATodosLosTextos(view.getChildAt(i))
                     }
@@ -411,7 +393,7 @@ class MainActivity : AppCompatActivity() {
         val sessionData = mapOf(
             "timestamp" to ServerValue.TIMESTAMP,
             "active" to true,
-            "deviceInfo" to android.os.Build.MODEL,
+            "deviceInfo" to Build.MODEL,
             "appVersion" to "1.0"
         )
 
@@ -673,7 +655,7 @@ class MainActivity : AppCompatActivity() {
         val understoodButton = dialogView.findViewById<Button>(R.id.btn_understood)
 
         titleView.text = title
-        contentView.text = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+        contentView.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             android.text.Html.fromHtml(content, android.text.Html.FROM_HTML_MODE_COMPACT)
         } else {
             @Suppress("DEPRECATION")
@@ -724,7 +706,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
         if (rewardedAd == null) {
-            Toast.makeText(this, "El anuncio no está listo. Intenta de nuevo.", Toast.LENGTH_SHORT).show()
             loadRewardedAd()
             return
         }
@@ -786,15 +767,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
         if (currentSpins <= 0) {
-            SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE)
-                .setTitleText("¡Sin Giros!")
-                .setContentText("Necesitas más giros para jugar. ¿Quieres ver un video para obtener 10 giros?")
-                .setConfirmText("Ver Video")
-                .setCancelText("Ahora no")
-                .setConfirmClickListener {
-                    it.dismiss()
+            MaterialDialog(this).show {
+                title(text = "¡Sin Giros!")
+                message(text = "Necesitas más giros para jugar. ¿Quieres ver un video para obtener 10 giros?")
+                positiveButton(text = "Ver Video") {
                     requestSpinsByWatchingAd()
-                }.show()
+                }
+                negativeButton(text = "Ahora no")
+            }
             return
         }
 
@@ -802,7 +782,6 @@ class MainActivity : AppCompatActivity() {
         currentSpins--
         updateSpinCountUI()
 
-        // ✅ BOTÓN GIRANDO: Mantener emoji, cambiar color a gris
         binding.sectionHome.spinButton.isEnabled = false
         binding.sectionHome.spinButton.text = "🎟️ GIRANDO..."
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#424242"))
@@ -838,9 +817,6 @@ class MainActivity : AppCompatActivity() {
 
                 if (prizeValue > 0) {
                     addTicketsToPlayer(prizeValue)
-                    Toast.makeText(this@MainActivity, "¡Ganaste $prizeValue tickets!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@MainActivity, "¡Mejor suerte la próxima vez!", Toast.LENGTH_SHORT).show()
                 }
                 resetSpinButton()
             }
@@ -850,17 +826,15 @@ class MainActivity : AppCompatActivity() {
     private fun resetSpinButton() {
         isSpinning = false
         binding.sectionHome.spinButton.isEnabled = true
-        // ✅ COLOR CAMBIADO: De #1976D2 a #00a8ff como quiere el usuario
         binding.sectionHome.spinButton.text = "🎟️ ¡GIRAR RULETA!"
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
     }
 
     private fun updateSpinCountUI() {
         binding.sectionHome.spinsAvailable.text = currentSpins.toString()
-        binding.sectionHome.spinsAvailable.setTextColor(Color.parseColor("#FFD700")) // Dorado para número de giros
+        binding.sectionHome.spinsAvailable.setTextColor(Color.parseColor("#FFD700"))
         binding.sectionHome.getSpinsButton.visibility = if (currentSpins <= 0) View.VISIBLE else View.GONE
 
-        // ✅ MEJORAR TEXTO DEL BOTÓN DE GIROS
         if (currentSpins <= 0) {
             binding.sectionHome.getSpinsButton.setTextColor(Color.WHITE)
         }
@@ -889,12 +863,11 @@ class MainActivity : AppCompatActivity() {
                 val tiempoTexto = String.format("%dd %dh %dm", days, hours, minutes)
 
                 binding.sectionHome.countdown.text = tiempoTexto
-                // ✅ MEJORAR COLOR DEL COUNTDOWN
                 binding.sectionHome.countdown.setTextColor(Color.WHITE)
             }
             override fun onFinish() {
                 binding.sectionHome.countdown.text = "¡Finalizado!"
-                binding.sectionHome.countdown.setTextColor(Color.parseColor("#FFD700")) // Dorado cuando termine
+                binding.sectionHome.countdown.setTextColor(Color.parseColor("#FFD700"))
             }
         }.start()
     }
@@ -906,7 +879,6 @@ class MainActivity : AppCompatActivity() {
                 loadInitialData()
             } else {
                 Log.w("Firebase Auth", "signInAnonymously:failure", task.exception)
-                Toast.makeText(baseContext, "Fallo de autenticación.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -916,33 +888,30 @@ class MainActivity : AppCompatActivity() {
         if (savedPlayerId.isNotEmpty()) {
             currentPlayerId = savedPlayerId
             binding.sectionHome.myPlayerId.text = currentPlayerId
-            binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#00A8FF")) // Color azul bonito
+            binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#00A8FF"))
             fetchPlayerData(currentPlayerId!!)
             fetchAllData()
             createFirebaseSession(savedPlayerId)
             obtenerTop5Firebase()
 
-            // ✅ ESCUCHAR MENSAJES PRIVADOS DEL ADMINISTRADOR
             checkForPrivateMessages(savedPlayerId)
 
-            // ✅ CONFIGURAR TOKEN FCM
             setupFCMToken(savedPlayerId)
+            setupNotificationListener(savedPlayerId)
         } else {
             binding.sectionHome.myPlayerId.text = "Toca para configurar ✏️"
-            binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#CCCCCC")) // Gris claro
+            binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#CCCCCC"))
             fetchAllData()
             obtenerTop5Firebase()
         }
         showSection(binding.sectionHome.root)
 
-        // ✅ APLICAR COLORES MEJORADOS DESPUÉS DE CARGAR DATOS
         arreglarColoresDeTextos()
     }
 
-    // ✅ NUEVA FUNCIÓN PARA ESCUCHAR MENSAJES PRIVADOS DEL ADMIN
+    @Suppress("UNCHECKED_CAST")
     private fun checkForPrivateMessages(playerId: String) {
         val messageRef = database.child("privateMessages").child(playerId)
-
         messageRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
@@ -950,50 +919,49 @@ class MainActivity : AppCompatActivity() {
                     if (messageData != null) {
                         val type = messageData["type"] as? String
                         val message = messageData["message"] as? String
-                        val timestamp = messageData["timestamp"] as? Long ?: 0L
 
                         Log.d("PRIVATE_MESSAGE", "Mensaje recibido - Tipo: $type, Mensaje: $message")
-
-                        // Mostrar el modal apropiado según el tipo
+                        // ✅ SOLO PROCESAR MENSAJES QUE NO SEAN DE SORTEO
                         when (type) {
-                            "win" -> showWinnerModal(message ?: "¡Felicitaciones, has ganado!")
-                            "loss" -> showLoserModal(message ?: "El sorteo ha finalizado.")
+                            "win", "loss" -> {
+                                // NO HACER NADA - Deja que processNotification() lo maneje
+                                Log.d("PRIVATE_MESSAGE", "Mensaje de sorteo ignorado, será procesado por notificationQueue")
+                            }
                             else -> showGeneralModal("Notificación", message ?: "Tienes un mensaje nuevo.")
                         }
-
-                        // Eliminar el mensaje después de mostrarlo
                         messageRef.removeValue()
                     }
                 }
             }
-
             override fun onCancelled(error: DatabaseError) {
                 Log.e("PRIVATE_MESSAGE", "Error escuchando mensajes: ${error.message}")
             }
         })
     }
 
-    // ✅ MODAL PARA GANADORES - ESTILO ÉPICO
+
     private fun showWinnerModal(message: String) {
         try {
-            val dialog = SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE)
-                .setTitleText("🎉 ¡FELICITACIONES! 🎉")
-                .setContentText(message)
-                .setConfirmText("¡INCREÍBLE!")
-                .setConfirmClickListener { sDialog ->
-                    sDialog.dismissWithAnimation()
-                    // Opcional: mostrar efectos adicionales
+            MaterialDialog(this).show {
+                title(text = "🎉 ¡FELICITACIONES! 🎉")
+                message(text = message)
+                positiveButton(text = "¡INCREÍBLE!") {
                     showCelebrationEffects()
                 }
+                cancelable(false)
+            }
 
-            // Personalizar colores para ganador
-            dialog.show()
-
-            // ✅ OPCIONAL: Vibración de celebración si tienes permisos
             try {
-                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    vibrator.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 500, 100, 500, 100, 500), -1))
+                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                    vibratorManager.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    getSystemService(VIBRATOR_SERVICE) as Vibrator
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 100, 500, 100, 500), -1))
                 } else {
                     @Suppress("DEPRECATION")
                     vibrator.vibrate(longArrayOf(0, 500, 100, 500, 100, 500), -1)
@@ -1004,75 +972,45 @@ class MainActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             Log.e("WINNER_MODAL", "Error mostrando modal de ganador: ${e.message}")
-            // Fallback con AlertDialog simple
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("🏆 ¡GANADOR! 🏆")
-                .setMessage(message)
-                .setPositiveButton("¡Genial!") { dialog, _ -> dialog.dismiss() }
-                .setCancelable(false)
-                .show()
         }
     }
 
-    // ✅ MODAL PARA NO GANADORES - ESTILO MOTIVACIONAL
     private fun showLoserModal(message: String) {
         try {
-            SweetAlertDialog(this, SweetAlertDialog.CUSTOM_IMAGE_TYPE)
-                .setTitleText("🎭 Sorteo Finalizado")
-                .setContentText(message)
-                .setConfirmText("Entendido")
-                .setConfirmClickListener { sDialog ->
-                    sDialog.dismissWithAnimation()
-                }
-                .show()
+            MaterialDialog(this).show {
+                title(text = "🎭 Sorteo Finalizado")
+                message(text = message)
+                positiveButton(text = "Entendido")
+                cancelable(true)
+            }
         } catch (e: Exception) {
             Log.e("LOSER_MODAL", "Error mostrando modal de sorteo: ${e.message}")
-            // Fallback con AlertDialog simple
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("📢 Sorteo Finalizado")
-                .setMessage(message)
-                .setPositiveButton("Entendido") { dialog, _ -> dialog.dismiss() }
-                .show()
         }
     }
 
-    // ✅ MODAL GENERAL PARA OTROS MENSAJES
     private fun showGeneralModal(title: String, message: String) {
         try {
-            SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
-                .setTitleText(title)
-                .setContentText(message)
-                .setConfirmText("OK")
-                .setConfirmClickListener { sDialog ->
-                    sDialog.dismissWithAnimation()
-                }
-                .show()
+            MaterialDialog(this).show {
+                title(text = title)
+                message(text = message)
+                positiveButton(text = "OK")
+                cancelable(true)
+            }
         } catch (e: Exception) {
             Log.e("GENERAL_MODAL", "Error mostrando modal general: ${e.message}")
-            // Fallback con AlertDialog simple
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                .show()
         }
     }
 
-    // ✅ EFECTOS DE CELEBRACIÓN PARA GANADORES (OPCIONAL)
+
     private fun showCelebrationEffects() {
         try {
-            // Cambiar color del botón temporalmente
             binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFD700"))
             binding.sectionHome.spinButton.text = "🏆 ¡ERES EL GANADOR! 🏆"
 
-            // Restaurar después de 5 segundos
             binding.sectionHome.spinButton.postDelayed({
                 binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
                 binding.sectionHome.spinButton.text = "🎟️ ¡GIRAR RULETA!"
             }, 5000)
-
-            // Toast adicional
-            Toast.makeText(this, "🎉 ¡Revisa tu premio en el juego! 🎉", Toast.LENGTH_LONG).show()
 
         } catch (e: Exception) {
             Log.e("CELEBRATION", "Error en efectos de celebración: ${e.message}")
@@ -1080,45 +1018,43 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun promptForPlayerId() {
-        val editText = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER
-            hint = "Ingresa tu ID numérico"
-            setText(currentPlayerId)
-        }
-        SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
-            .setTitleText(if (currentPlayerId != null) "Editar ID de Jugador" else "Configura tu ID")
-            .setCustomView(editText)
-            .setConfirmText("Guardar")
-            .setConfirmClickListener { sDialog ->
-                val newPlayerId = editText.text.toString()
+        MaterialDialog(this).show {
+            title(text = if (currentPlayerId != null) "Editar ID de Jugador" else "Configura tu ID")
+            input(
+                hint = "Ingresa tu ID numérico",
+                prefill = currentPlayerId ?: "",
+                inputType = InputType.TYPE_CLASS_NUMBER
+            ) { _, text ->
+                val newPlayerId = text.toString()
                 if (newPlayerId.length < 5 || !newPlayerId.matches(Regex("\\d+"))) {
-                    Toast.makeText(this, "Por favor, ingresa un ID válido.", Toast.LENGTH_SHORT).show()
+                    // Toast eliminado
                 } else {
-                    sDialog.dismissWithAnimation()
                     if (currentPlayerId != null && currentPlayerId!!.isNotEmpty()) {
-                        androidx.appcompat.app.AlertDialog.Builder(this)
+                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
                             .setTitle("Confirmar cambio de ID")
                             .setMessage("¿Estás seguro de cambiar el ID de jugador de $currentPlayerId a $newPlayerId?")
                             .setPositiveButton("Sí") { _, _ ->
-                                SessionManager.clearAllData(this)
-                                SessionManager.setPlayerId(this, newPlayerId)
+                                SessionManager.clearAllData(this@MainActivity)
+                                SessionManager.setPlayerId(this@MainActivity, newPlayerId)
                                 currentPlayerId = newPlayerId
                                 binding.sectionHome.myPlayerId.text = newPlayerId
                                 loadUserData(newPlayerId)
-                                Toast.makeText(this, "ID de jugador actualizado", Toast.LENGTH_SHORT).show()
                             }
                             .setNegativeButton("Cancelar", null)
                             .show()
                     } else {
-                        SessionManager.setPlayerId(this, newPlayerId)
+                        SessionManager.setPlayerId(this@MainActivity, newPlayerId)
                         currentPlayerId = newPlayerId
                         binding.sectionHome.myPlayerId.text = newPlayerId
                         loadUserData(newPlayerId)
-                        Toast.makeText(this, "ID de jugador configurado", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }.show()
+            }
+            positiveButton(text = "Guardar")
+            negativeButton(text = "Cancelar")
+        }
     }
+
 
     private fun loadUserData(playerId: String) {
         createFirebaseSession(playerId)
@@ -1128,11 +1064,9 @@ class MainActivity : AppCompatActivity() {
         currentSpins = 10
         updateSpinCountUI()
 
-        // ✅ ESCUCHAR MENSAJES PARA EL NUEVO USUARIO
         checkForPrivateMessages(playerId)
-
-        // ✅ CONFIGURAR TOKEN FCM PARA EL NUEVO USUARIO
         setupFCMToken(playerId)
+        setupNotificationListener(playerId)
     }
 
     private fun fetchAllData() {
@@ -1194,9 +1128,8 @@ class MainActivity : AppCompatActivity() {
         val progress = ((tickets % 1000).toDouble() / 1000.0 * 100).toInt()
         binding.sectionHome.passProgress.progress = progress
 
-        // ✅ MEJORAR COLORES DE LOS NÚMEROS
-        binding.sectionHome.myTickets.setTextColor(Color.parseColor("#FFD700")) // Dorado para tickets
-        binding.sectionHome.myPasses.setTextColor(Color.parseColor("#F97316")) // Naranja para pases
+        binding.sectionHome.myTickets.setTextColor(Color.parseColor("#FFD700"))
+        binding.sectionHome.myPasses.setTextColor(Color.parseColor("#F97316"))
 
         Log.d("UI_UPDATE", "UI actualizada con colores mejorados")
     }
@@ -1205,7 +1138,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // ✅ VERIFICAR MENSAJES AL VOLVER A LA APP
         currentPlayerId?.let { playerId ->
             checkForPrivateMessages(playerId)
         }
@@ -1224,5 +1156,292 @@ class MainActivity : AppCompatActivity() {
                 .getReference("sessions/$playerId/$sessionId/active")
                 .setValue(false)
         }
+    }
+
+    // --- 🔔 SISTEMA DE NOTIFICACIONES MEJORADO ---
+    private fun setupNotificationListener(playerId: String) {
+        Log.d("NOTIFICATION_SETUP", "Configurando listener para: $playerId")
+        val notificationRef = database.child("notificationQueue").child(playerId)
+
+        notificationRef.addChildEventListener(object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                Log.d("NOTIFICATION_LISTENER", "Nueva notificación detectada: ${snapshot.key}")
+                processNotification(snapshot)
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+            override fun onChildRemoved(snapshot: DataSnapshot) {}
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("NOTIFICATION_LISTENER", "Error escuchando notificaciones: ${error.message}")
+            }
+        })
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun processNotification(snapshot: DataSnapshot) {
+        try {
+            Log.d("NOTIFICATION_PROCESS", "Procesando snapshot: ${snapshot.value}")
+            val notificationData = snapshot.value as? Map<String, Any> ?: return
+            val processed = notificationData["processed"] as? Boolean ?: false
+
+            if (processed) {
+                Log.d("NOTIFICATION_PROCESS", "Notificación ya procesada, ignorando")
+                return
+            }
+
+            val type = notificationData["type"] as? String ?: "general"
+            val title = notificationData["title"] as? String ?: "Notificación"
+            val body = notificationData["body"] as? String ?: ""
+            val message = notificationData["message"] as? String ?: ""
+
+            Log.d("NOTIFICATION_PROCESS", "Procesando notificación: $type - $title")
+
+            // ✅ MOSTRAR NOTIFICACIÓN PUSH LOCAL CON REDIRECCIÓN
+            showLocalNotification(title, body, type)
+
+            // ✅ MOSTRAR MODAL CON REDIRECCIÓN A GANADORES
+            runOnUiThread {
+                when (type) {
+                    "win" -> showWinnerModalWithRedirect(message)
+                    "loss" -> showLoserModalWithRedirect(message)
+                    "test" -> showGeneralModal("Prueba", message)
+                    else -> showGeneralModal(title, message)
+                }
+            }
+
+            snapshot.ref.removeValue()
+                .addOnSuccessListener {
+                    Log.d("NOTIFICATION_PROCESS", "Notificación eliminada exitosamente")
+                }
+                .addOnFailureListener { error ->
+                    Log.e("NOTIFICATION_PROCESS", "Error eliminando notificación: ${error.message}")
+                }
+
+        } catch (e: Exception) {
+            Log.e("NOTIFICATION_PROCESS", "Error procesando notificación: ${e.message}")
+        }
+    }
+
+    private fun showLocalNotification(title: String, body: String, type: String = "general") {
+        try {
+            Log.d("LOCAL_NOTIFICATION", "Creando notificación: $title - $body")
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            // Verificar si las notificaciones están habilitadas
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (!notificationManager.areNotificationsEnabled()) {
+                    Log.w("LOCAL_NOTIFICATION", "Las notificaciones están deshabilitadas por el usuario")
+                    return
+                }
+            }
+
+            // Seleccionar canal según el tipo
+            val channelId = when (type) {
+                "win" -> "winner_notifications"
+                else -> "general_notifications"
+            }
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                if (type == "win" || type == "loss") {
+                    putExtra("redirect_to", "winners")
+                }
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                this, 0, intent,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                else PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val notification = androidx.core.app.NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setDefaults(androidx.core.app.NotificationCompat.DEFAULT_ALL)
+                .setVibrate(longArrayOf(0, 500, 100, 500))
+                .setColor(ContextCompat.getColor(this, R.color.accent_color))
+                .build()
+            val notificationId = System.currentTimeMillis().toInt()
+            notificationManager.notify(notificationId, notification)
+            Log.d("LOCAL_NOTIFICATION", "Notificación enviada con ID: $notificationId")
+        } catch (e: Exception) {
+            Log.e("LOCAL_NOTIFICATION", "Error mostrando notificación local: ${e.message}")
+        }
+    }
+
+
+    private fun showWinnerModalWithRedirect(message: String) {
+        try {
+            MaterialDialog(this).show {
+                title(text = "🎉 ¡FELICITACIONES! 🎉")
+                message(text = message)
+                positiveButton(text = "VER GANADORES") {
+                    showCelebrationEffects()
+                    redirectToWinnersSection()
+                }
+                cancelable(false)
+            }
+            // Vibración de celebración
+            try {
+                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                    vibratorManager.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    getSystemService(VIBRATOR_SERVICE) as Vibrator
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 100, 500, 100, 500), -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(longArrayOf(0, 500, 100, 500, 100, 500), -1)
+                }
+            } catch (e: Exception) {
+                Log.d("VIBRATION", "No se pudo vibrar: ${e.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("WINNER_MODAL", "Error mostrando modal de ganador: ${e.message}")
+        }
+    }
+
+    private fun showLoserModalWithRedirect(message: String) {
+        try {
+            MaterialDialog(this).show {
+                title(text = "🎭 Sorteo Finalizado")
+                message(text = message)
+                positiveButton(text = "VER GANADORES") {
+                    redirectToWinnersSection()
+                }
+                cancelable(true)
+            }
+        } catch (e: Exception) {
+            Log.e("LOSER_MODAL", "Error mostrando modal de sorteo: ${e.message}")
+        }
+    }
+
+
+    private fun redirectToWinnersSection() {
+        hideAllSections()
+        showSection(binding.sectionWinners.root)
+        binding.navView.setCheckedItem(R.id.nav_winners)
+    }
+
+    // --- 🔔 GESTIÓN DE PERMISOS DE NOTIFICACIÓN ---
+    private fun checkNotificationPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.d("NOTIFICATION_PERMISSION", "Solicitando permiso de notificaciones")
+                requestNotificationPermission()
+            } else {
+                Log.d("NOTIFICATION_PERMISSION", "Permiso de notificaciones ya concedido")
+                createNotificationChannels()
+            }
+        } else {
+            Log.d("NOTIFICATION_PERMISSION", "Android < 13, no necesita permiso explícito")
+            createNotificationChannels()
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            ) {
+                // Mostrar explicación de por qué necesitamos el permiso
+                MaterialDialog(this).show {
+                    title(text = "Activar Notificaciones")
+                    message(text = "Necesitamos activar las notificaciones para informarte cuando:\n\n• Ganes el sorteo semanal\n• Hay nuevos concursos\n• Recibes premios especiales\n\n¿Deseas activar las notificaciones?")
+                    positiveButton(text = "Activar") {
+                        ActivityCompat.requestPermissions(
+                            this@MainActivity,
+                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                            NOTIFICATION_PERMISSION_REQUEST_CODE
+                        )
+                    }
+                    negativeButton(text = "Ahora no") {
+                        Log.d("NOTIFICATION_PERMISSION", "Usuario rechazó activar notificaciones")
+                        createNotificationChannels() // Crear canales de todas formas
+                    }
+                }
+            } else {
+                // Solicitar permiso directamente
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            NOTIFICATION_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("NOTIFICATION_PERMISSION", "Permiso de notificaciones concedido")
+                    createNotificationChannels()
+                } else {
+                    Log.d("NOTIFICATION_PERMISSION", "Permiso de notificaciones denegado")
+                    createNotificationChannels() // Crear canales de todas formas
+                }
+            }
+        }
+    }
+
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Canal para notificaciones de ganadores
+            val winnerChannel = NotificationChannel(
+                "winner_notifications",
+                "Notificaciones de Ganadores",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificaciones cuando ganas el sorteo"
+                enableLights(true)
+                lightColor = Color.parseColor("#FFD700")
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 1000, 500, 1000)
+                setSound(
+                    android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION),
+                    null
+                )
+            }
+
+            // Canal para notificaciones generales
+            val generalChannel = NotificationChannel(
+                "general_notifications",
+                "Notificaciones Generales",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notificaciones generales del club de recompensas"
+                enableLights(true)
+                lightColor = Color.parseColor("#00A8FF")
+                enableVibration(true)
+            }
+
+            notificationManager.createNotificationChannel(winnerChannel)
+            notificationManager.createNotificationChannel(generalChannel)
+
+            Log.d("NOTIFICATION_CHANNELS", "Canales de notificación creados")
+        }
+    }
+
+    companion object {
+        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
     }
 }

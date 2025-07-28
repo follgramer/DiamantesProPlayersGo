@@ -19,8 +19,6 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // Configuración multiDex si es necesaria
         multiDexEnabled = true
     }
 
@@ -45,9 +43,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf(
-            "-opt-in=kotlin.RequiresOptIn"
-        )
+        freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
     }
 
     buildFeatures {
@@ -62,7 +58,6 @@ android {
         }
     }
 
-    // Configuración para evitar conflictos de dependencias
     configurations.all {
         resolutionStrategy {
             force("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
@@ -73,7 +68,6 @@ android {
 }
 
 dependencies {
-    // --- AndroidX Core ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
@@ -81,21 +75,19 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.drawerlayout)
 
-    // --- Firebase (Importa la plataforma BOM primero)---
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)
 
-    // --- Google Services ---
     implementation(libs.google.play.services.ads)
     implementation(libs.google.user.messaging.platform)
 
-    // --- Librerías de Terceros ---
-    implementation(libs.sweetalert)
+    // ✅ MATERIAL DIALOGS EN LUGAR DE SWEETALERT
+    implementation(libs.material.dialogs.core)
+    implementation(libs.material.dialogs.input)
 
-    // --- Dependencias de Test ---
     testImplementation(libs.test.junit)
     androidTestImplementation(libs.test.androidx.junit)
     androidTestImplementation(libs.test.androidx.espresso.core)
