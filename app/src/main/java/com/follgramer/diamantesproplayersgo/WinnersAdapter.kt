@@ -11,41 +11,72 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class WinnersAdapter(private val winners: List<Winner>) :
-    RecyclerView.Adapter<WinnersAdapter.WinnerViewHolder>() {
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    companion object {
+        private const val TYPE_WINNER = 0
+        private const val TYPE_AD = 1
+    }
+
+    // ViewHolder para ganadores
     class WinnerViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val date: TextView = view.findViewById(R.id.date)
         val prize: TextView = view.findViewById(R.id.prize)
         val winnerId: TextView = view.findViewById(R.id.winner_id)
-        val adView: AdView? = view.findViewById(R.id.adViewWinnerItem)
-        val contentLayout: View = view.findViewById(R.id.winner_content_layout)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WinnerViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_winner, parent, false)
-        return WinnerViewHolder(view)
+    // ViewHolder para anuncios
+    class AdViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val adView: AdView = view.findViewById(R.id.adViewWinnerItem)
     }
 
-    override fun onBindViewHolder(holder: WinnerViewHolder, position: Int) {
-        // Mostrar un anuncio cada 3 ganadores
-        if (position > 0 && position % 3 == 0) {
-            holder.adView?.visibility = View.VISIBLE
-            holder.contentLayout.visibility = View.GONE
-            holder.adView?.loadAd(AdRequest.Builder().build())
-        } else {
-            holder.adView?.visibility = View.GONE
-            holder.contentLayout.visibility = View.VISIBLE
+    override fun getItemViewType(position: Int): Int {
+        // Mostrar anuncio después de cada 2 ganadores
+        // Posiciones: 0,1 = ganadores, 2 = anuncio, 3,4 = ganadores, 5 = anuncio, etc.
+        return if ((position + 1) % 3 == 0) TYPE_AD else TYPE_WINNER
+    }
 
-            val winner = winners[position]
-            val sdf = SimpleDateFormat("dd 'de' MMMM 'de' yyyy, HH:mm", Locale("es", "ES"))
-            holder.date.text = "Sorteo del ${sdf.format(Date(winner.timestamp))}"
-            holder.prize.text = winner.prize
-            holder.winnerId.text = "Ganador ID: ${maskPlayerId(winner.winnerId)}"
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            TYPE_AD -> {
+                val adView = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_winner_ad, parent, false)
+                AdViewHolder(adView)
+            }
+            else -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_winner, parent, false)
+                WinnerViewHolder(view)
+            }
         }
     }
 
-    override fun getItemCount() = winners.size
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is AdViewHolder -> {
+                // Cargar anuncio
+                holder.adView.loadAd(AdRequest.Builder().build())
+            }
+            is WinnerViewHolder -> {
+                // Calcular el índice real del ganador (saltando las posiciones de anuncios)
+                val winnerIndex = position - (position / 3)
+
+                if (winnerIndex < winners.size) {
+                    val winner = winners[winnerIndex]
+                    val sdf = SimpleDateFormat("dd 'de' MMMM 'de' yyyy, HH:mm", Locale("es", "ES"))
+                    holder.date.text = "Sorteo del ${sdf.format(Date(winner.timestamp))}"
+                    holder.prize.text = winner.prize
+                    holder.winnerId.text = "Ganador ID: ${maskPlayerId(winner.winnerId)}"
+                }
+            }
+        }
+    }
+
+    override fun getItemCount(): Int {
+        // Calculamos cuántos anuncios necesitamos insertar
+        val adCount = winners.size / 2 // Un anuncio cada 2 ganadores
+        return winners.size + adCount
+    }
 
     private fun maskPlayerId(id: String): String {
         return if (id.length > 5) "${id.substring(0, 3)}***${id.substring(id.length - 2)}" else id

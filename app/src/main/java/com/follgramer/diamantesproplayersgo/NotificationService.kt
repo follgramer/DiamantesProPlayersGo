@@ -339,11 +339,13 @@ class NotificationService : FirebaseMessagingService() {
         Log.w("FCM_MESSAGE", "⚠️ Mensajes FCM eliminados (demasiados pendientes)")
     }
 
+    @Deprecated("This method is deprecated")
     override fun onMessageSent(msgId: String) {
         super.onMessageSent(msgId)
         Log.d("FCM_MESSAGE", "✅ Mensaje FCM enviado: $msgId")
     }
 
+    @Deprecated("This method is deprecated")
     override fun onSendError(msgId: String, exception: Exception) {
         super.onSendError(msgId, exception)
         Log.e("FCM_MESSAGE", "❌ Error enviando mensaje FCM $msgId: ${exception.message}")

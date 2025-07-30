@@ -19,8 +19,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Diamantesproplayersgo"
-        tools:targetApi="31"
-        tools:replace="android:icon">
+        tools:targetApi="31">
 
         <!-- ID de AdMob (modo test en este caso) -->
         <meta-data
@@ -62,17 +61,25 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="general_notifications" />
 
-        <!-- Actividad principal de la app -->
+        <!-- 🎬 SPLASH SCREEN - ACTIVIDAD PRINCIPAL -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
-            android:launchMode="singleTop"
-            android:windowSoftInputMode="adjustResize">
+            android:screenOrientation="portrait"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 🏠 MAIN ACTIVITY - ACTIVIDAD SECUNDARIA -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
 
     </application>
 

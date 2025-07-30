@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:fontFamily="@font/montserrat_bold"
-            android:text="🏆 MURO DE LA FAMA 🏆"
+            android:text="🏆 SALÓN DE CAMPEONES 🏆"
             android:textColor="@color/gold_accent"
             android:textSize="18sp" />
 
@@ -31,7 +31,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="4dp"
             android:fontFamily="@font/montserrat_regular"
-            android:text="Aquí se mostrarán los 10 ganadores más recientes."
+            android:text="Aquí se muestran los 10 ganadores más recientes de diamantes."
             android:textColor="@color/text_muted"
             android:textSize="14sp" />
 
@@ -47,4 +47,3 @@
     </LinearLayout>
 
 </LinearLayout>
-    

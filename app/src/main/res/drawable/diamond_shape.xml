@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sombra del diamante -->
+    <item android:top="2dp" android:left="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#66000000" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+    <!-- Diamante principal -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="45"
+                android:startColor="#FFD700"
+                android:centerColor="#FFA500"
+                android:endColor="#FFD700" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+    <!-- Brillo interno -->
+    <item android:top="8dp" android:left="8dp" android:right="8dp" android:bottom="8dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="45"
+                android:startColor="#FFFF00"
+                android:endColor="#FFD700" />
+            <corners android:radius="5dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -68,6 +68,7 @@ android {
 }
 
 dependencies {
+    // ✅ DEPENDENCIAS BÁSICAS DE ANDROID
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
@@ -75,19 +76,33 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.drawerlayout)
 
+    // ✅ FIREBASE - PLATAFORMA Y SERVICIOS
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)
 
+    // ✅ GOOGLE ADS Y CONSENTIMIENTO
     implementation(libs.google.play.services.ads)
     implementation(libs.google.user.messaging.platform)
 
-    // ✅ MATERIAL DIALOGS EN LUGAR DE SWEETALERT
+    // ✅ MATERIAL DIALOGS
     implementation(libs.material.dialogs.core)
     implementation(libs.material.dialogs.input)
 
+    // ✅ COROUTINES PARA OPTIMIZACIÓN DEL SPLASH
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+    // ✅ RECYCLERVIEW (para leaderboards y listas)
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    // ✅ LIFECYCLE COMPONENTS (para ViewModels si los usas)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+
+    // ✅ TESTING
     testImplementation(libs.test.junit)
     androidTestImplementation(libs.test.androidx.junit)
     androidTestImplementation(libs.test.androidx.espresso.core)

@@ -8,18 +8,7 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <!-- ANUNCIO NATIVO - Este es un ejemplo de cómo podrías intercalar anuncios nativos -->
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adViewWinnerItem"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone"
-        app:adSize="MEDIUM_RECTANGLE"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
-
+    <!-- CONTENIDO DEL GANADOR - SIN ANUNCIO AQUÍ -->
     <LinearLayout
         android:id="@+id/winner_content_layout"
         android:layout_width="match_parent"
@@ -58,4 +47,3 @@
             tools:text="Ganador ID: 123***89" />
     </LinearLayout>
 </LinearLayout>
-    

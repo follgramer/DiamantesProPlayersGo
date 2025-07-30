@@ -1,138 +1,382 @@
 <resources>
     <string name="app_name">Diamantes pro players Go</string>
-    <string name="header_title">Club de Recompensas</string>
+    <string name="header_title">Diamantes pro players</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <!-- Textos Legales EXACTOS del index.html -->
+    <!-- Textos Legales MEJORADOS Y PROFESIONALES -->
     <string name="privacy_policy_content">
         <![CDATA[
         <b>POLÍTICA DE PRIVACIDAD</b><br><br>
 
         <b>Última actualización:</b> Enero 2025<br><br>
 
-        En Club de Recompensas, nos tomamos muy en serio la protección de tu privacidad. Esta política explica qué información recopilamos y cómo la utilizamos.<br><br>
+        <b>Diamantes pro players Go</b> ("nosotros", "la aplicación") se compromete a proteger la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y protegemos su información personal cuando utiliza nuestra aplicación móvil.<br><br>
 
         <b>1. INFORMACIÓN QUE RECOPILAMOS</b><br><br>
 
-        • <b>ID de Jugador:</b> Recopilamos únicamente el ID numérico de Free Fire que nos proporcionas voluntariamente para participar en los sorteos y recibir premios.<br><br>
+        <b>1.1 Información Personal Proporcionada Voluntariamente:</b><br>
+        • <b>ID de Jugador de Free Fire:</b> Número de identificación único que usted proporciona voluntariamente para participar en sorteos y recibir premios.<br>
+        • <b>Datos de Contacto:</b> Información necesaria para coordinar la entrega de premios cuando corresponda.<br><br>
 
-        • <b>Datos de Juego:</b> Registramos tus tickets ganados, pases acumulados y participación en actividades dentro de la aplicación.<br><br>
+        <b>1.2 Información de Uso de la Aplicación:</b><br>
+        • <b>Progreso del Juego:</b> Tickets acumulados, pases generados, participación en actividades.<br>
+        • <b>Interacciones:</b> Clics, tiempo de uso, secciones visitadas (datos agregados y anónimos).<br>
+        • <b>Preferencias:</b> Configuraciones y ajustes de la aplicación.<br><br>
 
-        • <b>Datos de Dispositivo:</b> Utilizamos servicios de terceros como Google AdMob y Firebase Analytics que pueden recopilar información sobre tu dispositivo para mejorar el rendimiento de la app y mostrar anuncios relevantes.<br><br>
+        <b>1.3 Información Técnica Automatizada:</b><br>
+        • <b>Datos del Dispositivo:</b> Modelo, sistema operativo, versión de la aplicación, identificador único de dispositivo.<br>
+        • <b>Datos de Conexión:</b> Dirección IP, información de red, datos de rendimiento.<br>
+        • <b>Cookies y Tecnologías Similares:</b> Para mejorar la funcionalidad y personalizar la experiencia.<br><br>
 
-        <b>2. CÓMO USAMOS TU INFORMACIÓN</b><br><br>
+        <b>2. CÓMO UTILIZAMOS SU INFORMACIÓN</b><br><br>
 
-        • <b>Participación en Sorteos:</b> Usamos tu ID para identificarte en las clasificaciones, sorteos semanales y para el envío de premios.<br><br>
+        <b>2.1 Funcionalidad de la Aplicación:</b><br>
+        • Gestionar su participación en sorteos y actividades.<br>
+        • Calcular y otorgar tickets, pases y recompensas.<br>
+        • Mantener clasificaciones y estadísticas de juego.<br>
+        • Proporcionar soporte técnico y resolver problemas.<br><br>
 
-        • <b>Mejora del Servicio:</b> Los datos de uso nos ayudan a mejorar la experiencia de usuario y el funcionamiento de la aplicación.<br><br>
+        <b>2.2 Comunicaciones:</b><br>
+        • Notificar sobre premios ganados y coordinar entregas.<br>
+        • Enviar actualizaciones importantes sobre la aplicación.<br>
+        • Responder a consultas y solicitudes de soporte.<br><br>
 
-        • <b>Comunicación de Premios:</b> Te contactaremos únicamente para informarte sobre premios ganados y coordinar la entrega.<br><br>
+        <b>2.3 Mejora del Servicio:</b><br>
+        • Analizar patrones de uso para mejorar la experiencia del usuario.<br>
+        • Desarrollar nuevas funcionalidades y características.<br>
+        • Detectar y prevenir fraudes o uso indebido.<br><br>
+
+        <b>2.4 Cumplimiento Legal:</b><br>
+        • Cumplir con obligaciones legales aplicables.<br>
+        • Responder a solicitudes legales válidas de autoridades.<br><br>
 
         <b>3. SERVICIOS DE TERCEROS</b><br><br>
 
-        • <b>Google AdMob:</b> Muestra anuncios personalizados. Puedes revisar su política de privacidad en policies.google.com/privacy<br><br>
+        <b>3.1 Google AdMob:</b><br>
+        • <b>Propósito:</b> Mostrar anuncios personalizados y relevantes.<br>
+        • <b>Información Recopilada:</b> Identificadores de dispositivo, información de uso, datos de ubicación aproximada.<br>
+        • <b>Política de Privacidad:</b> https://policies.google.com/privacy<br>
+        • <b>Control del Usuario:</b> Puede optar por no recibir anuncios personalizados en Configuración > Google > Anuncios.<br><br>
 
-        • <b>Firebase:</b> Almacena datos de usuario y analíticas. Información disponible en firebase.google.com/support/privacy<br><br>
+        <b>3.2 Firebase (Google):</b><br>
+        • <b>Propósito:</b> Almacenamiento de datos, análisis, notificaciones push, autenticación.<br>
+        • <b>Información Recopilada:</b> Datos de uso, información de dispositivo, eventos de aplicación.<br>
+        • <b>Política de Privacidad:</b> https://firebase.google.com/support/privacy<br><br>
 
-        <b>4. PROTECCIÓN DE DATOS</b><br><br>
+        <b>3.3 Otros Proveedores de Servicios:</b><br>
+        • Proveedores de análisis y métricas de aplicación.<br>
+        • Servicios de soporte técnico y mantenimiento.<br>
+        • Procesadores de pagos (si aplicable en el futuro).<br><br>
 
-        • Implementamos medidas de seguridad para proteger tu información personal.<br>
-        • No vendemos ni compartimos tu información con terceros no autorizados.<br>
-        • Los datos se almacenan de forma segura en servidores protegidos.<br><br>
+        <b>4. COMPARTIR INFORMACIÓN</b><br><br>
 
-        <b>5. TUS DERECHOS</b><br><br>
+        <b>No vendemos, alquilamos ni comercializamos su información personal.</b> Podemos compartir información limitada en los siguientes casos:<br><br>
 
-        • Puedes solicitar la eliminación de tu cuenta y datos en cualquier momento.<br>
-        • Tienes derecho a acceder y corregir tu información personal.<br>
-        • Puedes optar por no recibir comunicaciones promocionales.<br><br>
+        • <b>Proveedores de Servicios:</b> Con terceros que nos ayudan a operar la aplicación (bajo estrictos acuerdos de confidencialidad).<br>
+        • <b>Cumplimiento Legal:</b> Cuando sea requerido por ley o para proteger nuestros derechos legales.<br>
+        • <b>Protección:</b> Para prevenir fraudes, abuso o actividades ilegales.<br>
+        • <b>Transacciones Comerciales:</b> En caso de fusión, adquisición o venta de activos (con notificación previa).<br><br>
 
-        <b>6. CONTACTO</b><br><br>
+        <b>5. SEGURIDAD Y PROTECCIÓN DE DATOS</b><br><br>
 
-        Si tienes preguntas sobre esta política de privacidad, contáctanos a través de los canales oficiales de la aplicación.<br><br>
+        <b>5.1 Medidas de Seguridad:</b><br>
+        • Encriptación de datos sensibles en tránsito y en reposo.<br>
+        • Acceso restringido a información personal solo a personal autorizado.<br>
+        • Monitoreo continuo de sistemas para detectar vulnerabilidades.<br>
+        • Copias de seguridad regulares y planes de recuperación de desastres.<br><br>
 
-        <b>7. CAMBIOS EN ESTA POLÍTICA</b><br><br>
+        <b>5.2 Retención de Datos:</b><br>
+        • Información de cuenta activa: Durante el tiempo que use la aplicación.<br>
+        • Datos de transacciones: 7 años para cumplimiento legal y contable.<br>
+        • Datos analíticos: 26 meses en forma agregada y anónima.<br>
+        • Datos de soporte: 3 años después de la resolución del caso.<br><br>
 
-        Podemos actualizar esta política ocasionalmente. Te notificaremos sobre cambios importantes a través de la aplicación.
+        <b>6. SUS DERECHOS Y CONTROLES</b><br><br>
+
+        <b>6.1 Derechos del Usuario:</b><br>
+        • <b>Acceso:</b> Solicitar una copia de la información personal que tenemos sobre usted.<br>
+        • <b>Rectificación:</b> Corregir información inexacta o incompleta.<br>
+        • <b>Eliminación:</b> Solicitar la eliminación de su cuenta y datos personales.<br>
+        • <b>Portabilidad:</b> Recibir sus datos en un formato estructurado y legible.<br>
+        • <b>Limitación:</b> Restringir ciertos tipos de procesamiento de datos.<br>
+        • <b>Oposición:</b> Oponerse al procesamiento de datos para marketing directo.<br><br>
+
+        <b>6.2 Cómo Ejercer Sus Derechos:</b><br>
+        • A través de la configuración de la aplicación.<br>
+        • Contactando nuestro equipo de soporte.<br>
+        • Enviando una solicitud por escrito (verificaremos su identidad).<br><br>
+
+        <b>6.3 Controles de Privacidad:</b><br>
+        • Configurar notificaciones push.<br>
+        • Gestionar preferencias de comunicación.<br>
+        • Controlar compartir datos con terceros (donde sea técnicamente posible).<br><br>
+
+        <b>7. USUARIOS MENORES DE EDAD</b><br><br>
+
+        • Esta aplicación está dirigida a usuarios de 13 años en adelante.<br>
+        • No recopilamos intencionalmente información de niños menores de 13 años.<br>
+        • Si descubrimos que hemos recopilado información de un menor de 13 años, la eliminaremos inmediatamente.<br>
+        • Los padres pueden contactarnos si creen que su hijo ha proporcionado información personal.<br><br>
+
+        <b>8. TRANSFERENCIAS INTERNACIONALES</b><br><br>
+
+        • Sus datos pueden ser transferidos y procesados en países diferentes al suyo.<br>
+        • Implementamos salvaguardas apropiadas para proteger sus datos durante transferencias internacionales.<br>
+        • Las transferencias se realizan bajo marcos legales reconocidos (cláusulas contractuales estándar, decisiones de adecuación).<br><br>
+
+        <b>9. CAMBIOS EN ESTA POLÍTICA</b><br><br>
+
+        • Podemos actualizar esta política ocasionalmente para reflejar cambios en nuestras prácticas o por razones legales.<br>
+        • Los cambios importantes serán notificados con al menos 30 días de anticipación.<br>
+        • La fecha de "Última actualización" al inicio indica cuándo se modificó por última vez.<br>
+        • El uso continuado de la aplicación después de los cambios constituye aceptación de la política actualizada.<br><br>
+
+        <b>10. CONTACTO Y SOPORTE</b><br><br>
+
+        <b>Para consultas sobre privacidad o ejercer sus derechos, contáctenos:</b><br>
+        • A través de la sección "Soporte" en la aplicación<br>
+        • Email: privacidad@diamantesproplayersgo.com<br>
+        • Tiempo de respuesta: Máximo 30 días hábiles<br><br>
+
+        <b>11. BASE LEGAL PARA EL PROCESAMIENTO (GDPR/LGPD)</b><br><br>
+
+        • <b>Consentimiento:</b> Para marketing y comunicaciones promocionales.<br>
+        • <b>Ejecución de Contrato:</b> Para proporcionar servicios de la aplicación.<br>
+        • <b>Interés Legítimo:</b> Para mejorar servicios, seguridad y prevención de fraudes.<br>
+        • <b>Cumplimiento Legal:</b> Para cumplir con obligaciones legales aplicables.<br><br>
+
+        <b>Esta política se rige por las leyes de protección de datos aplicables en su jurisdicción.</b>
         ]]>
     </string>
 
     <string name="terms_content">
         <![CDATA[
-        <b>TÉRMINOS Y CONDICIONES</b><br><br>
+        <b>TÉRMINOS Y CONDICIONES DE USO</b><br><br>
 
         <b>Última actualización:</b> Enero 2025<br><br>
 
-        Al usar Club de Recompensas, aceptas estos términos y condiciones. Por favor, léelos cuidadosamente.<br><br>
+        <b>IMPORTANTE:</b> Lea cuidadosamente estos Términos y Condiciones antes de usar la aplicación <b>Diamantes pro players Go</b>. Al descargar, instalar o usar esta aplicación, usted acepta estar legalmente vinculado por estos términos.<br><br>
 
-        <b>1. ACEPTACIÓN DE LOS TÉRMINOS</b><br><br>
+        <b>1. ACEPTACIÓN Y MODIFICACIÓN DE TÉRMINOS</b><br><br>
 
-        • El uso de esta aplicación implica la aceptación total de estos términos.<br>
-        • Si no estás de acuerdo con algún punto, no uses la aplicación.<br>
-        • Debes tener al menos 13 años para usar esta aplicación.<br><br>
+        <b>1.1 Aceptación:</b><br>
+        • El uso de esta aplicación constituye aceptación completa e incondicional de estos términos.<br>
+        • Si no acepta alguna parte de estos términos, debe discontinuar el uso inmediatamente.<br>
+        • La aceptación incluye también nuestra Política de Privacidad, incorporada por referencia.<br><br>
 
-        <b>2. REGLAS DE USO Y CONDUCTA</b><br><br>
+        <b>1.2 Modificaciones:</b><br>
+        • Nos reservamos el derecho de modificar estos términos en cualquier momento.<br>
+        • Las modificaciones materiales serán notificadas con 30 días de anticipación.<br>
+        • El uso continuado después de las modificaciones constituye aceptación de los nuevos términos.<br>
+        • Versiones anteriores de estos términos quedan sin efecto tras actualizaciones.<br><br>
 
-        • <b>Prohibido el Fraude:</b> Está estrictamente prohibido el uso de bots, scripts, trucos o cualquier método automatizado para obtener ventajas injustas.<br><br>
+        <b>1.3 Capacidad Legal:</b><br>
+        • Debe tener al menos 13 años para usar esta aplicación.<br>
+        • Menores entre 13-18 años requieren consentimiento parental verificable.<br>
+        • Debe tener capacidad legal para celebrar contratos vinculantes.<br><br>
 
-        • <b>Una Cuenta por Persona:</b> Solo puedes tener una cuenta activa. Las cuentas múltiples serán eliminadas.<br><br>
+        <b>2. DESCRIPCIÓN DEL SERVICIO</b><br><br>
 
-        • <b>ID Válido:</b> Debes proporcionar un ID de Free Fire real y verificable. IDs falsos resultarán en descalificación.<br><br>
+        <b>2.1 Naturaleza del Servicio:</b><br>
+        • <b>Diamantes pro players Go</b> es una aplicación de entretenimiento que ofrece la oportunidad de participar en sorteos semanales.<br>
+        • Los usuarios pueden acumular "tickets" mediante actividades en la aplicación.<br>
+        • Los tickets se convierten automáticamente en "pases" de sorteo (1,000 tickets = 1 pase).<br>
+        • Los sorteos ofrecen premios relacionados con el juego Free Fire (diamantes, pases, etc.).<br><br>
 
-        • <b>Comportamiento Respetuoso:</b> No se toleran insultos, spam ni comportamientos que afecten negativamente a otros usuarios.<br><br>
+        <b>2.2 Disponibilidad del Servicio:</b><br>
+        • El servicio se proporciona "tal como está" y "según disponibilidad".<br>
+        • No garantizamos disponibilidad ininterrumpida o libre de errores.<br>
+        • Podemos suspender temporalmente el servicio por mantenimiento o mejoras.<br>
+        • Nos reservamos el derecho de discontinuar el servicio con 90 días de aviso previo.<br><br>
 
-        <b>3. SISTEMA DE PREMIOS Y SORTEOS</b><br><br>
+        <b>3. REGLAS DE USO Y CONDUCTA</b><br><br>
 
-        • <b>Elegibilidad:</b> Solo usuarios con ID válido pueden participar en sorteos.<br><br>
+        <b>3.1 Uso Permitido:</b><br>
+        • Usar la aplicación solo para fines de entretenimiento personal y no comerciales.<br>
+        • Proporcionar información veraz y actualizada.<br>
+        • Mantener la confidencialidad de su cuenta.<br>
+        • Cumplir con todas las leyes aplicables.<br><br>
 
-        • <b>Sorteos Semanales:</b> Se realizan cada domingo a las 23:59 (hora del servidor).<br><br>
+        <b>3.2 Conducta Prohibida:</b><br>
+        • <b>Fraude y Trampa:</b> Uso de bots, scripts, exploits, hacks o cualquier software automatizado.<br>
+        • <b>Múltiples Cuentas:</b> Crear o mantener más de una cuenta por persona.<br>
+        • <b>Información Falsa:</b> Proporcionar datos falsos, especialmente ID de Free Fire inválidos.<br>
+        • <b>Abuso del Sistema:</b> Intentar manipular sorteos, sistemas de puntuación o algoritmos.<br>
+        • <b>Actividades Ilegales:</b> Usar la aplicación para cualquier propósito ilegal o no autorizado.<br>
+        • <b>Comportamiento Abusivo:</b> Acoso, spam, comportamiento ofensivo hacia otros usuarios o nuestro equipo.<br>
+        • <b>Violación de Propiedad Intelectual:</b> Infringir derechos de autor, marcas comerciales u otros derechos de propiedad.<br><br>
 
-        • <b>Entrega de Premios:</b> Los premios se entregan dentro de 24-48 horas después del sorteo. El ganador será contactado para coordinar la entrega.<br><br>
+        <b>3.3 Contenido del Usuario:</b><br>
+        • Usted es responsable de todo contenido que envíe o comparta.<br>
+        • No debe enviar contenido ofensivo, ilegal, difamatorio o que viole derechos de terceros.<br>
+        • Nos otorga una licencia no exclusiva para usar contenido que envíe para operar el servicio.<br><br>
 
-        • <b>Premios No Transferibles:</b> Los premios son personales e intransferibles.<br><br>
+        <b>4. SISTEMA DE PREMIOS Y SORTEOS</b><br><br>
 
-        <b>4. SANCIONES Y SUSPENSIONES</b><br><br>
+        <b>4.1 Elegibilidad para Premios:</b><br>
+        • Solo usuarios con ID de Free Fire válido y verificable pueden participar.<br>
+        • Debe tener al menos 1 pase completo para participar en sorteos semanales.<br>
+        • Empleados de la empresa y familiares directos están excluidos de premios.<br>
+        • Restricciones geográficas pueden aplicar según regulaciones locales.<br><br>
 
-        • <b>Advertencias:</b> Primera infracción menor resulta en advertencia.<br><br>
+        <b>4.2 Mecánica de Sorteos:</b><br>
+        • <b>Frecuencia:</b> Sorteos semanales realizados cada domingo a las 23:59 GMT-3.<br>
+        • <b>Selección:</b> Ganadores seleccionados mediante algoritmo aleatorio verificable.<br>
+        • <b>Transparencia:</b> Proceso documentado y auditable (disponible bajo solicitud).<br>
+        • <b>Límites:</b> Máximo un premio mayor por usuario cada 30 días.<br><br>
 
-        • <b>Suspensión Temporal:</b> Infracciones repetidas pueden resultar en suspensión de 7 a 30 días.<br><br>
+        <b>4.3 Entrega de Premios:</b><br>
+        • <b>Plazo:</b> Premios entregados dentro de 24-72 horas hábiles.<br>
+        • <b>Verificación:</b> Ganadores deben verificar identidad y validez del ID de Free Fire.<br>
+        • <b>Comunicación:</b> Contacto inicial a través de notificaciones in-app y métodos alternativos.<br>
+        • <b>Documentación:</b> Proceso de entrega documentado para transparencia.<br><br>
 
-        • <b>Ban Permanente:</b> Uso de trampas, fraude o comportamiento abusivo resulta en eliminación permanente sin previo aviso.<br><br>
+        <b>4.4 Limitaciones de Premios:</b><br>
+        • Premios son personales, intransferibles y no canjeables por dinero.<br>
+        • No somos responsables por problemas en la cuenta de Free Fire del ganador.<br>
+        • Premios sujetos a disponibilidad y términos del proveedor (Garena).<br>
+        • Ganadores pueden ser requeridos para fines promocionales (con consentimiento).<br><br>
 
-        • <b>Pérdida de Premios:</b> Usuarios sancionados pierden derecho a premios pendientes.<br><br>
+        <b>5. SISTEMA DE SANCIONES</b><br><br>
 
-        <b>5. LIMITACIONES DE RESPONSABILIDAD</b><br><br>
+        <b>5.1 Proceso Disciplinario:</b><br>
+        • <b>Investigación:</b> Todas las violaciones son investigadas antes de aplicar sanciones.<br>
+        • <b>Notificación:</b> Usuarios notificados sobre violaciones y sanciones (excepto bans de seguridad).<br>
+        • <b>Apelación:</b> Derecho a apelar decisiones dentro de 15 días de la notificación.<br><br>
 
-        • La aplicación se proporciona "tal como está" sin garantías.<br>
-        • No somos responsables de pérdidas de datos por fallos técnicos.<br>
-        • Los premios están sujetos a disponibilidad.<br>
-        • No garantizamos la disponibilidad 24/7 del servicio.<br><br>
+        <b>5.2 Tipos de Sanciones:</b><br>
+        • <b>Advertencia Formal:</b> Primera violación menor, registro permanente.<br>
+        • <b>Suspensión Temporal:</b> 7-30 días sin acceso a funciones principales.<br>
+        • <b>Pérdida de Premios:</b> Confiscación de tickets, pases y premios pendientes.<br>
+        • <b>Ban Permanente:</b> Eliminación permanente sin posibilidad de restablecimiento.<br><br>
+
+        <b>5.3 Violaciones Graves (Ban Inmediato):</b><br>
+        • Uso de software automatizado o hacks.<br>
+        • Fraude documentado en sorteos o sistema de puntos.<br>
+        • Múltiples cuentas con evidencia de abuso.<br>
+        • Amenazas o acoso hacia personal o usuarios.<br>
+        • Actividades ilegales documentadas.<br><br>
 
         <b>6. PROPIEDAD INTELECTUAL</b><br><br>
 
-        • Todo el contenido de la aplicación es propiedad de sus respectivos dueños.<br>
-        • No puedes copiar, reproducir o distribuir el contenido sin autorización.<br>
-        • Free Fire es marca registrada de Garena International.<br><br>
+        <b>6.1 Derechos de la Aplicación:</b><br>
+        • Todo el contenido, diseño, código y funcionalidad son propiedad de <b>Diamantes pro players Go</b> o sus licenciantes.<br>
+        • Protegido por leyes de derechos de autor, marcas comerciales y otros derechos de propiedad intelectual.<br>
+        • No se otorga ninguna licencia más allá del uso personal no comercial.<br><br>
 
-        <b>7. MODIFICACIONES</b><br><br>
+        <b>6.2 Marcas de Terceros:</b><br>
+        • <b>"Free Fire"</b> es marca registrada de Garena International I Private Limited.<br>
+        • <b>"Google"</b>, <b>"AdMob"</b>, <b>"Firebase"</b> son marcas de Google LLC.<br>
+        • No estamos afiliados oficialmente con Garena o Google.<br>
+        • Uso de marcas bajo principios de uso legítimo y referencia.<br><br>
 
-        • Nos reservamos el derecho de modificar estos términos en cualquier momento.<br>
-        • Los cambios importantes serán notificados a través de la aplicación.<br>
-        • El uso continuado implica aceptación de las modificaciones.<br><br>
+        <b>6.3 Contenido del Usuario:</b><br>
+        • Mantiene derechos sobre contenido original que envíe.<br>
+        • Nos otorga licencia mundial, libre de regalías para usar, mostrar y distribuir su contenido.<br>
+        • Responsable por asegurar que tiene derechos sobre contenido enviado.<br><br>
 
-        <b>8. TERMINACIÓN</b><br><br>
+        <b>7. LIMITACIONES DE RESPONSABILIDAD</b><br><br>
 
-        • Puedes dejar de usar la aplicación en cualquier momento.<br>
-        • Podemos terminar tu acceso por violación de estos términos.<br>
-        • Al terminar, pierdes acceso a todos los beneficios acumulados.<br><br>
+        <b>7.1 Descargo de Garantías:</b><br>
+        • EL SERVICIO SE PROPORCIONA "TAL COMO ESTÁ" SIN GARANTÍAS DE NINGÚN TIPO.<br>
+        • NO GARANTIZAMOS PRECISIÓN, COMPLETITUD O CONFIABILIDAD DEL CONTENIDO.<br>
+        • NO GARANTIZAMOS QUE EL SERVICIO SERÁ ININTERRUMPIDO O LIBRE DE ERRORES.<br>
+        • NO GARANTIZAMOS RESULTADOS ESPECÍFICOS DEL USO DE LA APLICACIÓN.<br><br>
 
-        <b>9. CONTACTO Y SOPORTE</b><br><br>
+        <b>7.2 Limitación de Daños:</b><br>
+        • EN NINGÚN CASO SEREMOS RESPONSABLES POR DAÑOS INDIRECTOS, INCIDENTALES, ESPECIALES O CONSECUENTES.<br>
+        • NUESTRA RESPONSABILIDAD TOTAL NO EXCEDERÁ EL VALOR DE LOS PREMIOS EN DISPUTA.<br>
+        • ESTAS LIMITACIONES SE APLICAN INDEPENDIENTEMENTE DE LA TEORÍA LEGAL DE RESPONSABILIDAD.<br><br>
 
-        Para reportar problemas, hacer consultas o solicitar soporte, utiliza los canales oficiales disponibles en la aplicación.<br><br>
+        <b>7.3 Responsabilidades del Usuario:</b><br>
+        • Uso a su propio riesgo y discreción.<br>
+        • Responsable por mantener seguridad de su dispositivo y cuenta.<br>
+        • Responsable por cumplir leyes locales aplicables.<br>
+        • Responsable por backup de cualquier información importante.<br><br>
 
-        <b>10. LEY APLICABLE</b><br><br>
+        <b>8. INDEMNIZACIÓN</b><br><br>
 
-        Estos términos se rigen por las leyes aplicables y cualquier disputa será resuelta mediante los mecanismos legales correspondientes.
+        Usted acepta indemnizar, defender y eximir de responsabilidad a <b>Diamantes pro players Go</b>, sus afiliados, directores, empleados y agentes de cualquier reclamo, demanda, pérdida, responsabilidad y gastos (incluyendo honorarios de abogados) que surjan de:<br><br>
+
+        • Su uso o mal uso de la aplicación.<br>
+        • Violación de estos términos.<br>
+        • Violación de derechos de terceros.<br>
+        • Cualquier contenido que envíe o comparta.<br>
+        • Sus actividades relacionadas con la aplicación.<br><br>
+
+        <b>9. PRIVACIDAD Y PROTECCIÓN DE DATOS</b><br><br>
+
+        • Su privacidad es importante para nosotros.<br>
+        • El manejo de información personal se rige por nuestra Política de Privacidad.<br>
+        • Al usar la aplicación, consiente al procesamiento de datos descrito en la Política de Privacidad.<br>
+        • Para ejercer derechos de privacidad, consulte la Política de Privacidad o contáctenos.<br><br>
+
+        <b>10. RESOLUCIÓN DE DISPUTAS</b><br><br>
+
+        <b>10.1 Resolución Amistosa:</b><br>
+        • Alentamos resolver disputas mediante comunicación directa.<br>
+        • Contacte nuestro equipo de soporte antes de iniciar acciones legales.<br>
+        • Mantenemos registro de todas las comunicaciones para referencia.<br><br>
+
+        <b>10.2 Arbitraje y Mediación:</b><br>
+        • Disputas que no puedan resolverse amistosamente serán sometidas a mediación.<br>
+        • Si la mediación falla, las disputas serán resueltas mediante arbitraje vinculante.<br>
+        • El arbitraje se realizará según reglas de la institución arbitral local aplicable.<br><br>
+
+        <b>10.3 Ley Aplicable:</b><br>
+        • Estos términos se rigen por las leyes del país donde está establecida la empresa.<br>
+        • Cualquier acción legal debe iniciarse dentro de un año del evento que la origina.<br>
+        • Los tribunales locales tendrán jurisdicción exclusiva sobre disputas no arbitrables.<br><br>
+
+        <b>11. TERMINACIÓN</b><br><br>
+
+        <b>11.1 Terminación por el Usuario:</b><br>
+        • Puede dejar de usar la aplicación en cualquier momento.<br>
+        • Puede solicitar eliminación de cuenta a través de configuraciones o soporte.<br>
+        • La terminación no afecta obligaciones ya contraídas.<br><br>
+
+        <b>11.2 Terminación por Nosotros:</b><br>
+        • Podemos terminar su acceso por violación de términos.<br>
+        • Podemos discontinuar el servicio con 90 días de aviso previo.<br>
+        • En caso de terminación por violación, pierde todos los beneficios acumulados.<br><br>
+
+        <b>11.3 Efectos de la Terminación:</b><br>
+        • Pérdida inmediata de acceso a la aplicación y servicios.<br>
+        • Eliminación de datos según nuestra Política de Privacidad.<br>
+        • Supervivencia de términos que por naturaleza deben continuar (indemnización, limitaciones de responsabilidad).<br><br>
+
+        <b>12. DISPOSICIONES GENERALES</b><br><br>
+
+        <b>12.1 Integridad del Acuerdo:</b><br>
+        • Estos términos y la Política de Privacidad constituyen el acuerdo completo entre las partes.<br>
+        • Reemplazan todos los acuerdos, comunicaciones y entendimientos previos.<br><br>
+
+        <b>12.2 Divisibilidad:</b><br>
+        • Si cualquier disposición es declarada inválida, el resto permanece en pleno vigor.<br>
+        • Las disposiciones inválidas serán reemplazadas por otras válidas de efecto similar.<br><br>
+
+        <b>12.3 Renuncia:</b><br>
+        • La falta de ejercer un derecho no constituye renuncia al mismo.<br>
+        • Las renuncias deben ser por escrito y firmadas por la parte que renuncia.<br><br>
+
+        <b>12.4 Cesión:</b><br>
+        • Usted no puede ceder sus derechos u obligaciones bajo estos términos.<br>
+        • Podemos ceder nuestros derechos a afiliados o en caso de transacciones comerciales.<br><br>
+
+        <b>13. INFORMACIÓN DE CONTACTO</b><br><br>
+
+        <b>Para consultas, soporte o asuntos legales:</b><br><br>
+
+        • <b>Soporte Técnico:</b> A través de la aplicación en sección "Ayuda"<br>
+        • <b>Consultas Legales:</b> legal@diamantesproplayersgo.com<br>
+        • <b>Privacidad:</b> privacidad@diamantesproplayersgo.com<br>
+        • <b>Reportar Abuso:</b> abuse@diamantesproplayersgo.com<br><br>
+
+        <b>Tiempo de respuesta:</b> Máximo 72 horas para consultas urgentes, 7 días hábiles para consultas generales.<br><br>
+
+        <b>---</b><br>
+        <b>Al usar Diamantes pro players Go, usted confirma que ha leído, entendido y acepta estar legalmente vinculado por estos Términos y Condiciones.</b>
         ]]>
     </string>
 </resources>

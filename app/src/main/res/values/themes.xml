@@ -21,4 +21,13 @@
         <item name="android:textAllCaps">true</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
+
+    <!-- 🎬 TEMA PARA SPLASH - SIN SPLASH BLANCO -->
+    <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- FONDO OSCURO INMEDIATO - elimina splash blanco -->
+        <item name="android:windowBackground">@color/primary_bg</item>
+        <item name="android:statusBarColor">@color/primary_bg</item>
+        <!-- Sin transiciones para arranque inmediato -->
+        <item name="android:windowDisablePreview">true</item>
+    </style>
 </resources>

@@ -173,7 +173,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/montserrat_regular"
-                android:text="Meta Semanal 🎯: 1,000 Tickets"
+                android:text="Meta Semanal 🎯: 1,000 Tickets = 1 Pase"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
 
@@ -204,10 +204,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/montserrat_bold"
-                android:text="GANA TICKETS"
+                android:text="🎰 RULETA DE LA SUERTE"
                 android:textColor="@color/accent_color"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="@font/montserrat_regular"
+                android:text="Gira y gana hasta 100 tickets por jugada"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:textAlignment="center" />
 
             <GridLayout
                 android:id="@+id/grid_container"
@@ -301,7 +311,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/montserrat_bold"
-                android:text="TOP 5 DE LA SEMANA"
+                android:text="⚡ TOP 5 DE LA SEMANA"
                 android:textColor="@color/green_accent"
                 android:textSize="16sp" />
 

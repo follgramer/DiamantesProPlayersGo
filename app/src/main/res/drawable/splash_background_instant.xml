@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Fondo del splash -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="135"
+                android:startColor="#0A0F14"
+                android:centerColor="#1a1f2e"
+                android:endColor="#0A0F14" />
+        </shape>
+    </item>
+
+    <!-- Diamante centrado que aparece INMEDIATAMENTE -->
+    <item android:gravity="center">
+        <shape android:shape="rectangle">
+            <size android:width="80dp" android:height="80dp"/>
+            <gradient
+                android:type="linear"
+                android:angle="45"
+                android:startColor="#FFD700"
+                android:centerColor="#FFA500"
+                android:endColor="#FFD700" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+</layer-list>

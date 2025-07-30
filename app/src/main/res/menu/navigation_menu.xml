@@ -15,15 +15,15 @@
         <item
             android:id="@+id/nav_tasks"
             android:icon="@drawable/ic_tasks"
-            android:title="Tareas" />
+            android:title="Misiones Diarias" />
         <item
             android:id="@+id/nav_leaderboard"
             android:icon="@drawable/ic_leaderboard"
-            android:title="Ranking" />
+            android:title="Tabla de Líderes" />
         <item
             android:id="@+id/nav_winners"
             android:icon="@drawable/ic_winners"
-            android:title="Ganadores" />
+            android:title="Salón de Campeones" />
     </group>
 
 </menu>

@@ -21,7 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/montserrat_bold"
-            android:text="COMPLETA TAREAS"
+            android:text="🎯 MISIONES DIARIAS"
             android:textColor="@color/purple_accent"
             android:textSize="18sp" />
 
@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:fontFamily="@font/montserrat_regular"
-            android:text="Gana tickets extra para tener más oportunidades."
+            android:text="Completa misiones y gana tickets extra para más oportunidades."
             android:textAlignment="center"
             android:textColor="@color/text_muted"
             android:textSize="14sp" />
@@ -38,40 +38,81 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/background_consent_notice"
             android:orientation="vertical"
-            android:padding="10dp">
+            android:padding="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:fontFamily="@font/montserrat_bold"
-                android:text="🎬 Videos Opcionales"
+                android:text="🎬 Video Recompensas"
                 android:textColor="@color/white"
                 android:textSize="16sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="@font/montserrat_regular"
-                android:text="Puedes ver videos publicitarios para ganar tickets adicionales. Solo se mostrarán videos con tu consentimiento explícito."
+                android:text="Ve videos publicitarios opcionales para ganar tickets adicionales. Solo se mostrarán con tu consentimiento explícito."
                 android:textAlignment="center"
                 android:textColor="#E0FFFFFF"
-                android:textSize="14sp" />
+                android:textSize="13sp"
+                android:lineSpacingExtra="2dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/montserrat_semibold"
+                android:text="💡 TIP: Cada video te da 20 tickets gratis"
+                android:textAlignment="center"
+                android:textColor="@color/gold_accent"
+                android:textSize="12sp"
+                android:layout_gravity="center_horizontal" />
         </LinearLayout>
 
         <Button
             android:id="@+id/task_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:backgroundTint="@color/purple_accent"
             android:fontFamily="@font/montserrat_bold"
-            android:text="📺 Ver un Video (+20 Tickets)"
-            android:textColor="@color/white" />
+            android:text="📺 Ver Video Recompensa (+20 Tickets)"
+            android:textColor="@color/white"
+            android:padding="12dp" />
+
+        <!-- Sección informativa adicional -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/background_container"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/montserrat_semibold"
+                android:text="📊 Progreso de Misiones"
+                android:textColor="@color/accent_color"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="@font/montserrat_regular"
+                android:text="• Videos vistos hoy: Ilimitados\n• Tickets ganados por video: 20\n• Tiempo estimado por video: 30 segundos"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp" />
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -83,7 +124,6 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
         app:adSize="BANNER"
-        app:adUnitId="ca-app-pub-3940256099942544/6300978111" /> <!-- ID de Banner de Prueba -->
+        app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
 
 </LinearLayout>
-    

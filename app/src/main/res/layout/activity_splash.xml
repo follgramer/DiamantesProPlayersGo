@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/splash_background">
+
+    <!-- Contenedor principal centrado -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Contenedor del diamante -->
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp">
+
+            <!-- Efecto de brillo de fondo -->
+            <View
+                android:id="@+id/diamondGlow"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/diamond_glow" />
+
+            <!-- Diamante principal -->
+            <View
+                android:id="@+id/diamond"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/diamond_shape"
+                android:rotation="45" />
+        </RelativeLayout>
+
+        <!-- Título principal -->
+        <TextView
+            android:id="@+id/appTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DIAMANTES PRO PLAYERS"
+            android:textColor="@android:color/white"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:alpha="0" />
+
+        <!-- Subtítulo -->
+        <TextView
+            android:id="@+id/appSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Club de Recompensas VIP"
+            android:textColor="@color/gold_accent"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="40dp"
+            android:gravity="center"
+            android:alpha="0" />
+
+        <!-- Contenedor de carga -->
+        <LinearLayout
+            android:id="@+id/loadingContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:alpha="0">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cargando tu experiencia..."
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:layout_marginBottom="10dp"
+                android:alpha="0.8" />
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="200dp"
+                android:layout_height="4dp"
+                android:progressDrawable="@drawable/progress_bar_gradient"
+                android:indeterminate="false"
+                android:max="100"
+                android:progress="0" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
