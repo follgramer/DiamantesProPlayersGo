@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -23,12 +24,11 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -78,28 +78,201 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         try {
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
 
-            Log.d("MAIN_SIMPLE", "🏠 MainActivity iniciada")
+            val componentsReady = intent.getBooleanExtra("COMPONENTS_READY", false)
+            val adsLoading = intent.getBooleanExtra("ADS_LOADING", false)
 
-            // Inicializar SessionManager básico
+            Log.d("MAIN_PROGRESSIVE", "🏠 MainActivity - Componentes: $componentsReady, Anuncios cargando: $adsLoading")
+
             SessionManager.init(this)
-
-            // Manejar intent de notificación
             handleNotificationIntent(intent)
 
-            // ✅ VERIFICAR CONSENTIMIENTO SIMPLE
-            checkConsentDirectly()
+            if (componentsReady) {
+                setupAppWithPreloadedComponents()
+                if (adsLoading) {
+                    monitorAdLoadingProgress()
+                }
+            } else {
+                checkConsentDirectly() // Fallback
+            }
 
         } catch (e: Exception) {
-            Log.e("MAIN_SIMPLE", "❌ Error en onCreate: ${e.message}")
-            // Si hay error, al menos mostrar la app básica
+            Log.e("MAIN_PROGRESSIVE", "❌ Error: ${e.message}")
             initializeBasicApp()
         }
     }
+
+    private fun setupAppWithPreloadedComponents() {
+        try {
+            Log.d("MAIN_PROGRESSIVE", "⚡ Configurando app con componentes precargados")
+
+            // UI inmediata
+            setupToolbarAndDrawer()
+            setupClickListeners()
+            setupRecyclerViews()
+            initializeGrid()
+            setupBackPressedHandler()
+            hideAllSections()
+            showSection(binding.sectionHome.root)
+
+            // Datos precargados
+            currentPlayerId = if (SplashActivity.preloadedPlayerId.isNotEmpty())
+                SplashActivity.preloadedPlayerId else null
+            currentSpins = SplashActivity.preloadedSpins
+
+            // UI con datos
+            if (currentPlayerId != null) {
+                binding.sectionHome.myPlayerId.text = currentPlayerId
+                binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#00A8FF"))
+            } else {
+                binding.sectionHome.myPlayerId.text = "Toca para configurar ✏️"
+                binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#CCCCCC"))
+            }
+
+            updateSpinCountUI()
+            updateUI(SplashActivity.preloadedTickets, SplashActivity.preloadedPasses)
+            arreglarColoresDeTextos()
+
+            // Firebase precargada
+            if (SplashActivity.preloadedDatabase != null && SplashActivity.preloadedAuth != null) {
+                database = SplashActivity.preloadedDatabase!!
+                auth = SplashActivity.preloadedAuth!!
+                Log.d("MAIN_PROGRESSIVE", "✅ Firebase conectada")
+            } else {
+                setupFirebase()
+            }
+
+            // AdMob básico (banners pueden cargar inmediatamente)
+            if (SplashActivity.isAdMobInitialized) {
+                loadBannerAds() // Solo banners por ahora
+                Log.d("MAIN_PROGRESSIVE", "✅ Banners cargados")
+            } else {
+                setupAdMob()
+                loadBannerAds()
+            }
+
+            // Consentimiento y welcome
+            if (SplashActivity.consentAccepted) {
+                if (!SplashActivity.welcomeShown) {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        checkAndShowWelcomeModalSimple()
+                    }, 200)
+                }
+            } else {
+                showConsentModalSimple()
+            }
+
+            // Background tasks
+            setupBackgroundTasks()
+
+            Log.d("MAIN_PROGRESSIVE", "✅ App lista - anuncios se cargan en background")
+
+        } catch (e: Exception) {
+            Log.e("MAIN_PROGRESSIVE", "Error: ${e.message}")
+            initializeBasicApp()
+        }
+    }
+
+    private fun monitorAdLoadingProgress() {
+        Thread {
+            try {
+                Log.d("MAIN_PROGRESSIVE", "📺 Monitoreando progreso de anuncios...")
+
+                var checkCount = 0
+                val maxChecks = 50 // 10 segundos máximo
+
+                while (checkCount < maxChecks) {
+                    val rewardedReady = SplashActivity.rewardedAdReady.get()
+                    val interstitialReady = SplashActivity.interstitialAdReady.get()
+
+                    if (rewardedReady && interstitialReady) {
+                        runOnUiThread {
+                            connectPreloadedAds()
+                        }
+                        Log.d("MAIN_PROGRESSIVE", "✅ Todos los anuncios listos")
+                        break
+                    } else if (rewardedReady && rewardedAd == null) { // Evita reconectar
+                        runOnUiThread {
+                            rewardedAd = SplashActivity.preloadedRewardedAd
+                            Log.d("MAIN_PROGRESSIVE", "✅ Rewarded Ad conectado")
+                        }
+                    } else if (interstitialReady && interstitialAd == null) { // Evita reconectar
+                        runOnUiThread {
+                            interstitialAd = SplashActivity.preloadedInterstitialAd
+                            Log.d("MAIN_PROGRESSIVE", "✅ Interstitial Ad conectado")
+                        }
+                    }
+
+                    Thread.sleep(200)
+                    checkCount++
+                }
+
+                if (checkCount >= maxChecks) {
+                    Log.w("MAIN_PROGRESSIVE", "⚠️ Timeout esperando anuncios, cargando manualmente")
+                    runOnUiThread {
+                        loadRemainingAds()
+                    }
+                }
+
+            } catch (e: Exception) {
+                Log.e("MAIN_PROGRESSIVE", "Error monitoreando anuncios: ${e.message}")
+            }
+        }.start()
+    }
+
+    private fun connectPreloadedAds() {
+        try {
+            rewardedAd = SplashActivity.preloadedRewardedAd
+            interstitialAd = SplashActivity.preloadedInterstitialAd
+            Log.d("MAIN_PROGRESSIVE", "✅ Anuncios precargados conectados")
+        } catch (e: Exception) {
+            Log.e("MAIN_PROGRESSIVE", "Error conectando ads: ${e.message}")
+            loadRemainingAds()
+        }
+    }
+
+    private fun loadRemainingAds() {
+        try {
+            if (rewardedAd == null) {
+                loadRewardedAd()
+            }
+            if (interstitialAd == null) {
+                loadInterstitialAd()
+            }
+            Log.d("MAIN_PROGRESSIVE", "🔄 Cargando anuncios faltantes")
+        } catch (e: Exception) {
+            Log.e("MAIN_PROGRESSIVE", "Error cargando ads faltantes: ${e.message}")
+        }
+    }
+
+    private fun setupBackgroundTasks() {
+        Thread {
+            try {
+                if (currentPlayerId != null) {
+                    createFirebaseSession(currentPlayerId!!)
+                    setupFCMToken(currentPlayerId!!)
+                    setupNotificationListener(currentPlayerId!!)
+                    checkForPrivateMessages(currentPlayerId!!)
+                    fetchPlayerData(currentPlayerId!!)
+                }
+
+                obtenerTop5Firebase()
+                fetchAllData()
+
+                runOnUiThread {
+                    startWeeklyCountdown()
+                    checkNotificationPermissions()
+                }
+
+            } catch (e: Exception) {
+                Log.e("MAIN_PROGRESSIVE", "Error en background tasks: ${e.message}")
+            }
+        }.start()
+    }
+
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -131,11 +304,14 @@ class MainActivity : AppCompatActivity() {
                 initializeBasicApp()
             } else {
                 Log.d("CONSENT_SIMPLE", "❌ Consentimiento no aceptado - mostrando modal")
+                // Se configura una UI mínima antes de pedir consentimiento
+                setupToolbarAndDrawer()
+                hideAllSections()
+                showSection(binding.sectionHome.root)
                 showConsentModalSimple()
             }
         } catch (e: Exception) {
             Log.e("CONSENT_SIMPLE", "❌ Error verificando consentimiento: ${e.message}")
-            // Si hay error, inicializar de todas formas
             initializeBasicApp()
         }
     }
@@ -152,7 +328,6 @@ class MainActivity : AppCompatActivity() {
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT
                 )
 
-                // Botón ACEPTAR
                 dialogView.findViewById<Button>(R.id.btnAceptarConsentimiento)?.setOnClickListener {
                     Log.d("CONSENT_SIMPLE", "✅ Usuario aceptó consentimiento")
                     val prefs = getSharedPreferences("DiamantesProPrefs", Context.MODE_PRIVATE)
@@ -161,16 +336,13 @@ class MainActivity : AppCompatActivity() {
                     initializeBasicApp()
                 }
 
-                // Botón RECHAZAR
                 dialogView.findViewById<Button>(R.id.btnRechazarConsentimiento)?.setOnClickListener {
                     Log.d("CONSENT_SIMPLE", "❌ Usuario rechazó consentimiento")
                     dialog.dismiss()
                     showMustAcceptDialog()
                 }
 
-                // Texto legal (opcional)
                 dialogView.findViewById<TextView>(R.id.textoLegalCompleto)?.setOnClickListener {
-                    // Solo mostrar un toast simple
                     android.widget.Toast.makeText(this, "Ver políticas en el menú de la app", android.widget.Toast.LENGTH_SHORT).show()
                 }
 
@@ -185,7 +357,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMustAcceptDialog() {
         try {
-            androidx.appcompat.app.AlertDialog.Builder(this)
+            AlertDialog.Builder(this)
                 .setTitle("Consentimiento Requerido")
                 .setMessage("La app necesita tu consentimiento para funcionar.")
                 .setCancelable(false)
@@ -205,11 +377,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- Lógica Principal de la Aplicación Simplificada ---
-
+    // --- Lógica Principal de la Aplicación (FALLBACK) ---
     private fun initializeBasicApp() {
         try {
-            Log.d("APP_FIX", "⚡ Inicializando app básica (corregida)...")
+            Log.d("APP_FIX", "⚡ Inicializando app básica (fallback)...")
 
             runOnUiThread {
                 // Setup de UI inmediato
@@ -218,19 +389,13 @@ class MainActivity : AppCompatActivity() {
                 setupRecyclerViews()
                 initializeGrid()
                 setupBackPressedHandler()
-
-                // Mostrar sección principal
                 hideAllSections()
                 showSection(binding.sectionHome.root)
 
-                // ✅ SOLO LEE LOS GIROS, NO LOS REGALA AQUÍ
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
                 this.currentSpins = SessionManager.getCurrentSpins(this@MainActivity)
                 updateSpinCountUI()
 
-                Log.d("APP_FIX", "Giros al iniciar (antes del welcome): ${this.currentSpins}")
-
-                // Configurar Player ID UI
                 if (playerId.isNotEmpty()) {
                     currentPlayerId = playerId
                     binding.sectionHome.myPlayerId.text = currentPlayerId
@@ -240,15 +405,11 @@ class MainActivity : AppCompatActivity() {
                     binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#CCCCCC"))
                 }
 
-                // Aplicar colores
                 arreglarColoresDeTextos()
-
                 Log.d("APP_FIX", "✅ App básica lista. Cargando componentes pesados...")
 
-                // Cargar componentes pesados en segundo plano
                 loadHeavyComponentsLater()
 
-                // Mostrar welcome modal si es necesario
                 Handler(Looper.getMainLooper()).postDelayed({
                     checkAndShowWelcomeModalSimple()
                 }, 500)
@@ -258,19 +419,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     private fun loadHeavyComponentsLater() {
         Thread {
             try {
                 Log.d("HEAVY_LOAD_FIX", "🔄 Cargando componentes pesados en background...")
 
-                // Inicialización de Firebase y AdMob (puede ser en UI thread, es rápido)
                 runOnUiThread {
                     setupFirebase()
                     setupAdMob()
                     loadAllAds()
                 }
 
-                // El resto de las tareas pesadas (lectura de datos)
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
                 if (playerId.isNotEmpty()) {
                     createFirebaseSession(playerId)
@@ -285,7 +445,6 @@ class MainActivity : AppCompatActivity() {
                     fetchAllData()
                 }
 
-                // Tareas finales que no son críticas para el inicio
                 runOnUiThread {
                     startWeeklyCountdown()
                     signInAnonymously()
@@ -299,17 +458,12 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    // --- Lógica de Welcome Modal Simplificada ---
-
     private fun checkAndShowWelcomeModalSimple() {
         try {
             val prefs = getSharedPreferences("DiamantesProPrefs", Context.MODE_PRIVATE)
             val hasShownWelcome = prefs.getBoolean("HAS_SHOWN_WELCOME", false)
 
-            Log.d("WELCOME_SIMPLE", "Welcome mostrado antes: $hasShownWelcome")
-
             if (!hasShownWelcome) {
-                Log.d("WELCOME_SIMPLE", "Mostrando welcome modal")
                 showWelcomeModalSimple()
             }
         } catch (e: Exception) {
@@ -328,39 +482,26 @@ class MainActivity : AppCompatActivity() {
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.parseColor("#CC000000")))
+                window.setBackgroundDrawable(ColorDrawable(Color.parseColor("#CC000000")))
                 window.setDimAmount(0.0f)
             }
 
-            // Botón empezar
             dialogView.findViewById<Button>(R.id.btnStartPlaying)?.setOnClickListener {
-                Log.d("WELCOME_FIX", "Botón 'Empezar a Jugar' presionado")
-
                 val prefs = getSharedPreferences("DiamantesProPrefs", Context.MODE_PRIVATE)
                 prefs.edit().putBoolean("HAS_SHOWN_WELCOME", true).apply()
-
                 dialog.dismiss()
-
-                // ✅ CORREGIDO: Usamos setCurrentSpins para ESTABLECER los giros a 10, no para AÑADIR.
-                // Esta es ahora la única fuente de los 10 giros iniciales.
                 SessionManager.setCurrentSpins(this, 10)
                 this.currentSpins = SessionManager.getCurrentSpins(this)
                 updateSpinCountUI()
-
-                Log.d("WELCOME_FIX", "✅ 10 giros de bienvenida establecidos. Total: ${this.currentSpins}")
             }
 
-            // Botón cerrar
             dialogView.findViewById<ImageView>(R.id.btnCloseWelcome)?.setOnClickListener {
-                Log.d("WELCOME_FIX", "Botón cerrar presionado")
-                // ✅ Al cerrar, también se marcan los giros iniciales para evitar el bug si vuelve a abrir.
                 val prefs = getSharedPreferences("DiamantesProPrefs", Context.MODE_PRIVATE)
                 if(!prefs.getBoolean("HAS_SHOWN_WELCOME", false)) {
                     SessionManager.setCurrentSpins(this, 10)
                     this.currentSpins = SessionManager.getCurrentSpins(this)
                     updateSpinCountUI()
                     prefs.edit().putBoolean("HAS_SHOWN_WELCOME", true).apply()
-                    Log.d("WELCOME_FIX", "✅ 10 giros establecidos al cerrar modal por primera vez.")
                 }
                 dialog.dismiss()
             }
@@ -382,32 +523,19 @@ class MainActivity : AppCompatActivity() {
                 return@addOnCompleteListener
             }
             val token = task.result
-            Log.d("FCM_TOKEN", "Token FCM obtenido: $token")
             saveTokenToDatabase(playerId, token)
         }
     }
 
     private fun saveTokenToDatabase(playerId: String, token: String) {
         try {
-            if (!::database.isInitialized) {
-                Log.w("FCM_TOKEN", "Database no inicializada, no se puede guardar token")
-                return
-            }
-
+            if (!::database.isInitialized) return
             val tokenData = mapOf(
                 "token" to token,
                 "timestamp" to ServerValue.TIMESTAMP,
                 "deviceInfo" to Build.MODEL
             )
-
-            database.child("playerTokens").child(playerId)
-                .setValue(tokenData)
-                .addOnSuccessListener {
-                    Log.d("FCM_TOKEN", "Token guardado exitosamente para $playerId")
-                }
-                .addOnFailureListener { error ->
-                    Log.e("FCM_TOKEN", "Error guardando token: ${error.message}")
-                }
+            database.child("playerTokens").child(playerId).setValue(tokenData)
         } catch (e: Exception) {
             Log.e("FCM_TOKEN", "Error en saveTokenToDatabase: ${e.message}")
         }
@@ -453,29 +581,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun createFirebaseSession(playerId: String) {
         try {
-            if (!::database.isInitialized) {
-                Log.w("SESSION_FIREBASE", "Database no inicializada, no se puede crear sesión")
-                return
-            }
-
+            if (!::database.isInitialized) return
             val sessionId = SessionManager.getSessionId(this)
-            Log.d("SESSION_FIREBASE", "Creando sesión para Player: $playerId, Session: $sessionId")
-
             val sessionData = mapOf(
                 "timestamp" to ServerValue.TIMESTAMP,
                 "active" to true,
                 "deviceInfo" to Build.MODEL,
                 "appVersion" to "1.0"
             )
-
             database.child("sessions").child(playerId).child(sessionId)
                 .setValue(sessionData)
                 .addOnSuccessListener {
-                    Log.d("SESSION_FIREBASE", "Sesión creada exitosamente")
                     verificarLimiteDeSesiones(playerId)
-                }
-                .addOnFailureListener { error ->
-                    Log.e("SESSION_FIREBASE", "Error creando sesión: ${error.message}")
                 }
         } catch (e: Exception) {
             Log.e("SESSION_FIREBASE", "Error en createFirebaseSession: ${e.message}")
@@ -484,30 +601,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun verificarLimiteDeSesiones(playerId: String) {
         try {
-            if (!::database.isInitialized) {
-                Log.w("SESSION_LIMIT", "Database no inicializada, no se puede verificar límite")
-                return
-            }
-
+            if (!::database.isInitialized) return
             val sessionsRef = database.child("sessions").child(playerId)
-
             sessionsRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     try {
                         var sesionesActivas = 0
                         val currentTime = System.currentTimeMillis()
-
                         for (sesion in snapshot.children) {
                             val active = sesion.child("active").getValue(Boolean::class.java) ?: false
                             val timestamp = sesion.child("timestamp").getValue(Long::class.java) ?: 0L
-
                             if (active && (currentTime - timestamp) < 15 * 60 * 1000) {
                                 sesionesActivas++
                             }
                         }
-
-                        Log.d("SESSION_LIMIT", "Sesiones activas para $playerId: $sesionesActivas")
-
                         if (sesionesActivas > 3) {
                             mostrarModalExcesoSesiones(sesionesActivas)
                         }
@@ -515,7 +622,6 @@ class MainActivity : AppCompatActivity() {
                         Log.e("SESSION_LIMIT", "Error procesando sesiones: ${e.message}")
                     }
                 }
-
                 override fun onCancelled(error: DatabaseError) {
                     Log.e("SESSION_LIMIT", "Error verificando sesiones: ${error.message}")
                 }
@@ -526,7 +632,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mostrarModalExcesoSesiones(cantidad: Int) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle("Demasiadas sesiones")
             .setMessage("Tu ID está siendo usado en $cantidad dispositivos al mismo tiempo.\n\n" +
                     "Solo se permiten máximo 3 dispositivos simultáneos.\n\n" +
@@ -542,7 +648,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun mostrarInfoSobreSesiones() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle("¿Qué son las sesiones?")
             .setMessage("Una sesión se crea cuando:\n\n" +
                     "• Instalas la app en un nuevo dispositivo\n" +
@@ -560,84 +666,67 @@ class MainActivity : AppCompatActivity() {
 
     private fun obtenerTop5Firebase() {
         try {
-            if (!::database.isInitialized) {
-                Log.w("TOP5_FIREBASE", "Database no inicializada, inicializando ahora...")
-                setupFirebase() // Forzar inicialización si no existe
-            }
-
-            Log.d("TOP5_FIREBASE", "=== OBTENIENDO LEADERBOARD COMPLETO ===")
-
-            database.child("players")
-                .addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        try {
-                            val jugadores = mutableListOf<Player>()
-                            for (playerSnapshot in snapshot.children) {
-                                try {
-                                    val playerId = playerSnapshot.key ?: continue
-                                    val tickets = playerSnapshot.child("tickets").getValue(Long::class.java) ?: 0L
-                                    val passes = playerSnapshot.child("passes").getValue(Long::class.java) ?: 0L
-                                    if (playerId.matches(Regex("\\d+")) && playerId.length >= 5) {
-                                        jugadores.add(Player(playerId, tickets, passes))
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("TOP5_FIREBASE", "Error procesando jugador: ${e.message}")
+            if (!::database.isInitialized) setupFirebase()
+            database.child("players").addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    try {
+                        val jugadores = mutableListOf<Player>()
+                        for (playerSnapshot in snapshot.children) {
+                            try {
+                                val playerId = playerSnapshot.key ?: continue
+                                val tickets = playerSnapshot.child("tickets").getValue(Long::class.java) ?: 0L
+                                val passes = playerSnapshot.child("passes").getValue(Long::class.java) ?: 0L
+                                if (playerId.matches(Regex("\\d+")) && playerId.length >= 5) {
+                                    jugadores.add(Player(playerId, tickets, passes))
                                 }
+                            } catch (e: Exception) {
+                                Log.e("TOP5_FIREBASE", "Error procesando jugador: ${e.message}")
                             }
-
-                            val jugadoresOrdenados = jugadores.sortedWith(
-                                compareByDescending<Player> { it.passes }.thenByDescending { it.tickets }
-                            )
-
-                            runOnUiThread {
-                                try {
-                                    // ✅ ASEGURAR QUE EL RECYCLERVIEW EXISTE
-                                    if (::binding.isInitialized) {
-                                        binding.sectionLeaderboard.leaderboardRecyclerView.adapter = LeaderboardAdapter(jugadoresOrdenados)
-
-                                        if (jugadoresOrdenados.isNotEmpty()) {
-                                            val top5 = jugadoresOrdenados.take(5)
-                                            val adapter = MiniLeaderboardAdapter(top5, currentPlayerId)
-                                            binding.sectionHome.miniLeaderboardList.adapter = adapter
-                                            binding.sectionHome.miniLeaderboardList.visibility = View.VISIBLE
-
-                                            Log.d("TOP5_FIREBASE", "✅ Top 5 mostrado correctamente con ${top5.size} jugadores")
-                                        } else {
-                                            binding.sectionHome.miniLeaderboardList.visibility = View.GONE
-                                            Log.w("TOP5_FIREBASE", "⚠️ No hay jugadores para mostrar en top 5")
-                                        }
-
-                                        // Mi ranking
-                                        val myRank = jugadoresOrdenados.indexOfFirst { it.playerId == currentPlayerId }
-                                        val myRankLayout = binding.sectionHome.myRankStatus
-                                        if (myRank != -1) {
-                                            myRankLayout.root.visibility = View.VISIBLE
-                                            val myPlayerData = jugadoresOrdenados[myRank]
-                                            myRankLayout.rank.text = "#${myRank + 1}"
-                                            myRankLayout.playerId.text = "Tú"
-                                            myRankLayout.passes.text = "${myPlayerData.passes} Pases"
-                                        } else {
-                                            myRankLayout.root.visibility = View.GONE
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("TOP5_FIREBASE", "Error actualizando UI del top 5: ${e.message}")
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("TOP5_FIREBASE", "Error general en onDataChange: ${e.message}")
                         }
+                        val jugadoresOrdenados = jugadores.sortedWith(
+                            compareByDescending<Player> { it.passes }.thenByDescending { it.tickets }
+                        )
+                        runOnUiThread {
+                            try {
+                                if (::binding.isInitialized) {
+                                    binding.sectionLeaderboard.leaderboardRecyclerView.adapter = LeaderboardAdapter(jugadoresOrdenados)
+                                    if (jugadoresOrdenados.isNotEmpty()) {
+                                        val top5 = jugadoresOrdenados.take(5)
+                                        binding.sectionHome.miniLeaderboardList.adapter = MiniLeaderboardAdapter(top5, currentPlayerId)
+                                        binding.sectionHome.miniLeaderboardList.visibility = View.VISIBLE
+                                    } else {
+                                        binding.sectionHome.miniLeaderboardList.visibility = View.GONE
+                                    }
+                                    val myRank = jugadoresOrdenados.indexOfFirst { it.playerId == currentPlayerId }
+                                    val myRankLayout = binding.sectionHome.myRankStatus
+                                    if (myRank != -1) {
+                                        myRankLayout.root.visibility = View.VISIBLE
+                                        val myPlayerData = jugadoresOrdenados[myRank]
+                                        myRankLayout.rank.text = "#${myRank + 1}"
+                                        myRankLayout.playerId.text = "Tú"
+                                        myRankLayout.passes.text = "${myPlayerData.passes} Pases"
+                                    } else {
+                                        myRankLayout.root.visibility = View.GONE
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e("TOP5_FIREBASE", "Error actualizando UI del top 5: ${e.message}")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("TOP5_FIREBASE", "Error general en onDataChange: ${e.message}")
                     }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        Log.e("TOP5_FIREBASE", "❌ ERROR Firebase: ${error.message}")
-                    }
-                })
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("TOP5_FIREBASE", "❌ ERROR Firebase: ${error.message}")
+                }
+            })
         } catch (e: Exception) {
             Log.e("TOP5_FIREBASE", "Error general obteniendo top5: ${e.message}")
         }
     }
 
+    // ========== FUNCIÓN CORREGIDA ==========
     private fun setupToolbarAndDrawer() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -645,24 +734,58 @@ class MainActivity : AppCompatActivity() {
         binding.drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
         binding.navView.setNavigationItemSelectedListener { handleNavigation(it) }
+
+        // ✅ AÑADIR: Configurar eventos click para opciones legales
+        setupLegalOptionsClickListeners()
+    }
+
+    // ✅ NUEVA FUNCIÓN: Configurar clicks para las opciones legales
+    private fun setupLegalOptionsClickListeners() {
+        try {
+            // Buscar los TextViews de las opciones legales en el drawer
+            val drawerLayout = binding.drawerLayout
+            val navPrivacy = drawerLayout.findViewById<TextView>(R.id.nav_privacy)
+            val navTerms = drawerLayout.findViewById<TextView>(R.id.nav_terms)
+
+            // Configurar click para Políticas de Privacidad
+            navPrivacy?.setOnClickListener {
+                Log.d("LEGAL_CLICK", "Click en Políticas de Privacidad")
+                binding.drawerLayout.closeDrawer(GravityCompat.START)
+
+                // Pequeño delay para que se cierre el drawer suavemente
+                Handler(Looper.getMainLooper()).postDelayed({
+                    showLegalModal("Política de Privacidad", getString(R.string.privacy_policy_content))
+                }, 250)
+            }
+
+            // Configurar click para Términos y Condiciones
+            navTerms?.setOnClickListener {
+                Log.d("LEGAL_CLICK", "Click en Términos y Condiciones")
+                binding.drawerLayout.closeDrawer(GravityCompat.START)
+
+                // Pequeño delay para que se cierre el drawer suavemente
+                Handler(Looper.getMainLooper()).postDelayed({
+                    showLegalModal("Términos y Condiciones", getString(R.string.terms_content))
+                }, 250)
+            }
+
+            if (navPrivacy != null && navTerms != null) {
+                Log.d("LEGAL_SETUP", "✅ Eventos legales configurados correctamente")
+            } else {
+                Log.e("LEGAL_SETUP", "❌ No se encontraron los TextViews legales")
+            }
+
+        } catch (e: Exception) {
+            Log.e("LEGAL_SETUP", "❌ Error configurando opciones legales: ${e.message}")
+        }
     }
 
     private fun setupFirebase() {
         try {
-            Log.d("FIREBASE_SETUP", "Inicializando Firebase Database")
             database = FirebaseDatabase.getInstance("https://diamantes-pro-players-go-f3510-default-rtdb.firebaseio.com/").reference
             auth = Firebase.auth
-            Log.d("FIREBASE_SETUP", "✅ Firebase Database inicializada correctamente")
         } catch (e: Exception) {
             Log.e("FIREBASE_SETUP", "❌ Error inicializando Firebase: ${e.message}")
-            // En caso de error, crear una referencia fallback
-            try {
-                database = FirebaseDatabase.getInstance().reference
-                auth = Firebase.auth
-                Log.d("FIREBASE_SETUP", "✅ Firebase Database inicializada con instancia por defecto")
-            } catch (fallbackError: Exception) {
-                Log.e("FIREBASE_SETUP", "❌ Error crítico inicializando Firebase: ${fallbackError.message}")
-            }
         }
     }
 
@@ -714,7 +837,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showExitConfirmationDialog() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle("Salir de la aplicación")
             .setMessage("¿Estás seguro de que quieres cerrar la aplicación?")
             .setCancelable(true)
@@ -726,6 +849,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    // ========== FUNCIÓN CORREGIDA ==========
     private fun handleNavigation(menuItem: MenuItem): Boolean {
         hideAllSections()
         if (menuItem.groupId == R.id.group_main) {
@@ -736,8 +860,6 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_tasks -> showInterstitialAd { showSection(binding.sectionTasks.root) }
             R.id.nav_leaderboard -> showInterstitialAd { showSection(binding.sectionLeaderboard.root) }
             R.id.nav_winners -> showInterstitialAd { showSection(binding.sectionWinners.root) }
-            R.id.nav_privacy -> showLegalModal("Política de Privacidad", getString(R.string.privacy_policy_content))
-            R.id.nav_terms -> showLegalModal("Términos y Condiciones", getString(R.string.terms_content))
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
@@ -756,25 +878,84 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showLegalModal(title: String, content: String) {
-        val dialog = android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-        val dialogView = layoutInflater.inflate(R.layout.dialog_legal, null)
-        dialog.setContentView(dialogView)
-        val titleView = dialogView.findViewById<TextView>(R.id.dialog_title)
-        val contentView = dialogView.findViewById<TextView>(R.id.dialog_content)
-        val closeButton = dialogView.findViewById<ImageView>(R.id.btn_close)
-        val understoodButton = dialogView.findViewById<Button>(R.id.btn_understood)
-        titleView.text = title
-        contentView.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            android.text.Html.fromHtml(content, android.text.Html.FROM_HTML_MODE_COMPACT)
-        } else {
-            @Suppress("DEPRECATION")
-            android.text.Html.fromHtml(content)
+        try {
+            val dialog = android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+            val dialogView = layoutInflater.inflate(R.layout.dialog_legal, null)
+            dialog.setContentView(dialogView)
+
+            // ✅ USAR LOS IDs CORRECTOS DE TU LAYOUT
+            val titleView = dialogView.findViewById<TextView>(R.id.dialog_title)
+            val contentView = dialogView.findViewById<TextView>(R.id.dialog_content)
+            val closeButton = dialogView.findViewById<ImageView>(R.id.btn_close)
+            val understoodButton = dialogView.findViewById<Button>(R.id.btn_understood)
+
+            // ✅ Verificar que los elementos existen
+            if (titleView == null || contentView == null || closeButton == null || understoodButton == null) {
+                Log.e("LEGAL_MODAL", "❌ Error: No se encontraron todos los elementos del layout")
+                showFallbackDialog(title)
+                return
+            }
+
+            // ✅ Configurar contenido
+            titleView.text = title
+            contentView.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                android.text.Html.fromHtml(content, android.text.Html.FROM_HTML_MODE_COMPACT)
+            } else {
+                @Suppress("DEPRECATION")
+                android.text.Html.fromHtml(content)
+            }
+
+            // ✅ Eventos click
+            closeButton.setOnClickListener {
+                Log.d("LEGAL_MODAL", "Cerrando modal con X")
+                dialog.dismiss()
+            }
+
+            understoodButton.setOnClickListener {
+                Log.d("LEGAL_MODAL", "Botón entendido presionado")
+                dialog.dismiss()
+            }
+
+            // ✅ Configurar ventana del modal
+            dialog.window?.let { window ->
+                window.setLayout(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                // Hacer que el fondo sea semi-transparente
+                window.setBackgroundDrawable(
+                    ColorDrawable(Color.parseColor("#B0000000"))
+                )
+            }
+
+            dialog.setCancelable(true)
+            dialog.setOnCancelListener {
+                Log.d("LEGAL_MODAL", "Modal cancelado")
+            }
+
+            dialog.show()
+
+            Log.d("LEGAL_MODAL", "✅ Modal legal mostrado correctamente: $title")
+
+        } catch (e: Exception) {
+            Log.e("LEGAL_MODAL", "❌ Error mostrando modal: ${e.message}")
+            showFallbackDialog(title)
         }
-        closeButton.setOnClickListener { dialog.dismiss() }
-        understoodButton.setOnClickListener { dialog.dismiss() }
-        dialog.setCancelable(true)
-        dialog.show()
     }
+
+    // ✅ Función auxiliar para fallback
+    private fun showFallbackDialog(title: String) {
+        try {
+            AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage("Consulta el contenido completo en la configuración de la app")
+                .setPositiveButton("OK", null)
+                .show()
+        } catch (e: Exception) {
+            Log.e("LEGAL_MODAL", "❌ Error en fallback dialog: ${e.message}")
+        }
+    }
+    // ========== FIN DE LAS FUNCIONES CORREGIDAS ==========
 
     private fun loadBannerAds() {
         val adRequest = AdRequest.Builder().build()
@@ -793,8 +974,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestSpinsByWatchingAd() {
         showRewardedAd {
-            val amount = 10
-            SessionManager.addSpins(this, amount)
+            SessionManager.addSpins(this, 10)
             currentSpins = SessionManager.getCurrentSpins(this)
             updateSpinCountUI()
         }
@@ -802,8 +982,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestTicketsByWatchingAd() {
         showRewardedAd {
-            val amount = 20
-            addTicketsToPlayer(amount)
+            addTicketsToPlayer(20)
         }
     }
 
@@ -932,20 +1111,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateSpinCountUI() {
         try {
-            // ✅ OBTENER GIROS DIRECTAMENTE DE SessionManager
             val realSpins = SessionManager.getCurrentSpins(this)
-            this.currentSpins = realSpins // Sincronizar variable global
-
+            this.currentSpins = realSpins
             binding.sectionHome.spinsAvailable.text = realSpins.toString()
             binding.sectionHome.spinsAvailable.setTextColor(Color.parseColor("#FFD700"))
             binding.sectionHome.getSpinsButton.visibility = if (realSpins <= 0) View.VISIBLE else View.GONE
-
             if (realSpins <= 0) {
                 binding.sectionHome.getSpinsButton.setTextColor(Color.WHITE)
             }
-
-            Log.d("SPIN_UI", "✅ UI actualizada: $realSpins giros disponibles")
-
         } catch (e: Exception) {
             Log.e("SPIN_UI", "❌ Error actualizando UI de giros: ${e.message}")
         }
@@ -1035,7 +1208,7 @@ class MainActivity : AppCompatActivity() {
                 val newPlayerId = text.toString()
                 if (newPlayerId.length >= 5 && newPlayerId.matches(Regex("\\d+"))) {
                     if (currentPlayerId != null && currentPlayerId!!.isNotEmpty()) {
-                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                        AlertDialog.Builder(this@MainActivity)
                             .setTitle("Confirmar cambio de ID")
                             .setMessage("¿Estás seguro de cambiar el ID de jugador de $currentPlayerId a $newPlayerId?")
                             .setPositiveButton("Sí") { _, _ ->
@@ -1066,25 +1239,17 @@ class MainActivity : AppCompatActivity() {
             fetchPlayerData(playerId)
             obtenerTop5Firebase()
             updateUI(0, 0)
-
             val storedPlayerId = SessionManager.getPlayerId(this)
             if (storedPlayerId.isEmpty() || storedPlayerId != playerId) {
-                // ✅ SOLO resetear si realmente cambió el jugador
-                Log.d("LOAD_USER", "Player ID cambió, reseteando giros a 10")
                 SessionManager.resetSpinsForNewPlayer(this)
                 this.currentSpins = 10
             } else {
-                // ✅ MANTENER giros existentes
                 this.currentSpins = SessionManager.getCurrentSpins(this)
-                Log.d("LOAD_USER", "Mismo Player ID, manteniendo giros: ${this.currentSpins}")
             }
-
             updateSpinCountUI()
-
             checkForPrivateMessages(playerId)
             setupFCMToken(playerId)
             setupNotificationListener(playerId)
-
         } catch (e: Exception) {
             Log.e("LOAD_USER", "❌ Error cargando datos de usuario: ${e.message}")
         }
@@ -1093,11 +1258,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         try {
-            // ✅ SOLO verificar mensajes si database está inicializada
             if (::database.isInitialized && currentPlayerId != null) {
                 checkForPrivateMessages(currentPlayerId!!)
-            } else {
-                Log.d("RESUME_FIX", "Database no inicializada o no hay player ID, saltando checkForPrivateMessages")
             }
         } catch (e: Exception) {
             Log.e("RESUME_FIX", "Error en onResume: ${e.message}")
@@ -1107,17 +1269,7 @@ class MainActivity : AppCompatActivity() {
     @Suppress("UNCHECKED_CAST")
     private fun checkForPrivateMessages(playerId: String) {
         try {
-            // ✅ VERIFICAR que database esté inicializada
-            if (!::database.isInitialized) {
-                Log.w("PRIVATE_MESSAGES", "Database no inicializada, no se pueden verificar mensajes privados")
-                return
-            }
-
-            if (playerId.isEmpty()) {
-                Log.w("PRIVATE_MESSAGES", "Player ID vacío, no se pueden verificar mensajes")
-                return
-            }
-
+            if (!::database.isInitialized || playerId.isEmpty()) return
             val messageRef = database.child("privateMessages").child(playerId)
             messageRef.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -1126,21 +1278,15 @@ class MainActivity : AppCompatActivity() {
                         if (messageData != null) {
                             val type = messageData["type"] as? String
                             val message = messageData["message"] as? String
-
-                            Log.d("PRIVATE_MESSAGE", "Mensaje recibido - Tipo: $type, Mensaje: $message")
                             when (type) {
-                                "win", "loss" -> {
-                                    Log.d("PRIVATE_MESSAGE", "Mensaje de sorteo ignorado, será procesado por notificationQueue")
-                                }
+                                "win", "loss" -> { /* Ignorado, se maneja por notificationQueue */ }
                                 else -> showGeneralModal("Notificación", message ?: "Tienes un mensaje nuevo.")
                             }
                             messageRef.removeValue()
                         }
                     }
                 }
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("PRIVATE_MESSAGE", "Error escuchando mensajes: ${error.message}")
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
         } catch (e: Exception) {
             Log.e("PRIVATE_MESSAGES", "Error verificando mensajes privados: ${e.message}")
@@ -1149,11 +1295,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchAllData() {
         try {
-            if (!::database.isInitialized) {
-                Log.w("FETCH_DATA", "Database no inicializada, no se pueden obtener datos")
-                return
-            }
-
+            if (!::database.isInitialized) return
             database.child("winners").orderByChild("timestamp").limitToLast(10)
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
@@ -1161,7 +1303,6 @@ class MainActivity : AppCompatActivity() {
                             val winners = snapshot.children.mapNotNull {
                                 it.getValue(Winner::class.java)
                             }.sortedByDescending { it.timestamp }
-
                             runOnUiThread {
                                 binding.sectionWinners.winnersRecyclerView.adapter = WinnersAdapter(winners)
                             }
@@ -1169,10 +1310,7 @@ class MainActivity : AppCompatActivity() {
                             Log.e("FETCH_DATA", "Error procesando winners: ${e.message}")
                         }
                     }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        Log.e("FETCH_DATA", "Error obteniendo winners: ${error.message}")
-                    }
+                    override fun onCancelled(error: DatabaseError) {}
                 })
         } catch (e: Exception) {
             Log.e("FETCH_DATA", "Error en fetchAllData: ${e.message}")
@@ -1181,11 +1319,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchPlayerData(playerId: String) {
         try {
-            if (!::database.isInitialized) {
-                Log.w("FETCH_PLAYER", "Database no inicializada, no se pueden obtener datos del jugador")
-                return
-            }
-
+            if (!::database.isInitialized) return
             val playerRef = database.child("players").child(playerId)
             playerRef.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -1199,9 +1333,7 @@ class MainActivity : AppCompatActivity() {
                         updateUI(0, 0)
                     }
                 }
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("PLAYER_DATA", "Error: ${error.message}")
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
         } catch (e: Exception) {
             Log.e("FETCH_PLAYER", "Error obteniendo datos del jugador: ${e.message}")
@@ -1210,27 +1342,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun addTicketsToPlayer(amount: Int) {
         try {
-            if (currentPlayerId == null) {
-                Log.w("ADD_TICKETS", "No hay player ID configurado")
-                return
-            }
-
-            if (!::database.isInitialized) {
-                Log.w("ADD_TICKETS", "Database no inicializada, no se pueden añadir tickets")
-                return
-            }
-
+            if (currentPlayerId == null || !::database.isInitialized) return
             val playerRef = database.child("players").child(currentPlayerId!!)
             playerRef.runTransaction(object : Transaction.Handler {
                 override fun doTransaction(currentData: MutableData): Transaction.Result {
                     val currentTickets = currentData.child("tickets").getValue(Long::class.java) ?: 0L
-                    val newTickets = currentTickets + amount
-                    val newPasses = newTickets / 1000
-                    currentData.child("tickets").value = newTickets
-                    currentData.child("passes").value = newPasses
+                    val currentPasses = currentData.child("passes").getValue(Long::class.java) ?: 0L
+
+                    // Primero, calculamos el total "virtual" de tickets que tendría el jugador
+                    val cumulativeTickets = (currentPasses * 1000) + currentTickets + amount
+
+                    // ✅ CORRECCIÓN: Calcular pases y tickets restantes a partir del total virtual
+                    val totalPasses = cumulativeTickets / 1000
+                    val remainingTickets = cumulativeTickets % 1000  // 🔧 Esto calcula el residuo
+
+                    currentData.child("tickets").value = remainingTickets  // ✅ Guarda solo los tickets restantes
+                    currentData.child("passes").value = totalPasses       // ✅ Guarda el total de pases actualizado
                     currentData.child("lastUpdate").value = ServerValue.TIMESTAMP
+
+                    Log.d("TICKETS_FIX", "Total virtual: $cumulativeTickets → Pases: $totalPasses, Tickets restantes: $remainingTickets")
+
                     return Transaction.success(currentData)
                 }
+
                 override fun onComplete(error: DatabaseError?, committed: Boolean, currentData: DataSnapshot?) {
                     if (committed) {
                         obtenerTop5Firebase()
@@ -1241,6 +1375,7 @@ class MainActivity : AppCompatActivity() {
             Log.e("ADD_TICKETS", "Error añadiendo tickets: ${e.message}")
         }
     }
+
 
     private fun updateUI(tickets: Long, passes: Long) {
         binding.sectionHome.myTickets.text = tickets.toString()
@@ -1259,18 +1394,8 @@ class MainActivity : AppCompatActivity() {
         try {
             val playerId = SessionManager.getPlayerId(this)
             val sessionId = SessionManager.getSessionId(this)
-
             if (playerId.isNotEmpty() && sessionId.isNotEmpty() && ::database.isInitialized) {
-                database.child("sessions").child(playerId).child(sessionId).child("active")
-                    .setValue(false)
-                    .addOnSuccessListener {
-                        Log.d("SESSION_INACTIVE", "Sesión marcada como inactiva exitosamente")
-                    }
-                    .addOnFailureListener { error ->
-                        Log.e("SESSION_INACTIVE", "Error marcando sesión como inactiva: ${error.message}")
-                    }
-            } else {
-                Log.w("SESSION_INACTIVE", "No se pudo marcar sesión como inactiva - datos faltantes o database no inicializada")
+                database.child("sessions").child(playerId).child(sessionId).child("active").setValue(false)
             }
         } catch (e: Exception) {
             Log.e("SESSION_INACTIVE", "Error en marcarSesionInactiva: ${e.message}")
@@ -1279,27 +1404,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNotificationListener(playerId: String) {
         try {
-            if (!::database.isInitialized) {
-                Log.w("NOTIFICATION_SETUP", "Database no inicializada, no se puede configurar listener")
-                return
-            }
-
-            Log.d("NOTIFICATION_SETUP", "Configurando listener para: $playerId")
+            if (!::database.isInitialized) return
             val notificationRef = database.child("notificationQueue").child(playerId)
-
             notificationRef.addChildEventListener(object : ChildEventListener {
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                    Log.d("NOTIFICATION_LISTENER", "Nueva notificación detectada: ${snapshot.key}")
                     processNotification(snapshot)
                 }
-
                 override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
                 override fun onChildRemoved(snapshot: DataSnapshot) {}
                 override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("NOTIFICATION_LISTENER", "Error escuchando notificaciones: ${error.message}")
-                }
+                override fun onCancelled(error: DatabaseError) {}
             })
         } catch (e: Exception) {
             Log.e("NOTIFICATION_SETUP", "Error en setupNotificationListener: ${e.message}")

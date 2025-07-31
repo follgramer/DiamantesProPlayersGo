@@ -68,12 +68,14 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Anuncio Banner debajo del sorteo semanal -->
+        <!-- ✅ Anuncio Banner con separación reducida 50% -->
         <com.google.android.gms.ads.AdView
             android:id="@+id/adViewTopHome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"
             app:adSize="BANNER"
             app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
 

@@ -2,12 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisos requeridos -->
+    <!-- ✅ Permisos requeridos por la app -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Opcional: para notificaciones en Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Si usas un servicio en primer plano, este es válido -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
@@ -21,18 +25,18 @@
         android:theme="@style/Theme.Diamantesproplayersgo"
         tools:targetApi="31">
 
-        <!-- ID de AdMob (modo test en este caso) -->
+        <!-- ✅ ID DE PRUEBA ADMOB -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
 
-        <!-- Configuración para servicios de anuncios -->
+        <!-- ✅ Servicios de anuncios de Google (GMA) -->
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
             android:resource="@xml/gma_ad_services_config"
             tools:replace="android:resource" />
 
-        <!-- ✅ Servicio para recibir notificaciones FCM -->
+        <!-- ✅ Notificaciones Firebase (servicio para mensajes) -->
         <service
             android:name=".NotificationService"
             android:exported="false">
@@ -41,7 +45,7 @@
             </intent-filter>
         </service>
 
-        <!-- ✅ Receiver para notificaciones -->
+        <!-- ✅ Receiver para BOOT y otras acciones -->
         <receiver
             android:name=".NotificationReceiver"
             android:exported="true">
@@ -50,7 +54,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Configuración de notificaciones de Firebase -->
+        <!-- ✅ Configuración de notificaciones Firebase -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
@@ -61,7 +65,7 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="general_notifications" />
 
-        <!-- 🎬 SPLASH SCREEN - ACTIVIDAD PRINCIPAL -->
+        <!-- ✅ SPLASH ACTIVITY (inicio de la app) -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -73,7 +77,7 @@
             </intent-filter>
         </activity>
 
-        <!-- 🏠 MAIN ACTIVITY - ACTIVIDAD SECUNDARIA -->
+        <!-- ✅ ACTIVIDAD PRINCIPAL DE LA APP -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
