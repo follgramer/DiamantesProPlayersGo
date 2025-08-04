@@ -4,7 +4,30 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <!-- Textos Legales MEJORADOS Y PROFESIONALES -->
+    <!-- Strings para BanActivity -->
+    <string name="default_ban_reason">Violación de las normas de la comunidad</string>
+    <string name="temporary_ban_title">Advertencia Temporal</string>
+    <string name="temporary_ban_subtitle">Tu cuenta está temporalmente suspendida</string>
+    <string name="permanent_ban_title">Cuenta Suspendida</string>
+    <string name="permanent_ban_subtitle">Tu cuenta ha sido suspendida permanentemente</string>
+    <string name="verify_status">Verificar Estado</string>
+    <string name="player_id_format">ID: %1$s</string>
+    <string name="suspension_ended">¡Suspensión terminada!</string>
+    <string name="continue_to_app">Continuar a la App</string>
+    <string name="expires_at_format">Expira: %1$s</string>
+    <string name="email_subject">Solicitud de revisión de suspensión - ID: %1$s</string>
+    <string name="email_body">Hola,\n\nSolicito la revisión de la suspensión de mi cuenta.\n\nDetalles:\n- ID de Jugador: %1$s\n- Tipo de suspensión: %2$s\n- Fecha de solicitud: %3$s\n\nMotivo de la solicitud:\n[Describe aquí por qué consideras que la suspensión es incorrecta]\n\nGracias por su atención.</string>
+    <string name="temporary">Temporal</string>
+    <string name="permanent">Permanente</string>
+    <string name="send_support_email">Enviar email de soporte</string>
+    <string name="support_email">Email de soporte</string>
+    <string name="email_copied">Email copiado: %1$s</string>
+    <string name="error_sending_email">Error enviando email</string>
+    <string name="verifying">Verificando…</string>
+    <string name="suspension_lifted">¡Suspensión levantada! Bienvenido de vuelta</string>
+    <string name="suspension_still_active">La suspensión aún está activa</string>
+    <string name="permanent_suspension_active">La suspensión permanente sigue activa</string>
+
     <string name="privacy_policy_content">
         <![CDATA[
         <b>POLÍTICA DE PRIVACIDAD</b><br><br>
@@ -16,7 +39,7 @@
         <b>1. INFORMACIÓN QUE RECOPILAMOS</b><br><br>
 
         <b>1.1 Información Personal Proporcionada Voluntariamente:</b><br>
-        • <b>ID de Jugador de Free Fire:</b> Número de identificación único que usted proporciona voluntariamente para participar en sorteos y recibir premios.<br>
+        • <b>ID de Jugador de FFire:</b> Número de identificación único que usted proporciona voluntariamente para participar en sorteos y recibir premios.<br>
         • <b>Datos de Contacto:</b> Información necesaria para coordinar la entrega de premios cuando corresponda.<br><br>
 
         <b>1.2 Información de Uso de la Aplicación:</b><br>
@@ -71,7 +94,7 @@
 
         <b>4. COMPARTIR INFORMACIÓN</b><br><br>
 
-        <b>No vendemos, alquilamos ni comercializamos su información personal.</b> Podemos compartir información limitada en los siguientes casos:<br><br>
+        <b>No vendemos, alquilamos ni comercializamos suinformación personal.</b> Podemos compartir información limitada en los siguientes casos:<br><br>
 
         • <b>Proveedores de Servicios:</b> Con terceros que nos ayudan a operar la aplicación (bajo estrictos acuerdos de confidencialidad).<br>
         • <b>Cumplimiento Legal:</b> Cuando sea requerido por ley o para proteger nuestros derechos legales.<br>
@@ -182,7 +205,7 @@
         • <b>Diamantes pro players Go</b> es una aplicación de entretenimiento que ofrece la oportunidad de participar en sorteos semanales.<br>
         • Los usuarios pueden acumular "tickets" mediante actividades en la aplicación.<br>
         • Los tickets se convierten automáticamente en "pases" de sorteo (1,000 tickets = 1 pase).<br>
-        • Los sorteos ofrecen premios relacionados con el juego Free Fire (diamantes, pases, etc.).<br><br>
+        • Los sorteos ofrecen premios relacionados con el juego FFire (diamantes, pases, etc.).<br><br>
 
         <b>2.2 Disponibilidad del Servicio:</b><br>
         • El servicio se proporciona "tal como está" y "según disponibilidad".<br>
@@ -201,7 +224,7 @@
         <b>3.2 Conducta Prohibida:</b><br>
         • <b>Fraude y Trampa:</b> Uso de bots, scripts, exploits, hacks o cualquier software automatizado.<br>
         • <b>Múltiples Cuentas:</b> Crear o mantener más de una cuenta por persona.<br>
-        • <b>Información Falsa:</b> Proporcionar datos falsos, especialmente ID de Free Fire inválidos.<br>
+        • <b>Información Falsa:</b> Proporcionar datos falsos, especialmente ID de FFire inválidos.<br>
         • <b>Abuso del Sistema:</b> Intentar manipular sorteos, sistemas de puntuación o algoritmos.<br>
         • <b>Actividades Ilegales:</b> Usar la aplicación para cualquier propósito ilegal o no autorizado.<br>
         • <b>Comportamiento Abusivo:</b> Acoso, spam, comportamiento ofensivo hacia otros usuarios o nuestro equipo.<br>
@@ -215,7 +238,7 @@
         <b>4. SISTEMA DE PREMIOS Y SORTEOS</b><br><br>
 
         <b>4.1 Elegibilidad para Premios:</b><br>
-        • Solo usuarios con ID de Free Fire válido y verificable pueden participar.<br>
+        • Solo usuarios con ID de FFire válido y verificable pueden participar.<br>
         • Debe tener al menos 1 pase completo para participar en sorteos semanales.<br>
         • Empleados de la empresa y familiares directos están excluidos de premios.<br>
         • Restricciones geográficas pueden aplicar según regulaciones locales.<br><br>
@@ -228,13 +251,13 @@
 
         <b>4.3 Entrega de Premios:</b><br>
         • <b>Plazo:</b> Premios entregados dentro de 24-72 horas hábiles.<br>
-        • <b>Verificación:</b> Ganadores deben verificar identidad y validez del ID de Free Fire.<br>
+        • <b>Verificación:</b> Ganadores deben verificar identidad y validez del ID de FFire.<br>
         • <b>Comunicación:</b> Contacto inicial a través de notificaciones in-app y métodos alternativos.<br>
         • <b>Documentación:</b> Proceso de entrega documentado para transparencia.<br><br>
 
         <b>4.4 Limitaciones de Premios:</b><br>
         • Premios son personales, intransferibles y no canjeables por dinero.<br>
-        • No somos responsables por problemas en la cuenta de Free Fire del ganador.<br>
+        • No somos responsables por problemas en la cuenta de FFire del ganador.<br>
         • Premios sujetos a disponibilidad y términos del proveedor (Garena).<br>
         • Ganadores pueden ser requeridos para fines promocionales (con consentimiento).<br><br>
 
@@ -266,7 +289,7 @@
         • No se otorga ninguna licencia más allá del uso personal no comercial.<br><br>
 
         <b>6.2 Marcas de Terceros:</b><br>
-        • <b>"Free Fire"</b> es marca registrada de Garena International I Private Limited.<br>
+        • <b>"FFire"</b> es marca registrada de Garena International I Private Limited.<br>
         • <b>"Google"</b>, <b>"AdMob"</b>, <b>"Firebase"</b> son marcas de Google LLC.<br>
         • No estamos afiliados oficialmente con Garena o Google.<br>
         • Uso de marcas bajo principios de uso legítimo y referencia.<br><br>

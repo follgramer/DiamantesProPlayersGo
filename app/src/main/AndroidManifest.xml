@@ -85,6 +85,14 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ✅ ACTIVIDAD DE BANEO -->
+        <activity
+            android:name=".BanActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Diamantesproplayersgo"
+            android:launchMode="singleTask" />
+
     </application>
 
 </manifest>

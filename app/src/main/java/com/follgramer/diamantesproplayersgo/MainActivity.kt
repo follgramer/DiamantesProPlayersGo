@@ -25,6 +25,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -122,6 +123,11 @@ class MainActivity : AppCompatActivity() {
             currentPlayerId = if (SplashActivity.preloadedPlayerId.isNotEmpty())
                 SplashActivity.preloadedPlayerId else null
             currentSpins = SplashActivity.preloadedSpins
+
+            // ✅ Verificación de baneo para el usuario precargado
+            if (currentPlayerId != null) {
+                checkUserBanStatus(currentPlayerId!!)
+            }
 
             // UI con datos
             if (currentPlayerId != null) {
@@ -726,7 +732,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ========== FUNCIÓN CORREGIDA ==========
     private fun setupToolbarAndDrawer() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
@@ -849,7 +854,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    // ========== FUNCIÓN CORREGIDA ==========
     private fun handleNavigation(menuItem: MenuItem): Boolean {
         hideAllSections()
         if (menuItem.groupId == R.id.group_main) {
@@ -955,7 +959,6 @@ class MainActivity : AppCompatActivity() {
             Log.e("LEGAL_MODAL", "❌ Error en fallback dialog: ${e.message}")
         }
     }
-    // ========== FIN DE LAS FUNCIONES CORREGIDAS ==========
 
     private fun loadBannerAds() {
         val adRequest = AdRequest.Builder().build()
@@ -1235,6 +1238,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadUserData(playerId: String) {
         try {
+            // ✅ Verificación de baneo al cargar datos del usuario
+            checkUserBanStatus(playerId)
+
             createFirebaseSession(playerId)
             fetchPlayerData(playerId)
             obtenerTop5Firebase()
@@ -1420,6 +1426,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ========== FUNCIÓN MODIFICADA ==========
     @Suppress("UNCHECKED_CAST")
     private fun processNotification(snapshot: DataSnapshot) {
         try {
@@ -1429,16 +1436,30 @@ class MainActivity : AppCompatActivity() {
             val title = notificationData["title"] as? String ?: "Notificación"
             val body = notificationData["body"] as? String ?: ""
             val message = notificationData["message"] as? String ?: ""
-            showLocalNotification(title, body, type)
+
+            // ✅ AGREGAR MANEJO DE NOTIFICACIONES DE BANEO:
             runOnUiThread {
                 when (type) {
+                    "ban" -> {
+                        val banType = notificationData["ban_type"] as? String ?: "permanent"
+                        val expiresAtStr = notificationData["expires_at"] as? String ?: "0"
+                        val expiresAt = expiresAtStr.toLongOrNull() ?: 0L
+                        showBanScreen(banType, message, expiresAt, currentPlayerId ?: "")
+                    }
+                    "unban" -> {
+                        android.widget.Toast.makeText(this, "Tu cuenta ha sido reactivada", android.widget.Toast.LENGTH_LONG).show()
+                    }
                     "win" -> showWinnerModalWithRedirect(message)
                     "loss" -> showLoserModalWithRedirect(message)
                     else -> showGeneralModal(title, message)
                 }
             }
+
+            showLocalNotification(title, body, type)
             snapshot.ref.removeValue()
-        } catch (e: Exception) { Log.e("NOTIFICATION_PROCESS", "Error: ${e.message}") }
+        } catch (e: Exception) {
+            Log.e("NOTIFICATION_PROCESS", "Error: ${e.message}")
+        }
     }
 
     private fun showLocalNotification(title: String, body: String, type: String) {
@@ -1469,7 +1490,7 @@ class MainActivity : AppCompatActivity() {
     private fun showWinnerModalWithRedirect(message: String) {
         try {
             MaterialDialog(this).show {
-                title(text = "🎉 ¡FELICITACIONES! 🎉")
+                title(text = "🎉 ¡FELICITACIONES! �")
                 message(text = message)
                 positiveButton(text = "VER GANADORES") {
                     showCelebrationEffects()
@@ -1551,5 +1572,42 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
+    }
+
+    // ==================== FUNCIONES DE VERIFICACIÓN DE BANEO ====================
+
+    private fun checkUserBanStatus(playerId: String) {
+        if (playerId.isEmpty()) return
+
+        Log.d("MAIN_BAN_CHECK", "🔍 Verificando estado de baneo para: $playerId")
+
+        BanChecker(this).checkBanStatus(playerId) { banStatus ->
+            when (banStatus) {
+                is BanChecker.BanStatus.NotBanned -> {
+                    Log.d("MAIN_BAN_CHECK", "✅ Usuario no baneado, continuar normalmente")
+                    // Usuario no está baneado, continuar con el flujo normal
+                }
+                is BanChecker.BanStatus.TemporaryBan -> {
+                    Log.w("MAIN_BAN_CHECK", "⚠️ Usuario con advertencia temporal")
+                    showBanScreen("temporary", banStatus.reason, banStatus.expiresAt, playerId)
+                }
+                is BanChecker.BanStatus.PermanentBan -> {
+                    Log.e("MAIN_BAN_CHECK", "🚫 Usuario baneado permanentemente")
+                    showBanScreen("permanent", banStatus.reason, 0L, playerId)
+                }
+            }
+        }
+    }
+
+    private fun showBanScreen(banType: String, reason: String, expiresAt: Long, playerId: String) {
+        val intent = Intent(this, BanActivity::class.java).apply {
+            putExtra(BanActivity.EXTRA_BAN_TYPE, banType)
+            putExtra(BanActivity.EXTRA_BAN_REASON, reason)
+            putExtra(BanActivity.EXTRA_EXPIRES_AT, expiresAt)
+            putExtra(BanActivity.EXTRA_PLAYER_ID, playerId)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
     }
 }

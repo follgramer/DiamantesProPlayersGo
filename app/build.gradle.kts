@@ -23,13 +23,30 @@ android {
     }
 
     buildTypes {
+        /**
+         * Configuración de build para la versión de lanzamiento (release).  Se habilita la
+         * minificación y compresión de recursos para reducir el tamaño del APK/AAB y mejorar
+         * el rendimiento.  R8 se encargará de eliminar código y recursos no utilizados.
+         */
         release {
-            isMinifyEnabled = false
+            // Habilita el uso de R8/ProGuard para minificar y ofuscar el código.
+            // Esto reduce el tamaño final del binario y mejora la seguridad.
+            isMinifyEnabled = true
+
+            // Habilita la compresión de recursos.  Los archivos no usados se eliminarán
+            // automáticamente y las imágenes se optimizarán.
+            isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+
+        /**
+         * Configuración para la versión de depuración (debug).  Se deshabilita la
+         * minificación para facilitar la depuración.  isDebuggable se mantiene en true.
+         */
         debug {
             isDebuggable = true
             isMinifyEnabled = false

@@ -28,21 +28,34 @@ object SessionManager {
             setCurrentSpins(context, 10) // ✅ SOLO 10 GIROS
         }
 
-        Log.d(TAG, "Estado inicial - Player ID: ${if (playerId.isEmpty()) "No configurado" else "Configurado"}, Giros: ${getCurrentSpins(context)}")
+        Log.d(
+            TAG,
+            "Estado inicial - Player ID: ${
+                if (playerId.isEmpty()) "No configurado" else "Configurado"
+            }, Giros: ${getCurrentSpins(context)}"
+        )
     }
 
     /**
-     * Obtiene el ID del jugador de Free Fire (ingresado por el usuario)
+     * Obtiene el ID del jugador de FreeFF (ingresado por el usuario). Se renombró
+     * la referencia para evitar el uso explícito de marcas registradas en los
+     * comentarios.
      */
     fun getPlayerId(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val playerId = prefs.getString(KEY_PLAYER_ID, "") ?: ""
-        Log.d(TAG, "Player ID obtenido: ${if (playerId.isEmpty()) "No configurado" else playerId}")
+        Log.d(
+            TAG,
+            "Player ID obtenido: ${
+                if (playerId.isEmpty()) "No configurado" else playerId
+            }"
+        )
         return playerId
     }
 
     /**
-     * Guarda el ID del jugador de Free Fire
+     * Guarda el ID del jugador de FreeFF. Se renombró la referencia para evitar
+     * el uso explícito de marcas registradas en los comentarios.
      */
     fun setPlayerId(context: Context, playerId: String) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -53,7 +66,10 @@ object SessionManager {
 
         // Solo generar nueva sesión si cambió el ID del jugador
         if (previousPlayerId != playerId && previousPlayerId.isNotEmpty()) {
-            Log.d(TAG, "Player ID cambió de '$previousPlayerId' a '$playerId' - generando nueva sesión")
+            Log.d(
+                TAG,
+                "Player ID cambió de '$previousPlayerId' a '$playerId' - generando nueva sesión"
+            )
             generateNewSession(context)
 
             // Al cambiar de jugador, resetear giros a 10
