@@ -37,43 +37,50 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = true
+
+            // Para anuncios de prueba
+            buildConfigField("Boolean", "USE_TEST_ADS", "true")
+
+            // IMPORTANTE: App ID de prueba para desarrollo
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+
+            // Agregar sufijo al package para poder instalar debug y release al mismo tiempo
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+
+            signingConfig = signingConfigs.getByName("debug")
+        }
+
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
+
+            // Para anuncios reales
+            buildConfigField("Boolean", "USE_TEST_ADS", "false")
+
+            // IMPORTANTE: Reemplaza con tu Application ID real de AdMob
+            // Ve a https://apps.admob.com/ -> Tu app -> Configuración de la app
+            // Formato: ca-app-pub-XXXXXXXXX~YYYYYYYYYY
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~XXXXXXXXXX"
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            isDebuggable = false
-            isJniDebuggable = false
-            isPseudoLocalesEnabled = false
+
             signingConfig = signingConfigs.getByName("release")
-
-            // CONFIGURACIÓN ADMOB PARA RELEASE
-            buildConfigField("boolean", "USE_TEST_ADS", "false")
-            buildConfigField("String", "BUILD_TYPE_NAME", "\"RELEASE\"")
-            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-2024712392092488~7992650364\"")
-            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
-        }
-        debug {
-            isDebuggable = true
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
-            isMinifyEnabled = false
-            isShrinkResources = false
-
-            // CONFIGURACIÓN ADMOB PARA DEBUG
-            buildConfigField("boolean", "USE_TEST_ADS", "true")
-            buildConfigField("String", "BUILD_TYPE_NAME", "\"DEBUG\"")
-            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
-            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
     }
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true // IMPORTANTE: Habilitar BuildConfig
         dataBinding = true
-        buildConfig = true
         aidl = false
         shaders = false
     }

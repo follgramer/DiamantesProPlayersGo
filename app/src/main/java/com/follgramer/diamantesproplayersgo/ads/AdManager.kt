@@ -2,163 +2,158 @@ package com.follgramer.diamantesproplayersgo.ads
 
 import android.app.Activity
 import android.content.Context
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.View
-import android.view.WindowInsets
-import android.view.WindowManager
-import android.webkit.WebSettings
-import android.webkit.WebView
-import androidx.core.view.WindowCompat
-import androidx.webkit.WebViewCompat
-import com.follgramer.diamantesproplayersgo.BuildConfig
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
+import android.widget.Toast
+import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Gestor centralizado y profesional de anuncios AdMob
+ * Maneja Interstitial y Rewarded Ads con retry automático y gestión de errores
+ */
 object AdManager {
-    private var interstitial: InterstitialAd? = null
-    private var rewarded: RewardedAd? = null
-
-    private val isLoadingInterstitial = AtomicBoolean(false)
-    private val isLoadingRewarded = AtomicBoolean(false)
-    private val isWarmingUp = AtomicBoolean(false)
-
-    private val mainHandler = Handler(Looper.getMainLooper())
     private const val TAG = "AdManager"
-    private const val RETRY_DELAY_MS = 8000L
-    private const val MAX_RETRY_ATTEMPTS = 2
+    private const val MAX_RETRY_ATTEMPTS = 3
+    private const val RETRY_DELAY_MS = 2000L
+    private const val MIN_REWARD_FALLBACK = 5
+    private const val DEFAULT_REWARD_FALLBACK = 10
 
+    // Estados de carga
     private var interstitialRetryCount = 0
     private var rewardedRetryCount = 0
+    private val isLoadingInterstitial = AtomicBoolean(false)
+    private val isLoadingRewarded = AtomicBoolean(false)
 
-    fun warmUp(context: Context) {
-        if (isWarmingUp.getAndSet(true)) {
-            Log.d(TAG, "Ya está ejecutando warmUp")
-            return
+    // Instancias de anuncios
+    private var interstitialAd: InterstitialAd? = null
+    private var rewardedAd: RewardedAd? = null
+
+    // Handler para delays
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /**
+     * Inicializa el AdManager cargando anuncios iniciales
+     */
+    fun initialize(context: Context) {
+        Log.d(TAG, "Inicializando AdManager...")
+        Log.d(TAG, "Modo de anuncios: ${if (isUsingTestAds()) "TEST" else "PRODUCCIÓN"}")
+
+        if (AdsInit.isAdMobReady()) {
+            loadInterstitialIfNeeded(context)
+            loadRewardedIfNeeded(context)
+        } else {
+            Log.w(TAG, "AdMob no está listo, esperando inicialización...")
+            mainHandler.postDelayed({
+                if (AdsInit.isAdMobReady()) {
+                    loadInterstitialIfNeeded(context)
+                    loadRewardedIfNeeded(context)
+                }
+            }, 3000)
         }
-
-        Log.d(TAG, "Iniciando warmUp de anuncios")
-
-        if (!AdsInit.isInitialized()) {
-            Log.w(TAG, "AdMob no inicializado, postponiendo warmUp")
-            isWarmingUp.set(false)
-            return
-        }
-
-        configureWebViewForAds(context)
-
-        mainHandler.postDelayed({
-            if (AdsInit.isAdMobReady()) {
-                loadInterstitialIfNeeded(context)
-                loadRewardedIfNeeded(context)
-            } else {
-                Log.w(TAG, "AdMob aún no está listo durante warmUp")
-            }
-        }, 1000)
-
-        mainHandler.postDelayed({
-            isWarmingUp.set(false)
-        }, 5000)
     }
 
-    private fun configureWebViewForAds(context: Context) {
+    /**
+     * Función de warmUp - precarga anuncios (alias para initialize)
+     */
+    fun warmUp(context: Context) {
+        Log.d(TAG, "Warming up AdManager...")
+        initialize(context)
+    }
+
+    // ==========================================
+    // ANUNCIOS INTERSTICIALES
+    // ==========================================
+
+    /**
+     * Muestra un anuncio intersticial si está disponible
+     * @param activity Actividad donde mostrar el anuncio
+     * @param onClosed Callback ejecutado cuando se cierra el anuncio
+     */
+    fun showInterstitial(activity: Activity, onClosed: () -> Unit = {}) {
         try {
-            val webViewPackage = WebViewCompat.getCurrentWebViewPackage(context)
-            if (webViewPackage == null) {
-                Log.w(TAG, "WebView no disponible en este dispositivo")
+            if (!isValidActivity(activity)) {
+                Log.w(TAG, "Activity no válida para mostrar intersticial")
+                onClosed()
                 return
             }
 
-            Log.d(TAG, "WebView package: ${webViewPackage.packageName} v${webViewPackage.versionName}")
+            val ad = interstitialAd
+            if (ad != null) {
+                Log.d(TAG, "📱 Mostrando anuncio intersticial")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
-            }
+                setupSystemBarsForAd(activity)
 
-            val webView = try {
-                WebView(context)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error creando WebView: ${e.message}")
-                return
-            }
+                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdShowedFullScreenContent() {
+                        Log.d(TAG, "✅ Intersticial mostrado exitosamente")
+                    }
 
-            val settings = webView.settings
-            settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                databaseEnabled = true
-                cacheMode = WebSettings.LOAD_DEFAULT
+                    override fun onAdDismissedFullScreenContent() {
+                        Log.d(TAG, "Intersticial cerrado por usuario")
+                        restoreSystemBars(activity)
+                        interstitialAd = null
 
-                allowFileAccess = false
-                allowContentAccess = false
-                allowFileAccessFromFileURLs = false
-                allowUniversalAccessFromFileURLs = false
+                        // Recargar para la próxima vez
+                        mainHandler.postDelayed({
+                            loadInterstitialIfNeeded(activity)
+                        }, RETRY_DELAY_MS)
 
-                try {
-                    val originalUA = userAgentString
-                    userAgentString = "$originalUA AdMobApp/1.0 (${context.packageName})"
-                } catch (e: Exception) {
-                    Log.w(TAG, "Error configurando User Agent: ${e.message}")
-                }
+                        onClosed()
+                    }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    try {
-                        safeBrowsingEnabled = true
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Safe browsing no soportado: ${e.message}")
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                        Log.e(TAG, "❌ Error mostrando intersticial: ${adError.message}")
+                        restoreSystemBars(activity)
+                        interstitialAd = null
+                        loadInterstitialIfNeeded(activity)
+                        onClosed()
+                    }
+
+                    override fun onAdImpression() {
+                        Log.d(TAG, "Impresión de intersticial registrada")
+                    }
+
+                    override fun onAdClicked() {
+                        Log.d(TAG, "Click en intersticial registrado")
                     }
                 }
 
-                try {
-                    mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-                } catch (e: Exception) {
-                    Log.w(TAG, "Error configurando mixed content: ${e.message}")
-                }
-
-                setSupportMultipleWindows(false)
-                setSupportZoom(false)
-                builtInZoomControls = false
-                displayZoomControls = false
-                mediaPlaybackRequiresUserGesture = false
+                ad.show(activity)
+            } else {
+                Log.w(TAG, "❌ Intersticial no disponible")
+                loadInterstitialIfNeeded(activity)
+                onClosed()
             }
-
-            try {
-                webView.destroy()
-            } catch (e: Exception) {
-                Log.w(TAG, "Error destruyendo WebView de configuración: ${e.message}")
-            }
-
-            Log.d(TAG, "WebView configurado para anuncios")
-
         } catch (e: Exception) {
-            Log.e(TAG, "Error general configurando WebView: ${e.message}")
+            Log.e(TAG, "Exception en showInterstitial: ${e.message}", e)
+            onClosed()
         }
     }
 
+    /**
+     * Carga un anuncio intersticial si es necesario
+     */
     private fun loadInterstitialIfNeeded(context: Context) {
-        if (interstitial != null || isLoadingInterstitial.getAndSet(true)) {
-            Log.d(TAG, "Interstitial ya está cargado o cargando")
+        if (interstitialAd != null || isLoadingInterstitial.getAndSet(true)) {
+            Log.d(TAG, "Intersticial ya está cargado o cargando")
             return
         }
 
         if (interstitialRetryCount >= MAX_RETRY_ATTEMPTS) {
-            Log.w(TAG, "Máximo de intentos alcanzado para interstitial")
+            Log.w(TAG, "Máximo de intentos alcanzado para intersticial")
             isLoadingInterstitial.set(false)
             return
         }
 
-        val adRequest = createOptimizedAdRequest()
-
-        Log.d(TAG, "Cargando interstitial...")
+        val adRequest = createAdRequest()
+        Log.d(TAG, "🔄 Cargando anuncio intersticial...")
+        Log.d(TAG, "Unit ID: ${currentInterstitialUnitId()}")
 
         InterstitialAd.load(
             context,
@@ -168,18 +163,16 @@ object AdManager {
                 override fun onAdLoaded(ad: InterstitialAd) {
                     isLoadingInterstitial.set(false)
                     interstitialRetryCount = 0
-                    interstitial = ad
-
-                    interstitial?.fullScreenContentCallback = createFullScreenCallback("interstitial", context)
-                    Log.d(TAG, "Interstitial cargado exitosamente")
+                    interstitialAd = ad
+                    Log.d(TAG, "✅ Intersticial cargado exitosamente")
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                     isLoadingInterstitial.set(false)
-                    interstitial = null
+                    interstitialAd = null
                     interstitialRetryCount++
 
-                    Log.w(TAG, "Error cargando interstitial: ${loadAdError.code} - ${loadAdError.message}")
+                    Log.w(TAG, "❌ Error cargando intersticial: ${loadAdError.code} - ${loadAdError.message}")
                     Log.w(TAG, "Intento $interstitialRetryCount/$MAX_RETRY_ATTEMPTS")
 
                     if (interstitialRetryCount < MAX_RETRY_ATTEMPTS) {
@@ -190,21 +183,108 @@ object AdManager {
         )
     }
 
+    // ==========================================
+    // ANUNCIOS RECOMPENSADOS
+    // ==========================================
+
+    /**
+     * Muestra un anuncio recompensado si está disponible
+     * @param activity Actividad donde mostrar el anuncio
+     * @param onReward Callback con la recompensa obtenida (amount, type)
+     */
+    fun showRewarded(activity: Activity, onReward: (amount: Int, type: String) -> Unit) {
+        try {
+            if (!isValidActivity(activity)) {
+                Log.w(TAG, "Activity no válida para mostrar recompensado")
+                onReward(DEFAULT_REWARD_FALLBACK, "coins")
+                return
+            }
+
+            val ad = rewardedAd
+            if (ad != null) {
+                Log.d(TAG, "📺 Mostrando video recompensado")
+
+                setupSystemBarsForAd(activity)
+
+                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdShowedFullScreenContent() {
+                        Log.d(TAG, "✅ Video recompensado mostrado exitosamente")
+                    }
+
+                    override fun onAdDismissedFullScreenContent() {
+                        Log.d(TAG, "Video recompensado cerrado por usuario")
+                        restoreSystemBars(activity)
+                        rewardedAd = null
+
+                        // Recargar para la próxima vez
+                        mainHandler.postDelayed({
+                            loadRewardedIfNeeded(activity)
+                        }, RETRY_DELAY_MS)
+                    }
+
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                        Log.e(TAG, "❌ Error mostrando video: ${adError.message}")
+                        Log.e(TAG, "Código de error: ${adError.code}")
+                        restoreSystemBars(activity)
+                        rewardedAd = null
+                        loadRewardedIfNeeded(activity)
+
+                        // Dar recompensa mínima en caso de error
+                        onReward(MIN_REWARD_FALLBACK, "coins")
+                    }
+
+                    override fun onAdImpression() {
+                        Log.d(TAG, "Impresión de video registrada")
+                    }
+
+                    override fun onAdClicked() {
+                        Log.d(TAG, "Click en video registrado")
+                    }
+                }
+
+                ad.show(activity) { rewardItem ->
+                    val amount = rewardItem.amount
+                    val type = rewardItem.type
+                    Log.d(TAG, "🎁 Recompensa obtenida: $amount $type")
+                    onReward(amount, type)
+                }
+
+            } else {
+                Log.w(TAG, "❌ Video recompensado no disponible")
+                loadRewardedIfNeeded(activity)
+
+                activity.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        "Video cargando, intenta en unos segundos...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception en showRewarded: ${e.message}", e)
+            onReward(DEFAULT_REWARD_FALLBACK, "coins")
+        }
+    }
+
+    /**
+     * Carga un anuncio recompensado si es necesario
+     */
     private fun loadRewardedIfNeeded(context: Context) {
-        if (rewarded != null || isLoadingRewarded.getAndSet(true)) {
-            Log.d(TAG, "Rewarded ya está cargado o cargando")
+        if (rewardedAd != null || isLoadingRewarded.getAndSet(true)) {
+            Log.d(TAG, "Recompensado ya está cargado o cargando")
             return
         }
 
         if (rewardedRetryCount >= MAX_RETRY_ATTEMPTS) {
-            Log.w(TAG, "Máximo de intentos alcanzado para rewarded")
+            Log.w(TAG, "Máximo de intentos alcanzado para recompensado")
             isLoadingRewarded.set(false)
             return
         }
 
-        val adRequest = createOptimizedAdRequest()
-
-        Log.d(TAG, "Cargando rewarded...")
+        val adRequest = createAdRequest()
+        Log.d(TAG, "🔄 Cargando video recompensado...")
+        Log.d(TAG, "Unit ID: ${currentRewardedUnitId()}")
 
         RewardedAd.load(
             context,
@@ -214,18 +294,16 @@ object AdManager {
                 override fun onAdLoaded(ad: RewardedAd) {
                     isLoadingRewarded.set(false)
                     rewardedRetryCount = 0
-                    rewarded = ad
-
-                    rewarded?.fullScreenContentCallback = createFullScreenCallback("rewarded", context)
-                    Log.d(TAG, "Rewarded cargado exitosamente")
+                    rewardedAd = ad
+                    Log.d(TAG, "✅ Rewarded video cargado exitosamente")
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                     isLoadingRewarded.set(false)
-                    rewarded = null
+                    rewardedAd = null
                     rewardedRetryCount++
 
-                    Log.w(TAG, "Error cargando rewarded: ${loadAdError.code} - ${loadAdError.message}")
+                    Log.w(TAG, "❌ Error cargando recompensado: ${loadAdError.code} - ${loadAdError.message}")
                     Log.w(TAG, "Intento $rewardedRetryCount/$MAX_RETRY_ATTEMPTS")
 
                     if (rewardedRetryCount < MAX_RETRY_ATTEMPTS) {
@@ -236,240 +314,101 @@ object AdManager {
         )
     }
 
-    private fun createOptimizedAdRequest(): AdRequest {
-        return AdRequest.Builder()
-            .setHttpTimeoutMillis(30000)
-            .apply {
-                try {
-                    setContentUrl("https://play.google.com/store/apps/details?id=com.follgramer.diamantesproplayersgo")
-                    addKeyword("games")
-                    addKeyword("rewards")
-                    addKeyword("mobile")
-                } catch (e: Exception) {
-                    Log.w(TAG, "Error configurando request: ${e.message}")
-                }
-            }
-            .build()
+    // ==========================================
+    // FUNCIONES AUXILIARES
+    // ==========================================
+
+    /**
+     * Crea un AdRequest configurado según el modo de compilación
+     */
+    private fun createAdRequest(): AdRequest {
+        // Los test devices se configuran a nivel de aplicación en AdsInit
+        return AdRequest.Builder().build()
     }
 
     /**
-     * Configurar Safe Areas antes de mostrar anuncios
-     * ESTO ES LO QUE USAN LOS DESARROLLADORES PROFESIONALES
+     * Valida si la actividad es válida para mostrar anuncios
      */
-    private fun setupSafeAreasForFullscreenAd(activity: Activity) {
-        try {
-            // 1. Forzar que respete las barras del sistema
-            WindowCompat.setDecorFitsSystemWindows(activity.window, true)
-
-            // 2. En Android P+, configurar cutout mode
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                activity.window.attributes.layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
-            }
-
-            // 3. Asegurar que las barras del sistema sean visibles
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                // Android 11+
-                activity.window.insetsController?.apply {
-                    show(WindowInsets.Type.systemBars())
-                }
-            } else {
-                // Android 10 y anteriores
-                @Suppress("DEPRECATION")
-                activity.window.decorView.systemUiVisibility =
-                    View.SYSTEM_UI_FLAG_VISIBLE or
-                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            }
-
-            // 4. Configurar window flags
-            activity.window.apply {
-                clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-                addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            }
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error configurando safe areas: ${e.message}")
-        }
+    private fun isValidActivity(activity: Activity): Boolean {
+        return !activity.isFinishing && !activity.isDestroyed
     }
 
     /**
-     * Restaurar configuración después de cerrar anuncios
+     * Configura las barras del sistema para anuncios de pantalla completa
      */
-    private fun restoreWindowConfiguration(activity: Activity) {
-        try {
-            // Restaurar configuración normal de la app
-            WindowCompat.setDecorFitsSystemWindows(activity.window, true)
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error restaurando configuración: ${e.message}")
-        }
+    private fun setupSystemBarsForAd(activity: Activity) {
+        Log.d(TAG, "Configurando barras del sistema para anuncio")
     }
 
-    private fun createFullScreenCallback(adType: String, context: Context) =
-        object : FullScreenContentCallback() {
-            override fun onAdShowedFullScreenContent() {
-                Log.d(TAG, "$adType mostrado exitosamente")
-
-                // Aplicar safe areas mientras se muestra
-                if (context is Activity) {
-                    setupSafeAreasForFullscreenAd(context)
-                }
-            }
-
-            override fun onAdDismissedFullScreenContent() {
-                Log.d(TAG, "$adType cerrado por usuario")
-
-                // Restaurar configuración
-                if (context is Activity) {
-                    restoreWindowConfiguration(context)
-                }
-
-                when (adType) {
-                    "interstitial" -> {
-                        interstitial = null
-                        mainHandler.postDelayed({
-                            loadInterstitialIfNeeded(context)
-                        }, 2000)
-                    }
-                    "rewarded" -> {
-                        rewarded = null
-                        mainHandler.postDelayed({
-                            loadRewardedIfNeeded(context)
-                        }, 2000)
-                    }
-                }
-            }
-
-            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                Log.e(TAG, "Error mostrando $adType: ${adError.code} - ${adError.message}")
-
-                when (adType) {
-                    "interstitial" -> {
-                        interstitial = null
-                        loadInterstitialIfNeeded(context)
-                    }
-                    "rewarded" -> {
-                        rewarded = null
-                        loadRewardedIfNeeded(context)
-                    }
-                }
-            }
-        }
-
-    private fun scheduleRetry(retryAction: () -> Unit) {
-        mainHandler.postDelayed(retryAction, RETRY_DELAY_MS)
+    /**
+     * Restaura las barras del sistema después del anuncio
+     */
+    private fun restoreSystemBars(activity: Activity) {
+        Log.d(TAG, "Restaurando barras del sistema")
     }
 
-    fun showInterstitial(activity: Activity, onClosed: () -> Unit = {}) {
-        try {
-            if (activity.isFinishing || activity.isDestroyed) {
-                Log.w(TAG, "Activity no válida para mostrar interstitial")
-                onClosed()
-                return
-            }
-
-            // CONFIGURAR SAFE AREAS ANTES DE MOSTRAR
-            setupSafeAreasForFullscreenAd(activity)
-
-            val ad = interstitial
-            if (ad != null) {
-                Log.d(TAG, "Mostrando interstitial con Safe Areas")
-                ad.show(activity)
-                onClosed()
-            } else {
-                Log.w(TAG, "Interstitial no disponible")
-                loadInterstitialIfNeeded(activity)
-                onClosed()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception en showInterstitial: ${e.message}")
-            onClosed()
-        }
+    /**
+     * Programa un reintento después de un delay
+     */
+    private fun scheduleRetry(action: () -> Unit) {
+        mainHandler.postDelayed(action, RETRY_DELAY_MS)
     }
 
-    fun showRewarded(activity: Activity, onReward: (amount: Int, type: String) -> Unit) {
-        try {
-            if (activity.isFinishing || activity.isDestroyed) {
-                Log.w(TAG, "Activity no válida para mostrar rewarded")
-                return
-            }
+    // ==========================================
+    // FUNCIONES PÚBLICAS DE ESTADO
+    // ==========================================
 
-            // CONFIGURAR SAFE AREAS ANTES DE MOSTRAR
-            setupSafeAreasForFullscreenAd(activity)
+    /**
+     * Verifica si hay un intersticial listo para mostrar
+     */
+    fun isInterstitialReady(): Boolean = interstitialAd != null
 
-            val ad = rewarded
-            if (ad != null) {
-                Log.d(TAG, "Mostrando rewarded con Safe Areas")
-                ad.show(activity) { rewardItem ->
-                    val amount = rewardItem.amount
-                    val type = rewardItem.type
-                    Log.d(TAG, "Recompensa obtenida: $amount $type")
-                    onReward(amount, type)
-                }
-            } else {
-                Log.w(TAG, "Rewarded no disponible, dando recompensa por defecto")
-                loadRewardedIfNeeded(activity)
-                onReward(10, "coins")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception en showRewarded: ${e.message}")
-            onReward(10, "coins")
-        }
-    }
+    /**
+     * Verifica si hay un intersticial listo para mostrar (alias)
+     */
+    fun hasInterstitialReady(): Boolean = isInterstitialReady()
 
-    fun hasInterstitialReady(): Boolean = interstitial != null
-    fun hasRewardedReady(): Boolean = rewarded != null
+    /**
+     * Verifica si hay un recompensado listo para mostrar
+     */
+    fun isRewardedReady(): Boolean = rewardedAd != null
 
-    fun forceReload(context: Context) {
-        Log.d(TAG, "Forzando recarga de anuncios")
-
+    /**
+     * Reinicia todos los contadores de reintento
+     */
+    fun resetRetryCounters() {
         interstitialRetryCount = 0
         rewardedRetryCount = 0
-
         isLoadingInterstitial.set(false)
         isLoadingRewarded.set(false)
-
-        interstitial = null
-        rewarded = null
-
-        mainHandler.postDelayed({
-            loadInterstitialIfNeeded(context)
-            loadRewardedIfNeeded(context)
-        }, 3000)
+        Log.d(TAG, "Contadores de reintento reiniciados")
     }
 
+    /**
+     * Limpia todas las referencias de anuncios
+     */
     fun cleanup() {
-        Log.d(TAG, "Limpiando recursos del AdManager")
-
-        try {
-            mainHandler.removeCallbacksAndMessages(null)
-
-            interstitial?.fullScreenContentCallback = null
-            rewarded?.fullScreenContentCallback = null
-
-            interstitial = null
-            rewarded = null
-
-            isLoadingInterstitial.set(false)
-            isLoadingRewarded.set(false)
-            isWarmingUp.set(false)
-
-            interstitialRetryCount = 0
-            rewardedRetryCount = 0
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error en cleanup: ${e.message}")
-        }
+        Log.d(TAG, "Limpiando AdManager...")
+        interstitialAd = null
+        rewardedAd = null
+        resetRetryCounters()
+        mainHandler.removeCallbacksAndMessages(null)
     }
 
+    /**
+     * Información de debug del estado actual
+     */
     fun getDebugInfo(): String {
-        return """
-            AdManager Debug Info:
-            - Interstitial: ${if (interstitial != null) "Listo" else "No disponible"} (loading: ${isLoadingInterstitial.get()}, retries: $interstitialRetryCount)
-            - Rewarded: ${if (rewarded != null) "Listo" else "No disponible"} (loading: ${isLoadingRewarded.get()}, retries: $rewardedRetryCount)
-            - WarmingUp: ${isWarmingUp.get()}
-            - Build Type: ${if (BuildConfig.DEBUG) "DEBUG (Test Ads)" else "RELEASE (Real Ads)"}
-            - Unit IDs: I=${currentInterstitialUnitId().takeLast(6)}, R=${currentRewardedUnitId().takeLast(6)}, B=${currentBannerUnitId().takeLast(6)}
-        """.trimIndent()
+        return buildString {
+            appendLine("=== AD MANAGER DEBUG INFO ===")
+            appendLine("Intersticial listo: ${isInterstitialReady()}")
+            appendLine("Recompensado listo: ${isRewardedReady()}")
+            appendLine("Cargando intersticial: ${isLoadingInterstitial.get()}")
+            appendLine("Cargando recompensado: ${isLoadingRewarded.get()}")
+            appendLine("Reintentos intersticial: $interstitialRetryCount/$MAX_RETRY_ATTEMPTS")
+            appendLine("Reintentos recompensado: $rewardedRetryCount/$MAX_RETRY_ATTEMPTS")
+            appendLine("Modo anuncios: ${if (isUsingTestAds()) "TEST" else "PRODUCCIÓN"}")
+            appendLine("============================")
+        }
     }
 }
