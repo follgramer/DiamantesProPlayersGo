@@ -25,12 +25,12 @@ object AdsInit {
 
             // Configuración según el tipo de build
             if (BuildConfig.DEBUG) {
-                // Modo DEBUG: Solo anuncios de prueba
                 Log.d(TAG, "🧪 Configurando anuncios de prueba")
 
                 val testDevices = listOf(
                     AdRequest.DEVICE_ID_EMULATOR,
-                    "72F928A6866D6BC25A62E7A6F4AFC402" // Tu dispositivo
+                    "72F928A6866D6BC25A62E7A6F4AFC402",
+                    "B3EEABB8EE11C2BE770B684D95219ECB" // Añade más IDs si necesitas
                 )
 
                 val configuration = RequestConfiguration.Builder()
@@ -43,7 +43,6 @@ object AdsInit {
                 MobileAds.setRequestConfiguration(configuration)
 
             } else {
-                // Modo RELEASE: Anuncios reales
                 Log.d(TAG, "🚀 Configurando anuncios reales de producción")
 
                 val configuration = RequestConfiguration.Builder()
@@ -60,7 +59,12 @@ object AdsInit {
                 try {
                     Log.d(TAG, "📋 Estado de inicialización:")
                     initializationStatus.adapterStatusMap.forEach { (adapter, status) ->
-                        Log.d(TAG, "  - $adapter: ${status?.initializationState}")
+                        val state = status?.initializationState?.name ?: "UNKNOWN"
+                        val description = status?.description ?: "Sin descripción"
+                        Log.d(TAG, "  - $adapter: $state")
+                        if (description.isNotEmpty()) {
+                            Log.d(TAG, "    Descripción: $description")
+                        }
                     }
 
                     isInitialized.set(true)
@@ -68,9 +72,17 @@ object AdsInit {
 
                     Log.d(TAG, "✅ AdMob inicializado correctamente")
                     Log.d(TAG, "📍 IDs en uso:")
-                    Log.d(TAG, "  Banner: ${currentBannerUnitId().takeLast(10)}")
-                    Log.d(TAG, "  Interstitial: ${currentInterstitialUnitId().takeLast(10)}")
-                    Log.d(TAG, "  Rewarded: ${currentRewardedUnitId().takeLast(10)}")
+                    Log.d(TAG, "  Banner Top: ${currentBannerTopUnitId()}")
+                    Log.d(TAG, "  Banner Bottom: ${currentBannerBottomUnitId()}")
+                    Log.d(TAG, "  Banner Recycler: ${currentRecyclerBannerUnitId()}")
+                    Log.d(TAG, "  Interstitial: ${currentInterstitialUnitId()}")
+                    Log.d(TAG, "  Rewarded: ${currentRewardedUnitId()}")
+
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "🧪 MODO DEBUG - Todos los anuncios serán de prueba")
+                    } else {
+                        Log.d(TAG, "💰 MODO RELEASE - Anuncios reales activos")
+                    }
 
                 } catch (e: Exception) {
                     Log.e(TAG, "Error procesando estado: ${e.message}")
@@ -80,6 +92,7 @@ object AdsInit {
 
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error inicializando AdMob: ${e.message}")
+            e.printStackTrace()
             isInitialized.set(false)
         }
     }
@@ -91,5 +104,18 @@ object AdsInit {
         Log.w(TAG, "🔄 Reseteando estado de AdMob")
         isInitialized.set(false)
         DiamantesApplication.resetAdMobInitialization()
+    }
+
+    fun getDebugInfo(): String {
+        return """
+            === ADMOB DEBUG INFO ===
+            Estado: ${if (isInitialized.get()) "✅ INICIALIZADO" else "❌ NO INICIALIZADO"}
+            Modo: ${if (BuildConfig.DEBUG) "DEBUG (Test Ads)" else "RELEASE (Real Ads)"}
+            Banner Top: ${currentBannerTopUnitId()}
+            Banner Bottom: ${currentBannerBottomUnitId()}
+            Banner Recycler: ${currentRecyclerBannerUnitId()}
+            Interstitial: ${currentInterstitialUnitId()}
+            Rewarded: ${currentRewardedUnitId()}
+        """.trimIndent()
     }
 }

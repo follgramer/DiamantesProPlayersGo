@@ -9,51 +9,37 @@ import android.view.ViewGroup
 import android.view.WindowMetrics
 import android.widget.FrameLayout
 import com.follgramer.diamantesproplayersgo.BuildConfig
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.*
 import kotlinx.coroutines.*
 
 object BannerHelper {
     private const val TAG = "BannerHelper"
     private val bannersMap = mutableMapOf<Int, AdView>()
     private val loadingStatus = mutableMapOf<Int, Boolean>()
-    private val lastRequestTime = mutableMapOf<Int, Long>()
-    private const val MIN_REQUEST_INTERVAL = 60000L
-    private const val NO_FILL_RETRY_DELAY = 180000L
-    private val failureCount = mutableMapOf<Int, Int>()
-    private const val MAX_FAILURES = 3
     private val retryScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     fun attachAdaptiveBanner(activity: Activity, container: ViewGroup) {
         try {
             val containerId = container.hashCode()
 
-            container.visibility = View.GONE
+            // Limpiar contenedor
             container.removeAllViews()
-            container.minimumHeight = 0
+            container.visibility = View.VISIBLE
+
+            // Verificar si ya existe
+            if (bannersMap.containsKey(containerId)) {
+                Log.d(TAG, "Banner ya existe")
+                return
+            }
 
             if (!AdsInit.isAdMobReady()) {
+                Log.w(TAG, "AdMob no listo, reintentando...")
                 retryScope.launch {
-                    delay(5000)
-                    if (!activity.isFinishing && !activity.isDestroyed) {
+                    delay(3000)
+                    if (!activity.isFinishing) {
                         attachAdaptiveBanner(activity, container)
                     }
                 }
-                return
-            }
-
-            val currentTime = System.currentTimeMillis()
-            val lastTime = lastRequestTime[containerId] ?: 0L
-
-            if (currentTime - lastTime < MIN_REQUEST_INTERVAL) {
-                return
-            }
-
-            val failures = failureCount[containerId] ?: 0
-            if (failures >= MAX_FAILURES) {
                 return
             }
 
@@ -61,108 +47,67 @@ object BannerHelper {
                 return
             }
 
-            lastRequestTime[containerId] = currentTime
             loadingStatus[containerId] = true
 
+            // Calcular tamaño
             val adWidth = getAdaptiveBannerWidth(activity)
             val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, adWidth)
 
+            // Crear AdView
             val adView = AdView(activity).apply {
-                adUnitId = determineAdUnitId(activity, container)
+                adUnitId = determineAdUnitId(container)
                 setAdSize(adSize)
             }
 
+            Log.d(TAG, "Cargando banner con ID: ${adView.adUnitId}")
+
+            // Listener
             adView.adListener = object : AdListener() {
                 override fun onAdLoaded() {
-                    super.onAdLoaded()
+                    Log.d(TAG, "✅ Banner cargado")
                     bannersMap[containerId] = adView
                     loadingStatus[containerId] = false
-                    failureCount[containerId] = 0
 
                     activity.runOnUiThread {
-                        val density = activity.resources.displayMetrics.density
-                        val minHeightPx = (adSize.height * density).toInt()
-                        container.minimumHeight = minHeightPx
                         container.visibility = View.VISIBLE
-                        container.alpha = 0f
-                        container.animate()
-                            .alpha(1f)
-                            .setDuration(300)
-                            .start()
+                        val density = activity.resources.displayMetrics.density
+                        container.minimumHeight = (adSize.height * density).toInt()
                     }
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    super.onAdFailedToLoad(error)
-
-                    activity.runOnUiThread {
-                        container.visibility = View.GONE
-                        container.minimumHeight = 0
-                        container.removeAllViews()
-                    }
-
-                    failureCount[containerId] = (failureCount[containerId] ?: 0) + 1
+                    Log.e(TAG, "❌ Error: ${error.message}")
                     loadingStatus[containerId] = false
 
-                    handleAdError(error, activity, container, containerId)
+                    // Reintentar
+                    retryScope.launch {
+                        delay(30000) // 30 segundos
+                        if (!activity.isFinishing) {
+                            attachAdaptiveBanner(activity, container)
+                        }
+                    }
                 }
             }
 
-            val layoutParams = FrameLayout.LayoutParams(
+            // Añadir al contenedor
+            container.addView(adView, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
-            )
-            container.addView(adView, layoutParams)
-            container.visibility = View.GONE
+            ))
 
+            // Cargar anuncio
             val adRequest = AdRequest.Builder().build()
             adView.loadAd(adRequest)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error en attachAdaptiveBanner: ${e.message}")
+            Log.e(TAG, "Error: ${e.message}")
             loadingStatus[container.hashCode()] = false
-            container.visibility = View.GONE
-            container.minimumHeight = 0
         }
     }
 
-    private fun handleAdError(
-        error: LoadAdError,
-        activity: Activity,
-        container: ViewGroup,
-        containerId: Int
-    ) {
-        // Sin placeholders, solo ocultar el contenedor
-        activity.runOnUiThread {
-            container.visibility = View.GONE
-            container.minimumHeight = 0
-            container.removeAllViews()
-        }
-
-        val retryDelay = when (error.code) {
-            0 -> 300000L  // Error interno: 5 minutos
-            1 -> 240000L  // Request inválido: 4 minutos
-            2 -> 120000L  // Error de red: 2 minutos
-            3 -> NO_FILL_RETRY_DELAY // No fill: 3 minutos
-            else -> MIN_REQUEST_INTERVAL
-        }
-
-        lastRequestTime[containerId] = System.currentTimeMillis() + retryDelay - MIN_REQUEST_INTERVAL
-
-        retryScope.launch {
-            delay(retryDelay)
-            if (!activity.isFinishing && !activity.isDestroyed) {
-                if (failureCount[containerId] ?: 0 >= MAX_FAILURES) {
-                    failureCount[containerId] = 1
-                }
-                attachAdaptiveBanner(activity, container)
-            }
-        }
-    }
-
-    private fun determineAdUnitId(activity: Activity, container: ViewGroup): String {
+    private fun determineAdUnitId(container: ViewGroup): String {
         return try {
-            val resourceName = getResourceName(activity, container.id)
+            val resourceName = container.context.resources.getResourceEntryName(container.id)
             when {
                 resourceName.contains("bannerBottomContainer") -> currentBannerBottomUnitId()
                 resourceName.contains("adInProfileContainer") -> currentBannerTopUnitId()
@@ -173,75 +118,41 @@ object BannerHelper {
         }
     }
 
-    private fun getResourceName(activity: Activity, id: Int): String {
-        return try {
-            if (id == View.NO_ID) "NO_ID"
-            else activity.resources.getResourceEntryName(id)
-        } catch (e: Exception) {
-            "UNKNOWN_$id"
-        }
-    }
-
     private fun getAdaptiveBannerWidth(activity: Activity): Int {
         val displayMetrics = DisplayMetrics()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val windowMetrics: WindowMetrics = activity.windowManager.currentWindowMetrics
-            val bounds = windowMetrics.bounds
-            displayMetrics.widthPixels = bounds.width()
+            val windowMetrics = activity.windowManager.currentWindowMetrics
+            displayMetrics.widthPixels = windowMetrics.bounds.width()
             displayMetrics.density = activity.resources.displayMetrics.density
         } else {
             @Suppress("DEPRECATION")
             activity.windowManager.defaultDisplay?.getMetrics(displayMetrics)
         }
 
-        val density = displayMetrics.density
-        val adWidthPixels = displayMetrics.widthPixels.toFloat()
-        return (adWidthPixels / density).toInt()
+        return (displayMetrics.widthPixels / displayMetrics.density).toInt()
     }
 
     fun pauseBanners(container: ViewGroup) {
-        try {
-            bannersMap[container.hashCode()]?.pause()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error pausando banner: ${e.message}")
-        }
+        bannersMap[container.hashCode()]?.pause()
     }
 
     fun resumeBanners(container: ViewGroup) {
-        try {
-            bannersMap[container.hashCode()]?.resume()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error resumiendo banner: ${e.message}")
-        }
+        bannersMap[container.hashCode()]?.resume()
     }
 
     fun destroyBanners(container: ViewGroup) {
-        try {
-            val containerId = container.hashCode()
-            bannersMap[containerId]?.destroy()
-            bannersMap.remove(containerId)
-            loadingStatus.remove(containerId)
-            lastRequestTime.remove(containerId)
-            failureCount.remove(containerId)
-            container.removeAllViews()
-            container.visibility = View.GONE
-            container.minimumHeight = 0
-        } catch (e: Exception) {
-            Log.e(TAG, "Error destruyendo banner: ${e.message}")
-        }
+        val id = container.hashCode()
+        bannersMap[id]?.destroy()
+        bannersMap.remove(id)
+        loadingStatus.remove(id)
+        container.removeAllViews()
     }
 
     fun cleanup() {
-        try {
-            retryScope.cancel()
-            bannersMap.values.forEach { it.destroy() }
-            bannersMap.clear()
-            loadingStatus.clear()
-            lastRequestTime.clear()
-            failureCount.clear()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error en cleanup: ${e.message}")
-        }
+        retryScope.cancel()
+        bannersMap.values.forEach { it.destroy() }
+        bannersMap.clear()
+        loadingStatus.clear()
     }
 }

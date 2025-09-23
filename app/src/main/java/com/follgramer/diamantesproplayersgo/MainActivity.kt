@@ -212,18 +212,37 @@ class MainActivity : AppCompatActivity() {
 
     // REEMPLAZAR LA FUNCIÓN COMPLETA
     private fun loadBannersWhenReady() {
-        if (bannersLoaded || !AdsInit.isAdMobReady()) return
+        if (bannersLoaded) {
+            Log.d(TAG_MAIN, "Banners ya cargados")
+            return
+        }
+        if (!AdsInit.isAdMobReady()) {
+            Log.w(TAG_MAIN, "AdMob no está listo, reintentando...")
+            lifecycleScope.launch {
+                delay(2000)
+                withContext(Dispatchers.Main) {
+                    loadBannersWhenReady()
+                }
+            }
+            return
+        }
         lifecycleScope.launch {
-            delay(3000) // Solo 3 segundos
             withContext(Dispatchers.Main) {
                 try {
-                    BannerHelper.attachAdaptiveBanner(this@MainActivity, binding.sectionHome.adInProfileContainer)
-                    delay(2000)
-                    BannerHelper.attachAdaptiveBanner(this@MainActivity, binding.bannerBottomContainer)
+                    Log.d(TAG_MAIN, "🎯 Cargando banners...")
+                    // Banner superior
+                    val homeContainer = binding.sectionHome.adInProfileContainer
+                    homeContainer.visibility = View.VISIBLE
+                    BannerHelper.attachAdaptiveBanner(this@MainActivity, homeContainer)
+                    delay(1000)
+                    // Banner inferior
+                    val bottomContainer = binding.bannerBottomContainer
+                    bottomContainer.visibility = View.VISIBLE
+                    BannerHelper.attachAdaptiveBanner(this@MainActivity, bottomContainer)
                     bannersLoaded = true
-                    Log.d(TAG_MAIN, "Banners loaded successfully")
+                    Log.d(TAG_MAIN, "✅ Banners cargados")
                 } catch (e: Exception) {
-                    Log.e(TAG_MAIN, "Error loading banners: ${e.message}")
+                    Log.e(TAG_MAIN, "❌ Error: ${e.message}")
                 }
             }
         }
@@ -307,6 +326,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // BUSCA LA FUNCIÓN setupBasicUI() Y REEMPLÁZALA POR ESTA:
     private fun setupBasicUI() {
         try {
             Log.d(TAG_MAIN, "Configurando basic UI...")
@@ -316,7 +336,16 @@ class MainActivity : AppCompatActivity() {
             setupBackPressedHandler()
             hideAllSections()
             showSectionSafely(binding.sectionHome.root)
-            setupBannerContainers()
+            // CAMBIO IMPORTANTE: NO OCULTAR CONTENEDORES DE BANNERS
+            val homeContainer = binding.sectionHome.adInProfileContainer
+            val bottomContainer = binding.bannerBottomContainer
+            // Preparar contenedores pero MANTENER VISIBLES
+            homeContainer.removeAllViews()
+            bottomContainer.removeAllViews()
+            homeContainer.visibility = View.VISIBLE // VISIBLE, no GONE
+            bottomContainer.visibility = View.VISIBLE // VISIBLE, no GONE
+            homeContainer.minimumHeight = 1 // Altura mínima
+            bottomContainer.minimumHeight = 1 // Altura mínima
             currentSpins = SessionManager.getCurrentSpins(this)
             val playerId = SessionManager.getPlayerId(this)
             updateSpinCountUI()
@@ -349,28 +378,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // BUSCA LA FUNCIÓN scheduleBackgroundInitialization() Y REEMPLÁZALA POR ESTA:
     private fun scheduleBackgroundInitialization() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                delay(500L) // Reducir delay inicial
-
+                delay(500L)
                 initializeAdvertisingId()
-
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
                 if (playerId.isNotEmpty()) {
                     initializeUserSession(playerId)
                 }
-
                 withContext(Dispatchers.Main) {
                     AdManager.warmUp(this@MainActivity)
                     finalizeUIInitialization(playerId)
-
                     // Cargar banners más rápido
-                    delay(2000L) // Reduced from 3000L to 2000L
+                    delay(1500L) // Solo 1.5 segundos
                     loadBannersWhenReady()
                 }
             } catch (e: Exception) {
-                Log.e(TAG_MAIN, "Error en inicialización background: ${e.message}")
+                Log.e(TAG_MAIN, "Error: ${e.message}")
             }
         }
     }

@@ -225,16 +225,14 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- BANNER SUPERIOR - SIN BACKGROUND BLANCO -->
+        <!-- BANNER SUPERIOR CORREGIDO -->
         <FrameLayout
             android:id="@+id/adInProfileContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:visibility="gone" />
-        <!-- REMOVIDO: android:minHeight="50dp" -->
-        <!-- REMOVIDO: android:background="@android:color/white" -->
-        <!-- REMOVIDO: android:elevation="1dp" -->
+            android:visibility="visible" />
+        <!-- SIN background blanco ni minHeight -->
 
         <!-- MI PROGRESO -->
         <LinearLayout

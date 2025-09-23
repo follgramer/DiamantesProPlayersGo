@@ -9,8 +9,7 @@
         android:id="@+id/adContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="50dp"
-        android:background="@android:color/white"
-        android:elevation="1dp" />
+        android:visibility="visible" />
+    <!-- SIN minHeight ni background blanco -->
 
 </FrameLayout>

@@ -94,16 +94,14 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- BANNER INFERIOR - SIN BACKGROUND BLANCO -->
+        <!-- BANNER INFERIOR CORREGIDO -->
         <FrameLayout
             android:id="@+id/bannerBottomContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:visibility="gone" />
-        <!-- REMOVIDO: android:minHeight="50dp" -->
-        <!-- REMOVIDO: android:background="@android:color/white" -->
-        <!-- REMOVIDO: android:elevation="2dp" -->
+            android:visibility="visible" />
+        <!-- SIN background blanco ni minHeight -->
 
     </RelativeLayout>
 

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Banner dimensions - CORREGIDO para AdMob -->
-    <dimen name="banner_min_height">60dp</dimen>
-    <dimen name="banner_height">60dp</dimen>
+    <!-- Banner dimensions optimizadas para AdMob -->
+    <dimen name="banner_min_height">0dp</dimen>  <!-- Sin altura mínima forzada -->
+    <dimen name="banner_height">50dp</dimen>  <!-- Altura estándar de banner AdMob -->
     <dimen name="banner_max_height">250dp</dimen>
-    <dimen name="banner_margin">8dp</dimen>
+    <dimen name="banner_margin">0dp</dimen>  <!-- Sin márgenes que interfieran -->
 
     <!-- General spacing -->
     <dimen name="padding_small">8dp</dimen>
