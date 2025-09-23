@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Tema específico para Android 15 (API 35+) con manejo de edge-to-edge -->
+    <style name="Base.Theme.Diamantesproplayersgo" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/accent_color</item>
+        <item name="android:windowBackground">@color/primary_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+
+        <!-- Edge-to-edge enforcement para Android 15 -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:fitsSystemWindows">false</item>
+
+        <!-- NO usar windowOptOutEdgeToEdgeEnforcement ya que será deprecado en Android 16 -->
+        <!-- En su lugar, manejamos los insets programáticamente -->
+    </style>
+
+    <style name="Theme.Diamantesproplayersgo" parent="Base.Theme.Diamantesproplayersgo" />
+
+    <!-- Tema optimizado para actividades con anuncios fullscreen en Android 15 -->
+    <style name="Theme.DiamantesproplayersgoAds" parent="Base.Theme.Diamantesproplayersgo">
+        <!-- Configuraciones específicas para anuncios en Android 15 -->
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+
+        <!-- Asegurar que los anuncios pueden usar modo immersivo -->
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
+
+        <!-- Evitar que el modo oscuro altere creativos de anuncios -->
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+    </style>
+
+    <!-- Estilo para splash screen en Android 15 -->
+    <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/primary_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    </style>
+
+    <!-- Estilo para diálogos y modales en Android 15 -->
+    <style name="Theme.WithInterstitialAds" parent="Base.Theme.Diamantesproplayersgo">
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
+    </style>
+</resources>

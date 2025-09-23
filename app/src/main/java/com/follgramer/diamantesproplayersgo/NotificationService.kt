@@ -1,353 +1,472 @@
 package com.follgramer.diamantesproplayersgo
 
-import android.app.*
 import android.content.Context
-import android.content.Intent
-import android.graphics.Color
-import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
-import androidx.core.app.NotificationCompat
+import com.follgramer.diamantesproplayersgo.notifications.AppNotificationManager
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 
 class NotificationService : FirebaseMessagingService() {
 
     companion object {
-        private const val WINNER_CHANNEL_ID = "winner_notifications"
-        private const val GENERAL_CHANNEL_ID = "general_notifications"
-        private const val WINNER_NOTIFICATION_ID = 1001
-        private const val LOSER_NOTIFICATION_ID = 1002
+        private const val TAG = "FCM_Service"
+        private const val PREFS_NAME = "DiamantesProPrefs"
+        private const val KEY_PLAYER_ID = "PLAYER_ID"
     }
 
-    override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        super.onMessageReceived(remoteMessage)
-
-        Log.d("FCM_MESSAGE", "📱 Mensaje FCM recibido")
-        Log.d("FCM_MESSAGE", "From: ${remoteMessage.from}")
-        Log.d("FCM_MESSAGE", "Data: ${remoteMessage.data}")
-        Log.d("FCM_MESSAGE", "Notification: ${remoteMessage.notification}")
-
-        // ✅ DETERMINAR ESTADO DE LA APP
-        val isAppInForeground = isAppInForeground()
-        Log.d("FCM_MESSAGE", "App en foreground: $isAppInForeground")
-
-        val data = remoteMessage.data
-        val notification = remoteMessage.notification
-
-        if (data.isNotEmpty()) {
-            val type = data["type"] ?: "general"
-            val title = notification?.title ?: data["title"] ?: "Club de Recompensas"
-            val body = notification?.body ?: data["body"] ?: "Nueva notificación"
-            val message = data["message"] ?: body
-
-            Log.d("FCM_MESSAGE", "Procesando: $type - $title")
-
-            // ✅ SIEMPRE CREAR NOTIFICACIÓN (para garantizar que aparezca)
-            when (type) {
-                "win", "winner" -> sendWinnerNotification(title, message)
-                "loss", "loser" -> sendLoserNotification(title, message)
-                "test" -> sendTestNotification(title, message)
-                else -> sendGeneralNotification(title, message)
-            }
-        } else if (notification != null) {
-            // Si solo hay notification payload, crear notificación básica
-            Log.d("FCM_MESSAGE", "Solo notification payload, creando notificación básica")
-            sendGeneralNotification(
-                notification.title ?: "Club de Recompensas",
-                notification.body ?: "Nueva notificación"
-            )
-        } else {
-            Log.w("FCM_MESSAGE", "Mensaje FCM sin data ni notification")
-        }
-    }
-
-    private fun isAppInForeground(): Boolean {
-        return try {
-            val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            val appProcesses = activityManager.runningAppProcesses ?: return false
-
-            for (appProcess in appProcesses) {
-                if (appProcess.processName == packageName &&
-                    appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                    return true
-                }
-            }
-            false
-        } catch (e: Exception) {
-            Log.e("FCM_MESSAGE", "Error checking foreground state: ${e.message}")
-            false
-        }
-    }
-
-    private fun sendWinnerNotification(title: String, messageBody: String) {
-        Log.d("FCM_WINNER", "Creando notificación de ganador")
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            putExtra("notification_type", "winner")
-            putExtra("message", messageBody)
-            putExtra("redirect_to", "winners")
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            WINNER_NOTIFICATION_ID,
-            intent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            else PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        createNotificationChannel(WINNER_CHANNEL_ID, "Notificaciones de Ganadores", NotificationManager.IMPORTANCE_HIGH)
-
-        val notificationBuilder = NotificationCompat.Builder(this, WINNER_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("🏆 ¡GANADOR!")
-            .setContentText("¡Felicitaciones! Has ganado el sorteo.")
-            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
-            .setAutoCancel(true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setContentIntent(pendingIntent)
-            .setColor(Color.parseColor("#FFD700"))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000))
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setOnlyAlertOnce(false)
-            .setShowWhen(true)
-            .setWhen(System.currentTimeMillis())
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        try {
-            notificationManager.notify(WINNER_NOTIFICATION_ID, notificationBuilder.build())
-            Log.d("FCM_WINNER", "✅ Notificación de ganador enviada exitosamente")
-        } catch (e: Exception) {
-            Log.e("FCM_WINNER", "❌ Error enviando notificación de ganador: ${e.message}")
-        }
-    }
-
-    private fun sendLoserNotification(title: String, messageBody: String) {
-        Log.d("FCM_LOSER", "Creando notificación de sorteo finalizado")
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            putExtra("notification_type", "loser")
-            putExtra("message", messageBody)
-            putExtra("redirect_to", "winners")
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            LOSER_NOTIFICATION_ID,
-            intent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            else PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        createNotificationChannel(GENERAL_CHANNEL_ID, "Notificaciones Generales", NotificationManager.IMPORTANCE_DEFAULT)
-
-        val notificationBuilder = NotificationCompat.Builder(this, GENERAL_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("🎭 Sorteo Finalizado")
-            .setContentText("El sorteo ha finalizado. ¡Sigue participando!")
-            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
-            .setAutoCancel(true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setContentIntent(pendingIntent)
-            .setColor(Color.parseColor("#00A8FF"))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setShowWhen(true)
-            .setWhen(System.currentTimeMillis())
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        try {
-            notificationManager.notify(LOSER_NOTIFICATION_ID, notificationBuilder.build())
-            Log.d("FCM_LOSER", "✅ Notificación de sorteo enviada exitosamente")
-        } catch (e: Exception) {
-            Log.e("FCM_LOSER", "❌ Error enviando notificación de sorteo: ${e.message}")
-        }
-    }
-
-    private fun sendTestNotification(title: String, messageBody: String) {
-        Log.d("FCM_TEST", "Creando notificación de prueba")
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            putExtra("notification_type", "test")
-            putExtra("message", messageBody)
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            System.currentTimeMillis().toInt(),
-            intent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            else PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        createNotificationChannel(GENERAL_CHANNEL_ID, "Notificaciones Generales", NotificationManager.IMPORTANCE_DEFAULT)
-
-        val notificationBuilder = NotificationCompat.Builder(this, GENERAL_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("🔔 $title")
-            .setContentText(messageBody)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
-            .setAutoCancel(true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setContentIntent(pendingIntent)
-            .setColor(Color.parseColor("#FF9800"))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationId = System.currentTimeMillis().toInt()
-
-        try {
-            notificationManager.notify(notificationId, notificationBuilder.build())
-            Log.d("FCM_TEST", "✅ Notificación de prueba enviada exitosamente")
-        } catch (e: Exception) {
-            Log.e("FCM_TEST", "❌ Error enviando notificación de prueba: ${e.message}")
-        }
-    }
-
-    private fun sendGeneralNotification(title: String, messageBody: String) {
-        Log.d("FCM_GENERAL", "Creando notificación general")
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            putExtra("notification_type", "general")
-            putExtra("message", messageBody)
-        }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            System.currentTimeMillis().toInt(),
-            intent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            else PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        createNotificationChannel(GENERAL_CHANNEL_ID, "Notificaciones Generales", NotificationManager.IMPORTANCE_DEFAULT)
-
-        val notificationBuilder = NotificationCompat.Builder(this, GENERAL_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(title)
-            .setContentText(messageBody)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
-            .setAutoCancel(true)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setContentIntent(pendingIntent)
-            .setColor(Color.parseColor("#00A8FF"))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationId = System.currentTimeMillis().toInt()
-
-        try {
-            notificationManager.notify(notificationId, notificationBuilder.build())
-            Log.d("FCM_GENERAL", "✅ Notificación general enviada exitosamente")
-        } catch (e: Exception) {
-            Log.e("FCM_GENERAL", "❌ Error enviando notificación general: ${e.message}")
-        }
-    }
-
-    private fun createNotificationChannel(channelId: String, channelName: String, importance: Int) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-            if (notificationManager.getNotificationChannel(channelId) == null) {
-                val channel = NotificationChannel(channelId, channelName, importance).apply {
-                    description = "Notificaciones del club de recompensas"
-                    enableLights(true)
-                    lightColor = if (importance == NotificationManager.IMPORTANCE_HIGH) Color.YELLOW else Color.BLUE
-                    enableVibration(true)
-                    if (importance == NotificationManager.IMPORTANCE_HIGH) {
-                        vibrationPattern = longArrayOf(0, 1000, 500, 1000)
-                    }
-                    setSound(
-                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
-                        null
-                    )
-                    setShowBadge(true)
-                }
-                notificationManager.createNotificationChannel(channel)
-                Log.d("FCM_CHANNEL", "✅ Canal $channelId creado con importancia $importance")
-            } else {
-                Log.d("FCM_CHANNEL", "Canal $channelId ya existe")
-            }
-        }
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val firebaseDb by lazy {
+        FirebaseDatabase.getInstance("https://diamantes-pro-players-go-f3510-default-rtdb.firebaseio.com/").reference
     }
 
     override fun onNewToken(token: String) {
-        Log.d("FCM_TOKEN", "🔄 Nuevo token FCM generado: ${token.take(10)}...")
-        sendRegistrationToServer(token)
+        super.onNewToken(token)
+        Log.d(TAG, "🔑 Nuevo token FCM: ${token.take(20)}...")
 
-        // Actualizar token en Firebase Database si hay un usuario activo
-        try {
-            val playerId = getSharedPreferences("DiamantesProPrefs", Context.MODE_PRIVATE)
-                .getString("PLAYER_ID", "")
+        // Guardar token temporalmente
+        getSharedPreferences("fcm_prefs", MODE_PRIVATE).edit()
+            .putString("fcm_token", token)
+            .putLong("token_timestamp", System.currentTimeMillis())
+            .apply()
 
-            if (!playerId.isNullOrEmpty()) {
-                updateTokenInDatabase(playerId, token)
-            } else {
-                Log.d("FCM_TOKEN", "No hay playerId activo, token guardado localmente")
-            }
-        } catch (e: Exception) {
-            Log.e("FCM_TOKEN", "❌ Error actualizando token: ${e.message}")
+        // Intentar actualizar en Firebase
+        val playerId = getCurrentPlayerId()
+        if (playerId.isNotEmpty()) {
+            updateTokenInFirebase(playerId, token)
         }
     }
 
-    private fun sendRegistrationToServer(token: String) {
-        Log.d("FCM_TOKEN", "📤 Token enviado al sistema: ${token.take(10)}...")
+    override fun onMessageReceived(message: RemoteMessage) {
+        super.onMessageReceived(message)
+
+        try {
+            Log.d(TAG, "📨 Mensaje FCM recibido")
+            Log.d(TAG, "From: ${message.from}")
+            Log.d(TAG, "Data: ${message.data}")
+            Log.d(TAG, "Notification: ${message.notification}")
+
+            val playerId = getCurrentPlayerId()
+            val data = message.data
+            val notification = message.notification
+
+            // Determinar el tipo de notificación
+            val type = data["type"] ?: when {
+                data.containsKey("winner_id") -> "loser"
+                data.containsKey("ban_type") -> "ban"
+                data.containsKey("amount") && data.containsKey("unit") -> "gift"
+                notification?.title?.contains("GANADOR", ignoreCase = true) == true -> "winner"
+                notification?.title?.contains("Sorteo", ignoreCase = true) == true -> "loser"
+                else -> "general"
+            }
+
+            // Procesar según el tipo
+            when (type) {
+                "winner", "win" -> processWinnerNotification(message, playerId)
+                "loser", "loss" -> processLoserNotification(message, playerId)
+                "gift" -> processGiftNotification(message, playerId)
+                "ban" -> processBanNotification(message, playerId)
+                "unban" -> processUnbanNotification(message, playerId)
+                "weekly_draw" -> processWeeklyDrawNotification(message, playerId)
+                "test" -> processTestNotification(message, playerId)
+                else -> processGeneralNotification(message, playerId)
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error procesando mensaje FCM: ${e.message}", e)
+        }
     }
 
-    private fun updateTokenInDatabase(playerId: String, token: String) {
-        try {
-            val tokenData = mapOf(
-                "token" to token,
-                "timestamp" to System.currentTimeMillis(),
-                "deviceInfo" to "${Build.MANUFACTURER} ${Build.MODEL}",
-                "androidVersion" to Build.VERSION.RELEASE,
-                "lastUpdate" to System.currentTimeMillis()
-            )
+    private fun processWinnerNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
 
-            com.google.firebase.database.FirebaseDatabase.getInstance()
-                .getReference("playerTokens")
-                .child(playerId)
-                .setValue(tokenData)
-                .addOnSuccessListener {
-                    Log.d("FCM_TOKEN", "✅ Token actualizado en database para: $playerId")
+        val title = data["title"] ?: notification?.title ?: "🏆 ¡FELICITACIONES, GANADOR!"
+        val body = data["body"] ?: data["message"] ?: notification?.body
+        ?: "¡Has ganado el sorteo semanal! Te contactaremos pronto."
+        val prize = data["prize"] ?: "Premio Sorpresa"
+
+        // Guardar en notificationQueue si tenemos playerId
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "winner",
+                title = title,
+                body = body,
+                message = "$body\nPremio: $prize",
+                extraData = mapOf("prize" to prize)
+            )
+        }
+
+        // Mostrar a través del AppNotificationManager
+        showThroughNotificationManager(
+            type = "winner",
+            title = title,
+            message = "$body\nPremio: $prize",
+            data = mapOf("prize" to prize)
+        )
+    }
+
+    private fun processLoserNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val title = data["title"] ?: notification?.title ?: "📢 Sorteo Finalizado"
+        val body = data["body"] ?: data["message"] ?: notification?.body
+        ?: "El sorteo ha finalizado. ¡Sigue participando!"
+        val winnerId = data["winner_id"] ?: ""
+
+        val finalMessage = if (winnerId.isNotEmpty()) {
+            "$body\nGanador: $winnerId"
+        } else body
+
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "loser",
+                title = title,
+                body = body,
+                message = finalMessage,
+                extraData = mapOf("winner_id" to winnerId)
+            )
+        }
+
+        showThroughNotificationManager(
+            type = "loser",
+            title = title,
+            message = finalMessage,
+            data = mapOf("winner_id" to winnerId)
+        )
+    }
+
+    private fun processGiftNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val title = data["title"] ?: notification?.title ?: "🎁 Regalo Recibido"
+        val amount = data["amount"] ?: "0"
+        val unit = data["unit"] ?: "tickets"
+        val customMessage = data["message"] ?: notification?.body ?: ""
+
+        val body = when {
+            customMessage.isNotEmpty() -> customMessage
+            unit == "passes" -> "¡Has recibido $amount ${if (amount == "1") "pase" else "pases"}!"
+            unit == "tickets" -> "¡Has recibido $amount tickets!"
+            unit == "spins" -> "¡Has recibido $amount giros!"
+            else -> "¡Tienes un regalo del administrador!"
+        }
+
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "gift",
+                title = title,
+                body = body,
+                message = body,
+                extraData = mapOf("amount" to amount, "unit" to unit)
+            )
+        }
+
+        showThroughNotificationManager(
+            type = "gift",
+            title = title,
+            message = body,
+            data = mapOf("amount" to amount, "unit" to unit)
+        )
+    }
+
+    private fun processBanNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val banType = data["ban_type"] ?: "temporary"
+        val reason = data["reason"] ?: data["message"] ?: notification?.body ?: "Violación de términos"
+        val expiresAt = data["expires_at"] ?: "0"
+
+        val title = if (banType == "permanent") {
+            "🚫 Cuenta Suspendida Permanentemente"
+        } else {
+            "⚠️ Suspensión Temporal"
+        }
+
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "ban",
+                title = title,
+                body = reason,
+                message = reason,
+                extraData = mapOf(
+                    "ban_type" to banType,
+                    "expires_at" to expiresAt
+                )
+            )
+        }
+
+        showThroughNotificationManager(
+            type = "ban",
+            title = title,
+            message = reason,
+            data = mapOf(
+                "ban_type" to banType,
+                "expires_at" to expiresAt
+            )
+        )
+    }
+
+    private fun processUnbanNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val title = data["title"] ?: notification?.title ?: "✅ Cuenta Reactivada"
+        val body = data["body"] ?: data["message"] ?: notification?.body
+        ?: "Tu cuenta ha sido reactivada. ¡Bienvenido de vuelta!"
+
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "unban",
+                title = title,
+                body = body,
+                message = body
+            )
+        }
+
+        showThroughNotificationManager(
+            type = "unban",
+            title = title,
+            message = body
+        )
+    }
+
+    private fun processWeeklyDrawNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val status = data["status"] ?: "update"
+        val title = data["title"] ?: notification?.title ?: "🎰 Sorteo Semanal"
+        val body = data["body"] ?: data["message"] ?: notification?.body ?: ""
+
+        val finalTitle = when (status) {
+            "starting" -> "🎲 ¡Sorteo Iniciando!"
+            "completed" -> "🏆 Sorteo Completado"
+            else -> title
+        }
+
+        val finalMessage = when (status) {
+            "starting" -> body.ifEmpty { "El sorteo semanal está por comenzar" }
+            "completed" -> {
+                val winnerId = data["winner_id"] ?: ""
+                if (winnerId.isNotEmpty()) {
+                    "Ganador: $winnerId\n$body"
+                } else body
+            }
+            else -> body
+        }
+
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "weekly_draw",
+                title = finalTitle,
+                body = finalMessage,
+                message = finalMessage,
+                extraData = mapOf("status" to status)
+            )
+        }
+
+        showThroughNotificationManager(
+            type = "weekly_draw",
+            title = finalTitle,
+            message = finalMessage,
+            data = mapOf("status" to status)
+        )
+    }
+
+    private fun processTestNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val title = data["title"] ?: notification?.title ?: "🧪 Notificación de Prueba"
+        val body = data["body"] ?: data["message"] ?: notification?.body ?: "Esta es una prueba"
+
+        if (playerId.isNotEmpty()) {
+            saveToNotificationQueue(
+                playerId = playerId,
+                type = "test",
+                title = title,
+                body = body,
+                message = body
+            )
+        }
+
+        showThroughNotificationManager(
+            type = "test",
+            title = title,
+            message = body
+        )
+    }
+
+    private fun processGeneralNotification(message: RemoteMessage, playerId: String) {
+        val data = message.data
+        val notification = message.notification
+
+        val title = data["title"] ?: notification?.title ?: "📢 Notificación"
+        val body = data["body"] ?: data["message"] ?: notification?.body ?: ""
+
+        if (body.isNotEmpty()) {
+            if (playerId.isNotEmpty()) {
+                saveToNotificationQueue(
+                    playerId = playerId,
+                    type = "general",
+                    title = title,
+                    body = body,
+                    message = body
+                )
+            }
+
+            showThroughNotificationManager(
+                type = "general",
+                title = title,
+                message = body
+            )
+        }
+    }
+
+    private fun saveToNotificationQueue(
+        playerId: String,
+        type: String,
+        title: String,
+        body: String,
+        message: String,
+        extraData: Map<String, String> = emptyMap()
+    ) {
+        serviceScope.launch {
+            try {
+                val notificationId = "${System.currentTimeMillis()}_${type}_${(0..9999).random()}"
+
+                val notificationData = mutableMapOf(
+                    "type" to type,
+                    "title" to title,
+                    "body" to body,
+                    "message" to message,
+                    "timestamp" to ServerValue.TIMESTAMP,
+                    "processed" to false
+                )
+
+                // Agregar datos extra si existen
+                extraData.forEach { (key, value) ->
+                    notificationData[key] = value
                 }
-                .addOnFailureListener { error ->
-                    Log.e("FCM_TOKEN", "❌ Error actualizando token en database: ${error.message}")
-                }
+
+                firebaseDb.child("notificationQueue")
+                    .child(playerId)
+                    .child(notificationId)
+                    .setValue(notificationData)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "✅ Notificación guardada en queue: $type")
+                    }
+                    .addOnFailureListener { error ->
+                        Log.e(TAG, "❌ Error guardando en queue: ${error.message}")
+                    }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error en saveToNotificationQueue: ${e.message}")
+            }
+        }
+    }
+
+    private fun showThroughNotificationManager(
+        type: String,
+        title: String,
+        message: String,
+        data: Map<String, String> = emptyMap()
+    ) {
+        serviceScope.launch {
+            try {
+                val notificationManager = AppNotificationManager.getInstance(applicationContext)
+
+                val notificationData = AppNotificationManager.NotificationData(
+                    id = "${System.currentTimeMillis()}_${type}_fcm",
+                    type = type,
+                    title = title,
+                    body = message,
+                    message = message,
+                    timestamp = System.currentTimeMillis(),
+                    amount = data["amount"],
+                    unit = data["unit"],
+                    ban_type = data["ban_type"],
+                    expires_at = data["expires_at"]
+                )
+
+                // Procesar directamente sin pasar por Firebase
+                notificationManager.processDirectNotification(notificationData)
+
+                Log.d(TAG, "✅ Notificación procesada localmente: $type")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error mostrando notificación: ${e.message}")
+            }
+        }
+    }
+
+    private fun getCurrentPlayerId(): String {
+        return try {
+            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_PLAYER_ID, "") ?: ""
         } catch (e: Exception) {
-            Log.e("FCM_TOKEN", "❌ Error en updateTokenInDatabase: ${e.message}")
+            Log.e(TAG, "Error obteniendo playerId: ${e.message}")
+            ""
+        }
+    }
+
+    private fun updateTokenInFirebase(playerId: String, token: String) {
+        if (playerId.isEmpty()) return
+
+        serviceScope.launch {
+            try {
+                val tokenData = mapOf(
+                    "token" to token,
+                    "timestamp" to ServerValue.TIMESTAMP,
+                    "deviceInfo" to "${Build.MANUFACTURER} ${Build.MODEL}",
+                    "androidVersion" to Build.VERSION.RELEASE,
+                    "appVersion" to try {
+                        packageManager.getPackageInfo(packageName, 0).versionName
+                    } catch (e: Exception) {
+                        "unknown"
+                    },
+                    "lastUpdate" to ServerValue.TIMESTAMP
+                )
+
+                firebaseDb.child("playerTokens")
+                    .child(playerId)
+                    .setValue(tokenData)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "✅ Token actualizado para: ***${playerId.takeLast(3)}")
+                    }
+                    .addOnFailureListener { error ->
+                        Log.e(TAG, "❌ Error actualizando token: ${error.message}")
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error en updateTokenInFirebase: ${e.message}")
+            }
         }
     }
 
     override fun onDeletedMessages() {
         super.onDeletedMessages()
-        Log.w("FCM_MESSAGE", "⚠️ Mensajes FCM eliminados (demasiados pendientes)")
+        Log.w(TAG, "⚠️ Mensajes FCM eliminados por exceso")
     }
 
-    @Deprecated("This method is deprecated")
-    override fun onMessageSent(msgId: String) {
-        super.onMessageSent(msgId)
-        Log.d("FCM_MESSAGE", "✅ Mensaje FCM enviado: $msgId")
-    }
-
-    @Deprecated("This method is deprecated")
-    override fun onSendError(msgId: String, exception: Exception) {
-        super.onSendError(msgId, exception)
-        Log.e("FCM_MESSAGE", "❌ Error enviando mensaje FCM $msgId: ${exception.message}")
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
     }
 }

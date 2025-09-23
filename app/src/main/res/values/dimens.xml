@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Banner dimensions - CORREGIDO para AdMob -->
+    <dimen name="banner_min_height">60dp</dimen>
+    <dimen name="banner_height">60dp</dimen>
+    <dimen name="banner_max_height">250dp</dimen>
+    <dimen name="banner_margin">8dp</dimen>
+
+    <!-- General spacing -->
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">12dp</dimen>
+    <dimen name="padding_large">16dp</dimen>
+
+    <!-- Text sizes -->
+    <dimen name="text_size_small">12sp</dimen>
+    <dimen name="text_size_medium">14sp</dimen>
+    <dimen name="text_size_large">16sp</dimen>
+    <dimen name="text_size_xlarge">18sp</dimen>
+
+    <!-- Layout dimensions -->
+    <dimen name="card_radius">8dp</dimen>
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
+
+    <!-- Container dimensions -->
+    <dimen name="container_margin">12dp</dimen>
+    <dimen name="container_padding">16dp</dimen>
+
+    <!-- Grid dimensions -->
+    <dimen name="grid_item_size">80dp</dimen>
+    <dimen name="grid_spacing">8dp</dimen>
+</resources>

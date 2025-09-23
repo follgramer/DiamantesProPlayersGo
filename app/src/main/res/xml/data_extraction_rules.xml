@@ -1,19 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Incluir datos importantes -->
+        <include domain="sharedpref" path="DiamantesProPrefs"/>
+        <include domain="database" path="."/>
+
+        <!-- Excluir datos sensibles -->
+        <exclude domain="sharedpref" path="com.google.android.gms.ads.identifier.service.START"/>
+        <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
+        <exclude domain="sharedpref" path="com.google.firebase.auth"/>
+        <exclude domain="sharedpref" path="com.google.android.gms"/>
+        <exclude domain="sharedpref" path="androidx.work.workdb"/>
+        <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+        <exclude domain="sharedpref" path="measurement.prefs"/>
+        <exclude domain="sharedpref" path="gms_ads_flags"/>
     </cloud-backup>
-    <!--
+
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!-- Incluir datos importantes para transferencia -->
+        <include domain="sharedpref" path="DiamantesProPrefs"/>
+        <include domain="database" path="."/>
+
+        <!-- Excluir datos que no deben transferirse -->
+        <exclude domain="sharedpref" path="com.google.android.gms"/>
+        <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
+        <exclude domain="sharedpref" path="androidx.work.workdb"/>
+        <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+        <exclude domain="sharedpref" path="device.xml"/>
+        <exclude domain="sharedpref" path="InstallationId"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Estado cuando el botón está desactivado -->
-    <item android:state_enabled="false"
-        android:drawable="@drawable/background_button_disabled" />
-    <!-- Estado por defecto (activado) -->
-    <item android:drawable="@drawable/background_button_main" />
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="@color/button_primary_pressed" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item android:state_enabled="false">
+        <shape>
+            <solid android:color="@color/spinner_disabled" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="@color/button_primary" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
 </selector>

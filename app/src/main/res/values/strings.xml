@@ -4,6 +4,13 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <!-- NECESARIO: usado por el AndroidManifest -->
+    <string name="admob_app_id">ca-app-pub-2024712392092488~7992650364</string>
+
+    <!-- AÑADIDO: Strings para activity_main.xml -->
+    <string name="privacy_policy">Políticas de Privacidad</string>
+    <string name="terms_conditions">Términos y Condiciones</string>
+
     <!-- Strings para BanActivity -->
     <string name="default_ban_reason">Violación de las normas de la comunidad</string>
     <string name="temporary_ban_title">Advertencia Temporal</string>
@@ -27,6 +34,8 @@
     <string name="suspension_lifted">¡Suspensión levantada! Bienvenido de vuelta</string>
     <string name="suspension_still_active">La suspensión aún está activa</string>
     <string name="permanent_suspension_active">La suspensión permanente sigue activa</string>
+    <string name="weekly_prize_template">Premio de esta semana: %1$s</string>
+    <string name="weekly_prize_placeholder">Premio de esta semana: —</string>
 
     <string name="privacy_policy_content">
         <![CDATA[
@@ -39,7 +48,7 @@
         <b>1. INFORMACIÓN QUE RECOPILAMOS</b><br><br>
 
         <b>1.1 Información Personal Proporcionada Voluntariamente:</b><br>
-        • <b>ID de Jugador de FFire:</b> Número de identificación único que usted proporciona voluntariamente para participar en sorteos y recibir premios.<br>
+        • <b>ID de Jugador de Free Fire:</b> Número de identificación único que usted proporciona voluntariamente para participar en sorteos y recibir premios.<br>
         • <b>Datos de Contacto:</b> Información necesaria para coordinar la entrega de premios cuando corresponda.<br><br>
 
         <b>1.2 Información de Uso de la Aplicación:</b><br>
@@ -94,7 +103,7 @@
 
         <b>4. COMPARTIR INFORMACIÓN</b><br><br>
 
-        <b>No vendemos, alquilamos ni comercializamos suinformación personal.</b> Podemos compartir información limitada en los siguientes casos:<br><br>
+        <b>No vendemos, alquilamos ni comercializamos su información personal.</b> Podemos compartir información limitada en los siguientes casos:<br><br>
 
         • <b>Proveedores de Servicios:</b> Con terceros que nos ayudan a operar la aplicación (bajo estrictos acuerdos de confidencialidad).<br>
         • <b>Cumplimiento Legal:</b> Cuando sea requerido por ley o para proteger nuestros derechos legales.<br>
@@ -159,10 +168,18 @@
 
         <b>Para consultas sobre privacidad o ejercer sus derechos, contáctenos:</b><br>
         • A través de la sección "Soporte" en la aplicación<br>
-        • Email: privacidad@diamantesproplayersgo.com<br>
+        • Email: follgramer@gmail.com<br>
         • Tiempo de respuesta: Máximo 30 días hábiles<br><br>
 
-        <b>11. BASE LEGAL PARA EL PROCESAMIENTO (GDPR/LGPD)</b><br><br>
+        <b>11. DESCARGO DE RESPONSABILIDAD Y AFILIACIÓN</b><br><br>
+
+        • <b>NO AFILIACIÓN OFICIAL:</b> Esta aplicación NO está oficialmente afiliada, respaldada, patrocinada o aprobada por Garena International I Private Limited, Free Fire, o cualquiera de sus subsidiarias o marcas relacionadas.<br>
+        • <b>MARCAS REGISTRADAS:</b> "Free Fire" y todos los elementos relacionados son marcas comerciales registradas de Garena International I Private Limited. Su uso es únicamente con fines descriptivos y de referencia.<br>
+        • <b>SERVICIO INDEPENDIENTE:</b> Los sorteos, premios y servicios son proporcionados independientemente por los desarrolladores de esta aplicación.<br>
+        • <b>MÉTODO DE ENTREGA:</b> Los premios son adquiridos y entregados por los desarrolladores a través de https://pagostore.garena.com/<br>
+        • <b>RESPONSABILIDAD FINANCIERA:</b> Todos los costos son cubiertos por los desarrolladores, sin costo para Garena.<br><br>
+
+        <b>12. BASE LEGAL PARA EL PROCESAMIENTO (GDPR/LGPD)</b><br><br>
 
         • <b>Consentimiento:</b> Para marketing y comunicaciones promocionales.<br>
         • <b>Ejecución de Contrato:</b> Para proporcionar servicios de la aplicación.<br>
@@ -205,7 +222,7 @@
         • <b>Diamantes pro players Go</b> es una aplicación de entretenimiento que ofrece la oportunidad de participar en sorteos semanales.<br>
         • Los usuarios pueden acumular "tickets" mediante actividades en la aplicación.<br>
         • Los tickets se convierten automáticamente en "pases" de sorteo (1,000 tickets = 1 pase).<br>
-        • Los sorteos ofrecen premios relacionados con el juego FFire (diamantes, pases, etc.).<br><br>
+        • Los sorteos ofrecen premios relacionados con el juego Free Fire (diamantes, pases, etc.).<br><br>
 
         <b>2.2 Disponibilidad del Servicio:</b><br>
         • El servicio se proporciona "tal como está" y "según disponibilidad".<br>
@@ -224,7 +241,7 @@
         <b>3.2 Conducta Prohibida:</b><br>
         • <b>Fraude y Trampa:</b> Uso de bots, scripts, exploits, hacks o cualquier software automatizado.<br>
         • <b>Múltiples Cuentas:</b> Crear o mantener más de una cuenta por persona.<br>
-        • <b>Información Falsa:</b> Proporcionar datos falsos, especialmente ID de FFire inválidos.<br>
+        • <b>Información Falsa:</b> Proporcionar datos falsos, especialmente ID de Free Fire inválidos.<br>
         • <b>Abuso del Sistema:</b> Intentar manipular sorteos, sistemas de puntuación o algoritmos.<br>
         • <b>Actividades Ilegales:</b> Usar la aplicación para cualquier propósito ilegal o no autorizado.<br>
         • <b>Comportamiento Abusivo:</b> Acoso, spam, comportamiento ofensivo hacia otros usuarios o nuestro equipo.<br>
@@ -238,7 +255,7 @@
         <b>4. SISTEMA DE PREMIOS Y SORTEOS</b><br><br>
 
         <b>4.1 Elegibilidad para Premios:</b><br>
-        • Solo usuarios con ID de FFire válido y verificable pueden participar.<br>
+        • Solo usuarios con ID de Free Fire válido y verificable pueden participar.<br>
         • Debe tener al menos 1 pase completo para participar en sorteos semanales.<br>
         • Empleados de la empresa y familiares directos están excluidos de premios.<br>
         • Restricciones geográficas pueden aplicar según regulaciones locales.<br><br>
@@ -251,13 +268,13 @@
 
         <b>4.3 Entrega de Premios:</b><br>
         • <b>Plazo:</b> Premios entregados dentro de 24-72 horas hábiles.<br>
-        • <b>Verificación:</b> Ganadores deben verificar identidad y validez del ID de FFire.<br>
+        • <b>Verificación:</b> Ganadores deben verificar identidad y validez del ID de Free Fire.<br>
         • <b>Comunicación:</b> Contacto inicial a través de notificaciones in-app y métodos alternativos.<br>
         • <b>Documentación:</b> Proceso de entrega documentado para transparencia.<br><br>
 
         <b>4.4 Limitaciones de Premios:</b><br>
         • Premios son personales, intransferibles y no canjeables por dinero.<br>
-        • No somos responsables por problemas en la cuenta de FFire del ganador.<br>
+        • No somos responsables por problemas en la cuenta de Free Fire del ganador.<br>
         • Premios sujetos a disponibilidad y términos del proveedor (Garena).<br>
         • Ganadores pueden ser requeridos para fines promocionales (con consentimiento).<br><br>
 
@@ -289,7 +306,7 @@
         • No se otorga ninguna licencia más allá del uso personal no comercial.<br><br>
 
         <b>6.2 Marcas de Terceros:</b><br>
-        • <b>"FFire"</b> es marca registrada de Garena International I Private Limited.<br>
+        • <b>"Free Fire"</b> es marca registrada de Garena International I Private Limited.<br>
         • <b>"Google"</b>, <b>"AdMob"</b>, <b>"Firebase"</b> son marcas de Google LLC.<br>
         • No estamos afiliados oficialmente con Garena o Google.<br>
         • Uso de marcas bajo principios de uso legítimo y referencia.<br><br>
@@ -369,32 +386,60 @@
         • Eliminación de datos según nuestra Política de Privacidad.<br>
         • Supervivencia de términos que por naturaleza deben continuar (indemnización, limitaciones de responsabilidad).<br><br>
 
-        <b>12. DISPOSICIONES GENERALES</b><br><br>
+        <b>12. DESCARGO DE RESPONSABILIDAD Y AFILIACIÓN CON GARENA</b><br><br>
 
-        <b>12.1 Integridad del Acuerdo:</b><br>
+        <b>12.1 No Afiliación Oficial:</b><br>
+        • Esta aplicación <b>NO está oficialmente afiliada, respaldada, patrocinada o aprobada</b> por Garena International I Private Limited, Free Fire, o cualquiera de sus subsidiarias.<br>
+        • Los sorteos y premios son proporcionados de manera completamente <b>independiente</b> por los desarrolladores de esta aplicación.<br>
+        • Cualquier referencia a Free Fire se utiliza únicamente con fines descriptivos bajo el principio de uso legítimo.<br><br>
+
+        <b>12.2 Marcas Comerciales:</b><br>
+        • "Free Fire" y todos los elementos relacionados son <b>marcas comerciales registradas</b> de Garena International I Private Limited.<br>
+        • Su uso en esta aplicación es únicamente con <b>fines descriptivos y de referencia</b>.<br>
+        • No reclamamos ninguna propiedad sobre estas marcas comerciales.<br><br>
+
+        <b>12.3 Método de Entrega de Premios:</b><br>
+        • Los premios en diamantes de Free Fire son <b>adquiridos y entregados por los desarrolladores</b> de esta aplicación.<br>
+        • La entrega se realiza a través de la plataforma oficial: <b>https://pagostore.garena.com/</b><br>
+        • <b>Todos los costos</b> de los premios son cubiertos íntegramente por los desarrolladores de esta aplicación.<br>
+        • No recibimos ningún beneficio económico o patrocinio de Garena International I Private Limited.<br><br>
+
+        <b>12.4 Limitación de Responsabilidad de Garena:</b><br>
+        • Garena International I Private Limited <b>no es responsable</b> de ningún aspecto de esta aplicación, sus sorteos, premios, o cualquier problema técnico que pueda surgir.<br>
+        • La entrega de premios está sujeta a la <b>disponibilidad de la plataforma oficial</b> de Garena y puede verse afectada por cambios en sus políticas o servicios.<br>
+        • En caso de problemas con la plataforma de Garena, los desarrolladores buscarán métodos alternativos de entrega o compensación equivalente.<br><br>
+
+        <b>12.5 Derechos de Garena:</b><br>
+        • Garena International I Private Limited se reserva todos los derechos sobre sus marcas comerciales y propiedad intelectual.<br>
+        • Si Garena solicita la modificación o eliminación de cualquier elemento de esta aplicación, cumpliremos inmediatamente con dicha solicitud.<br>
+        • Reconocemos el derecho de Garena a proteger sus marcas comerciales y propiedad intelectual.<br><br>
+
+        <b>13. DISPOSICIONES GENERALES</b><br><br>
+
+        <b>13.1 Integridad del Acuerdo:</b><br>
         • Estos términos y la Política de Privacidad constituyen el acuerdo completo entre las partes.<br>
         • Reemplazan todos los acuerdos, comunicaciones y entendimientos previos.<br><br>
 
-        <b>12.2 Divisibilidad:</b><br>
+        <b>13.2 Divisibilidad:</b><br>
         • Si cualquier disposición es declarada inválida, el resto permanece en pleno vigor.<br>
         • Las disposiciones inválidas serán reemplazadas por otras válidas de efecto similar.<br><br>
 
-        <b>12.3 Renuncia:</b><br>
+        <b>13.3 Renuncia:</b><br>
         • La falta de ejercer un derecho no constituye renuncia al mismo.<br>
         • Las renuncias deben ser por escrito y firmadas por la parte que renuncia.<br><br>
 
-        <b>12.4 Cesión:</b><br>
+        <b>13.4 Cesión:</b><br>
         • Usted no puede ceder sus derechos u obligaciones bajo estos términos.<br>
         • Podemos ceder nuestros derechos a afiliados o en caso de transacciones comerciales.<br><br>
 
-        <b>13. INFORMACIÓN DE CONTACTO</b><br><br>
+        <b>14. INFORMACIÓN DE CONTACTO</b><br><br>
 
         <b>Para consultas, soporte o asuntos legales:</b><br><br>
 
         • <b>Soporte Técnico:</b> A través de la aplicación en sección "Ayuda"<br>
-        • <b>Consultas Legales:</b> legal@diamantesproplayersgo.com<br>
-        • <b>Privacidad:</b> privacidad@diamantesproplayersgo.com<br>
-        • <b>Reportar Abuso:</b> abuse@diamantesproplayersgo.com<br><br>
+        • <b>Consultas Legales:</b> follgramer@gmail.com<br>
+        • <b>Privacidad:</b> follgramer@gmail.com<br>
+        • <b>Reportar Abuso:</b> follgramer@gmail.com<br><br>
 
         <b>Tiempo de respuesta:</b> Máximo 72 horas para consultas urgentes, 7 días hábiles para consultas generales.<br><br>
 

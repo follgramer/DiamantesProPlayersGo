@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
@@ -7,51 +8,69 @@
     android:layout_height="match_parent"
     android:background="@color/primary_bg"
     android:fitsSystemWindows="true"
-    tools:context=".MainActivity"
-    tools:openDrawer="start">
+    tools:context=".MainActivity">
 
-    <!-- Contenido Principal de la App -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
 
-        <!-- Barra Superior -->
+        <!-- TOOLBAR CON NOTIFICACIONES -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="56dp"
             android:layout_alignParentTop="true"
             android:background="@color/secondary_bg"
             android:elevation="4dp">
 
-            <TextView
-                android:id="@+id/toolbar_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:fontFamily="@font/montserrat_extrabold"
-                android:text="@string/header_title"
-                android:textColor="@color/accent_color"
-                android:textSize="20sp" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="16dp">
 
+                <!-- Botón de Notificaciones con Badge -->
+                <FrameLayout
+                    android:id="@+id/notificationButton"
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentEnd="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notification"
+                        android:tint="@color/text_color" />
+
+                    <TextView
+                        android:id="@+id/notificationBadge"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/badge_background"
+                        android:gravity="center"
+                        android:text="0"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+            </RelativeLayout>
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Banner Ad Fijo en la parte inferior -->
-        <com.google.android.gms.ads.AdView
-            android:id="@+id/adViewBottom"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            app:adSize="BANNER"
-            app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
-
-        <!-- Contenedor para las secciones (ocupa el espacio restante) -->
+        <!-- CONTENEDOR PRINCIPAL -->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@id/adViewBottom"
+            android:layout_above="@id/bannerBottomContainer"
             android:layout_below="@id/toolbar">
 
             <include
@@ -59,86 +78,101 @@
                 layout="@layout/section_home" />
             <include
                 android:id="@+id/section_tasks"
-                layout="@layout/section_tasks" />
+                layout="@layout/section_tasks"
+                android:visibility="gone" />
             <include
                 android:id="@+id/section_leaderboard"
-                layout="@layout/section_leaderboard" />
+                layout="@layout/section_leaderboard"
+                android:visibility="gone" />
             <include
                 android:id="@+id/section_winners"
-                layout="@layout/section_winners" />
+                layout="@layout/section_winners"
+                android:visibility="gone" />
             <include
                 android:id="@+id/section_legal"
-                layout="@layout/section_legal" />
-
+                layout="@layout/section_legal"
+                android:visibility="gone" />
         </FrameLayout>
+
+        <!-- BANNER INFERIOR - SIN BACKGROUND BLANCO -->
+        <FrameLayout
+            android:id="@+id/bannerBottomContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:visibility="gone" />
+        <!-- REMOVIDO: android:minHeight="50dp" -->
+        <!-- REMOVIDO: android:background="@android:color/white" -->
+        <!-- REMOVIDO: android:elevation="2dp" -->
 
     </RelativeLayout>
 
-    <!-- Menú de Navegación Lateral -->
+    <!-- NAVIGATION DRAWER -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/secondary_bg"
+        android:fitsSystemWindows="true"
         android:orientation="vertical">
 
-        <!-- Header del Navigation -->
         <include layout="@layout/nav_header" />
 
-        <!-- NavigationView principal -->
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/nav_view"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:background="@color/secondary_bg"
+            app:menu="@menu/navigation_menu"
             app:itemIconTint="@color/accent_color"
-            app:itemTextColor="@color/nav_item_colors"
-            app:menu="@menu/navigation_menu" />
+            app:itemTextColor="@color/text_color" />
 
-        <!-- Footer con opciones legales -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/secondary_bg"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
             android:paddingVertical="8dp">
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="@color/border_color"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="8dp"
+                android:alpha="0.3"
+                android:background="@color/border_color" />
 
             <TextView
                 android:id="@+id/nav_privacy"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:text="Políticas de Privacidad"
-                android:textColor="#C0C0C0"
-                android:textSize="14sp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingHorizontal="32dp"
+                android:paddingVertical="12dp"
+                android:text="@string/privacy_policy"
+                android:textColor="#C0C0C0"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/nav_terms"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:text="Términos y Condiciones"
-                android:textColor="#C0C0C0"
-                android:textSize="14sp"
                 android:clickable="true"
-                android:focusable="true" />
-
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingHorizontal="32dp"
+                android:paddingVertical="12dp"
+                android:text="@string/terms_conditions"
+                android:textColor="#C0C0C0"
+                android:textSize="13sp" />
         </LinearLayout>
-
     </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

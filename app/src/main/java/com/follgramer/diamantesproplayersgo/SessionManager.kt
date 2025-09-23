@@ -1,403 +1,681 @@
 package com.follgramer.diamantesproplayersgo
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import java.util.UUID
 
+/**
+ * SESSIONMANAGER CORREGIDO - GESTIÓN SEGURA DE DATOS
+ * Maneja Player ID, giros, sesiones con validación anti-tamper
+ * ✅ CORREGIDO: Uso de EncryptedSharedPreferences para mayor seguridad
+ */
 object SessionManager {
     private const val PREFS_NAME = "DiamantesProPrefs"
     private const val KEY_PLAYER_ID = "PLAYER_ID"
     private const val KEY_SESSION_ID = "SESSION_ID"
-    private const val KEY_CURRENT_SPINS = "CURRENT_SPINS" // Clave para persistir giros
+    private const val KEY_CURRENT_SPINS = "CURRENT_SPINS"
+    private const val KEY_TOTAL_SPINS_USED = "TOTAL_SPINS_USED"
+    private const val KEY_TOTAL_SPINS_EARNED = "TOTAL_SPINS_EARNED"
+    private const val KEY_LAST_SPIN_TIME = "LAST_SPIN_TIME"
+    private const val KEY_INTEGRITY_CHECK = "INTEGRITY_CHECK"
+    private const val KEY_FIRST_LAUNCH = "FIRST_LAUNCH"
     private const val TAG = "SessionManager"
 
+    // CONSTANTES DE SEGURIDAD
+    private const val MAX_ALLOWED_SPINS = 100 // Límite anti-hack
+    private const val DEFAULT_INITIAL_SPINS = 10 // Solo 10 giros iniciales
+    private const val MIN_PLAYER_ID_LENGTH = 5
+
+    // ✅ NUEVO: Cache para evitar múltiples accesos a SharedPreferences
+    private var prefsCache: SharedPreferences? = null
+
     /**
-     * Inicializa SessionManager - OBLIGATORIO llamar en onCreate()
+     * ✅ CORREGIDO: Inicializa SessionManager con EncryptedSharedPreferences
      */
     fun init(context: Context) {
-        Log.d(TAG, "SessionManager inicializado")
+        try {
+            Log.d(TAG, "SessionManager inicializado")
 
-        // Verificar integridad de datos al inicializar
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val playerId = prefs.getString(KEY_PLAYER_ID, "") ?: ""
-        val currentSpins = prefs.getInt(KEY_CURRENT_SPINS, -1)
+            // ✅ NUEVO: Inicializar EncryptedSharedPreferences solo una vez
+            if (prefsCache == null) {
+                prefsCache = getSecurePrefs(context)
+            }
 
-        // ✅ Si es primera vez (no hay giros configurados), establecer SOLO 10 giros
-        if (currentSpins == -1) {
-            Log.d(TAG, "Primera inicialización - estableciendo EXACTAMENTE 10 giros por defecto")
-            setCurrentSpins(context, 10) // ✅ SOLO 10 GIROS
+            val prefs = prefsCache!!
+
+            // Verificar si es primera vez
+            val isFirstLaunch = prefs.getBoolean(KEY_FIRST_LAUNCH, true)
+
+            if (isFirstLaunch) {
+                Log.d(TAG, "Primera inicialización - configurando valores por defecto")
+                initializeForFirstTime(context)
+            } else {
+                // Validar integridad en launches subsecuentes
+                validateAndFixData(context)
+            }
+
+            logCurrentState(context)
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en init: ${e.message}")
+            // En caso de error, usar SharedPreferences normales como fallback
+            initializeWithFallback(context)
         }
-
-        Log.d(
-            TAG,
-            "Estado inicial - Player ID: ${
-                if (playerId.isEmpty()) "No configurado" else "Configurado"
-            }, Giros: ${getCurrentSpins(context)}"
-        )
     }
 
     /**
-     * Obtiene el ID del jugador de FreeFF (ingresado por el usuario). Se renombró
-     * la referencia para evitar el uso explícito de marcas registradas en los
-     * comentarios.
+     * ✅ NUEVO: Obtener SharedPreferences seguras con fallback
+     */
+    private fun getSecurePrefs(context: Context): SharedPreferences {
+        return try {
+            // ✅ CORREGIDO: Usar EncryptedSharedPreferences para mayor seguridad
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+
+            EncryptedSharedPreferences.create(
+                PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo crear EncryptedSharedPreferences, usando normales: ${e.message}")
+            // Fallback a SharedPreferences normales
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Inicialización con fallback para dispositivos antiguos
+     */
+    private fun initializeWithFallback(context: Context) {
+        try {
+            prefsCache = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            initializeForFirstTime(context)
+            Log.d(TAG, "Inicializado con SharedPreferences normales (fallback)")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error crítico en inicialización: ${e.message}")
+        }
+    }
+
+    /**
+     * Obtiene SharedPreferences de forma segura con cache
+     */
+    private fun getPrefs(context: Context): SharedPreferences {
+        if (prefsCache == null) {
+            prefsCache = getSecurePrefs(context)
+        }
+        return prefsCache!!
+    }
+
+    /**
+     * Configuración inicial para primera vez
+     */
+    private fun initializeForFirstTime(context: Context) {
+        val prefs = getPrefs(context)
+        val editor = prefs.edit()
+
+        editor.putInt(KEY_CURRENT_SPINS, DEFAULT_INITIAL_SPINS)
+        editor.putInt(KEY_TOTAL_SPINS_EARNED, DEFAULT_INITIAL_SPINS)
+        editor.putInt(KEY_TOTAL_SPINS_USED, 0)
+        editor.putLong(KEY_LAST_SPIN_TIME, 0)
+        editor.putBoolean(KEY_FIRST_LAUNCH, false)
+        editor.putString(KEY_INTEGRITY_CHECK, generateIntegrityHash(context))
+
+        // ✅ CORREGIDO: Usar commit() en lugar de apply() para operaciones críticas
+        val success = editor.commit()
+
+        if (success) {
+            Log.d(TAG, "Inicialización completada - $DEFAULT_INITIAL_SPINS giros establecidos")
+        } else {
+            Log.e(TAG, "Error guardando configuración inicial")
+        }
+    }
+
+    /**
+     * Obtiene el Player ID
      */
     fun getPlayerId(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val playerId = prefs.getString(KEY_PLAYER_ID, "") ?: ""
-        Log.d(
-            TAG,
-            "Player ID obtenido: ${
-                if (playerId.isEmpty()) "No configurado" else playerId
-            }"
-        )
+        val playerId = getPrefs(context).getString(KEY_PLAYER_ID, "") ?: ""
+        Log.d(TAG, "Player ID obtenido: ${if (playerId.isEmpty()) "No configurado" else "***${playerId.takeLast(3)}"}")
         return playerId
     }
 
     /**
-     * Guarda el ID del jugador de FreeFF. Se renombró la referencia para evitar
-     * el uso explícito de marcas registradas en los comentarios.
+     * ✅ CORREGIDO: Configura el Player ID con validaciones mejoradas
      */
     fun setPlayerId(context: Context, playerId: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (!isValidPlayerId(playerId)) {
+            Log.w(TAG, "Player ID inválido: $playerId")
+            throw IllegalArgumentException("Player ID debe tener al menos $MIN_PLAYER_ID_LENGTH dígitos")
+        }
+
+        val prefs = getPrefs(context)
         val previousPlayerId = prefs.getString(KEY_PLAYER_ID, "") ?: ""
 
-        prefs.edit().putString(KEY_PLAYER_ID, playerId).apply()
-        Log.d(TAG, "Player ID guardado: $playerId")
+        // ✅ CORREGIDO: Transacción atómica para cambios críticos
+        val editor = prefs.edit()
+        editor.putString(KEY_PLAYER_ID, playerId)
 
-        // Solo generar nueva sesión si cambió el ID del jugador
-        if (previousPlayerId != playerId && previousPlayerId.isNotEmpty()) {
-            Log.d(
-                TAG,
-                "Player ID cambió de '$previousPlayerId' a '$playerId' - generando nueva sesión"
-            )
-            generateNewSession(context)
+        val success = editor.commit()
 
-            // Al cambiar de jugador, resetear giros a 10
-            resetSpinsForNewPlayer(context)
-        } else if (previousPlayerId.isEmpty()) {
-            // Si es la primera vez que se configura un Player ID
-            Log.d(TAG, "Primera configuración de Player ID - generando sesión inicial")
-            generateNewSession(context)
+        if (success) {
+            Log.d(TAG, "Player ID configurado: ***${playerId.takeLast(3)}")
+
+            // Generar nueva sesión si cambió el Player ID
+            if (previousPlayerId != playerId && previousPlayerId.isNotEmpty()) {
+                Log.d(TAG, "Player ID cambió - generando nueva sesión y reseteando giros")
+                generateNewSession(context)
+                resetSpinsForNewPlayer(context)
+            } else if (previousPlayerId.isEmpty()) {
+                Log.d(TAG, "Primera configuración de Player ID")
+                generateNewSession(context)
+            }
+
+            updateIntegrityHash(context)
+        } else {
+            Log.e(TAG, "Error guardando Player ID")
+            throw RuntimeException("No se pudo guardar el Player ID")
         }
     }
 
     /**
-     * Obtiene el ID de sesión único para este dispositivo
+     * ✅ CORREGIDO: Validación mejorada de Player ID
+     */
+    private fun isValidPlayerId(playerId: String): Boolean {
+        return try {
+            playerId.length >= MIN_PLAYER_ID_LENGTH &&
+                    playerId.matches(Regex("\\d+")) &&
+                    playerId.length <= 15 && // Máximo razonable
+                    !playerId.startsWith("0") && // No puede empezar con 0
+                    playerId.toLongOrNull() != null // Debe ser numérico válido
+        } catch (e: Exception) {
+            Log.w(TAG, "Error validando Player ID: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Obtiene Session ID único
      */
     fun getSessionId(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = getPrefs(context)
         var sessionId = prefs.getString(KEY_SESSION_ID, "")
 
         if (sessionId.isNullOrEmpty()) {
-            sessionId = UUID.randomUUID().toString()
-            prefs.edit().putString(KEY_SESSION_ID, sessionId).apply()
-            Log.d(TAG, "Nueva sesión creada: $sessionId")
-        } else {
-            Log.d(TAG, "Sesión existente: $sessionId")
+            sessionId = generateNewSession(context)
         }
 
         return sessionId
     }
 
     /**
-     * Genera una nueva sesión
+     * ✅ CORREGIDO: Generación de sesión más robusta
      */
     fun generateNewSession(context: Context): String {
         val newSessionId = UUID.randomUUID().toString()
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_SESSION_ID, newSessionId).apply()
-        Log.d(TAG, "Nueva sesión generada: $newSessionId")
-        return newSessionId
-    }
+        val prefs = getPrefs(context)
 
-    /**
-     * Limpia la sesión actual
-     */
-    fun clearSession(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(KEY_SESSION_ID).apply()
-        Log.d(TAG, "Sesión limpiada")
-    }
+        val success = prefs.edit()
+            .putString(KEY_SESSION_ID, newSessionId)
+            .commit()
 
-    /**
-     * Limpia completamente todos los datos guardados
-     */
-    fun clearAllData(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().clear().apply()
-        Log.d(TAG, "Todos los datos limpiados completamente")
-
-        // Después de limpiar, reinicializar con valores por defecto
-        init(context)
-    }
-
-    /**
-     * Verifica si el usuario tiene configurado su Player ID
-     */
-    fun hasPlayerIdConfigured(context: Context): Boolean {
-        val playerId = getPlayerId(context)
-        val hasConfigured = playerId.isNotEmpty() && playerId.length >= 5
-        Log.d(TAG, "Player ID configurado: $hasConfigured")
-        return hasConfigured
+        if (success) {
+            Log.d(TAG, "Nueva sesión generada: ${newSessionId.substring(0, 8)}...")
+            return newSessionId
+        } else {
+            Log.e(TAG, "Error generando nueva sesión")
+            return newSessionId // Retornar de todas formas
+        }
     }
 
     // ================ GESTIÓN DE GIROS ================
 
     /**
-     * Obtiene los giros actuales guardados
-     * Por defecto: SOLO 10 giros iniciales
+     * ✅ CORREGIDO: Obtiene giros actuales con validación mejorada
      */
     fun getCurrentSpins(context: Context): Int {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val spins = prefs.getInt(KEY_CURRENT_SPINS, 10) // ✅ Por defecto SOLO 10 giros
-        Log.d(TAG, "Giros obtenidos: $spins")
-        return spins
-    }
+        return try {
+            val prefs = getPrefs(context)
+            var spins = prefs.getInt(KEY_CURRENT_SPINS, DEFAULT_INITIAL_SPINS)
 
-    /**
-     * Guarda los giros actuales
-     */
-    fun setCurrentSpins(context: Context, spins: Int) {
-        if (spins < 0) {
-            Log.w(TAG, "Intentando establecer giros negativos ($spins), estableciendo a 0")
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().putInt(KEY_CURRENT_SPINS, 0).apply()
-            Log.d(TAG, "Giros guardados: 0 (corregido desde $spins)")
-            return
-        }
-
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putInt(KEY_CURRENT_SPINS, spins).apply()
-        Log.d(TAG, "Giros guardados: $spins")
-    }
-
-    /**
-     * Añade giros a los actuales
-     */
-    fun addSpins(context: Context, amount: Int) {
-        if (amount <= 0) {
-            Log.w(TAG, "Intentando añadir cantidad inválida de giros: $amount")
-            return
-        }
-
-        val currentSpins = getCurrentSpins(context)
-        val newSpins = currentSpins + amount
-        setCurrentSpins(context, newSpins)
-        Log.d(TAG, "Giros añadidos: $amount. Total anterior: $currentSpins, Total nuevo: $newSpins")
-    }
-
-    /**
-     * Usa un giro (reduce en 1)
-     * Retorna true si se pudo usar, false si no hay giros disponibles
-     */
-    fun useSpin(context: Context): Boolean {
-        val currentSpins = getCurrentSpins(context)
-        if (currentSpins > 0) {
-            val newSpins = currentSpins - 1
-            setCurrentSpins(context, newSpins)
-            Log.d(TAG, "Giro usado. Anterior: $currentSpins, Restantes: $newSpins")
-            return true
-        }
-        Log.d(TAG, "No hay giros disponibles para usar (current: $currentSpins)")
-        return false
-    }
-
-    /**
-     * Reinicia los giros a 10 (solo para jugadores nuevos o cambio de jugador)
-     */
-    fun resetSpinsForNewPlayer(context: Context) {
-        setCurrentSpins(context, 10) // ✅ Exactamente 10 giros iniciales
-        Log.d(TAG, "Giros reiniciados a EXACTAMENTE 10 para nuevo jugador")
-    }
-
-    /**
-     * Verifica si el usuario tiene giros disponibles
-     */
-    fun hasSpinsAvailable(context: Context): Boolean {
-        val hasSpins = getCurrentSpins(context) > 0
-        Log.d(TAG, "Tiene giros disponibles: $hasSpins")
-        return hasSpins
-    }
-
-    // ================ FUNCIONES DE UTILIDAD ================
-
-    /**
-     * Obtiene información completa de la sesión para debugging
-     */
-    fun getSessionInfo(context: Context): String {
-        val playerId = getPlayerId(context)
-        val sessionId = getSessionId(context)
-        val spins = getCurrentSpins(context)
-        val hasPlayerConfigured = hasPlayerIdConfigured(context)
-
-        return """
-            SessionManager Info:
-            - Player ID: ${if (playerId.isEmpty()) "No configurado" else playerId}
-            - Session ID: $sessionId
-            - Giros actuales: $spins
-            - Player configurado: $hasPlayerConfigured
-        """.trimIndent()
-    }
-
-    /**
-     * Valida la integridad de los datos guardados
-     */
-    fun validateDataIntegrity(context: Context): Boolean {
-        try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-            // Verificar que los giros no sean negativos
-            val spins = prefs.getInt(KEY_CURRENT_SPINS, 10)
-            if (spins < 0) {
-                Log.w(TAG, "Datos corruptos detectados: giros negativos ($spins). Corrigiendo...")
-                setCurrentSpins(context, 10) // ✅ Corregir a 10 giros
-                return false
-            }
-
-            // ✅ VERIFICAR QUE NO HAYA MÁS DE 50 GIROS (PREVENIR HACKS)
-            if (spins > 50) {
-                Log.w(TAG, "Giros sospechosamente altos ($spins). Corrigiendo a 10...")
-                setCurrentSpins(context, 10)
-                return false
-            }
-
-            // Verificar que el session ID sea válido
-            val sessionId = prefs.getString(KEY_SESSION_ID, "")
-            if (!sessionId.isNullOrEmpty()) {
-                try {
-                    UUID.fromString(sessionId)
-                } catch (e: IllegalArgumentException) {
-                    Log.w(TAG, "Session ID inválido detectado. Generando nuevo...")
-                    generateNewSession(context)
-                    return false
+            // Validación anti-tamper mejorada
+            when {
+                spins < 0 -> {
+                    Log.w(TAG, "Giros negativos detectados ($spins), corrigiendo a 0")
+                    spins = 0
+                    setCurrentSpins(context, spins)
+                }
+                spins > MAX_ALLOWED_SPINS -> {
+                    Log.w(TAG, "Giros excesivos detectados ($spins), corrigiendo a $DEFAULT_INITIAL_SPINS")
+                    spins = DEFAULT_INITIAL_SPINS
+                    setCurrentSpins(context, spins)
+                    recordTamperAttempt(context)
                 }
             }
 
-            Log.d(TAG, "Integridad de datos validada correctamente")
-            return true
-
+            Log.d(TAG, "Giros obtenidos: $spins")
+            spins
         } catch (e: Exception) {
-            Log.e(TAG, "Error validando integridad de datos: ${e.message}")
-            return false
+            Log.e(TAG, "Error obteniendo giros: ${e.message}")
+            DEFAULT_INITIAL_SPINS
         }
     }
 
     /**
-     * Función de debugging para resetear completamente el SessionManager
-     * ⚠️ SOLO USAR PARA TESTING
+     * ✅ CORREGIDO: Establece giros con transacción atómica
      */
-    fun resetForTesting(context: Context) {
-        Log.w(TAG, "⚠️ RESETEO COMPLETO PARA TESTING ⚠️")
-        clearAllData(context)
+    fun setCurrentSpins(context: Context, spins: Int) {
+        val validatedSpins = when {
+            spins < 0 -> {
+                Log.w(TAG, "Intentando establecer giros negativos ($spins), estableciendo a 0")
+                0
+            }
+            spins > MAX_ALLOWED_SPINS -> {
+                Log.w(TAG, "Intentando establecer demasiados giros ($spins), limitando a $MAX_ALLOWED_SPINS")
+                recordTamperAttempt(context)
+                MAX_ALLOWED_SPINS
+            }
+            else -> spins
+        }
 
-        // ✅ Reinicializar con SOLO 10 giros
-        setCurrentSpins(context, 10) // ✅ SOLO 10 GIROS
+        try {
+            val success = getPrefs(context).edit()
+                .putInt(KEY_CURRENT_SPINS, validatedSpins)
+                .commit()
 
-        // Limpiar también otros flags relacionados
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .remove("HAS_SHOWN_WELCOME")
-            .remove("CONSENT_ACCEPTED")
-            .apply()
+            if (success) {
+                updateIntegrityHash(context)
+                Log.d(TAG, "Giros establecidos: $validatedSpins")
+            } else {
+                Log.e(TAG, "Error estableciendo giros")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en setCurrentSpins: ${e.message}")
+        }
+    }
 
-        Log.w(TAG, "Reset completo terminado - App volverá a estado inicial con EXACTAMENTE 10 giros")
+    /**
+     * ✅ CORREGIDO: Añade giros con validación de límites
+     */
+    fun addSpins(context: Context, amount: Int) {
+        if (amount <= 0 || amount > 50) {
+            Log.w(TAG, "Cantidad de giros inválida: $amount")
+            return
+        }
+
+        val currentSpins = getCurrentSpins(context)
+        val newSpins = (currentSpins + amount).coerceAtMost(MAX_ALLOWED_SPINS)
+
+        setCurrentSpins(context, newSpins)
+        recordSpinsEarned(context, amount)
+
+        Log.d(TAG, "Giros añadidos: $amount. Total: $currentSpins -> $newSpins")
+    }
+
+    /**
+     * ✅ CORREGIDO: Usa un giro con validación atómica
+     */
+    fun useSpin(context: Context): Boolean {
+        return try {
+            val prefs = getPrefs(context)
+            val currentSpins = getCurrentSpins(context)
+
+            if (currentSpins <= 0) {
+                Log.d(TAG, "No hay giros disponibles para usar")
+                return false
+            }
+
+            val newSpins = currentSpins - 1
+            val success = prefs.edit()
+                .putInt(KEY_CURRENT_SPINS, newSpins)
+                .commit()
+
+            if (success) {
+                recordSpinUsed(context)
+                updateIntegrityHash(context)
+                Log.d(TAG, "Giro usado. Restantes: $newSpins")
+                true
+            } else {
+                Log.e(TAG, "Error usando giro")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en useSpin: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * ✅ CORREGIDO: Reset atómico para nuevo jugador
+     */
+    fun resetSpinsForNewPlayer(context: Context) {
+        try {
+            val prefs = getPrefs(context)
+            val editor = prefs.edit()
+
+            editor.putInt(KEY_CURRENT_SPINS, DEFAULT_INITIAL_SPINS)
+            editor.putInt(KEY_TOTAL_SPINS_USED, 0)
+            editor.putInt(KEY_TOTAL_SPINS_EARNED, DEFAULT_INITIAL_SPINS)
+            editor.putLong(KEY_LAST_SPIN_TIME, 0)
+
+            val success = editor.commit()
+
+            if (success) {
+                updateIntegrityHash(context)
+                Log.d(TAG, "Giros reseteados a $DEFAULT_INITIAL_SPINS para nuevo jugador")
+            } else {
+                Log.e(TAG, "Error reseteando giros")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en resetSpinsForNewPlayer: ${e.message}")
+        }
+    }
+
+    /**
+     * Verifica si tiene giros disponibles
+     */
+    fun hasSpinsAvailable(context: Context): Boolean {
+        return getCurrentSpins(context) > 0
+    }
+
+    /**
+     * Verifica si tiene Player ID configurado
+     */
+    fun hasPlayerIdConfigured(context: Context): Boolean {
+        val playerId = getPlayerId(context)
+        return isValidPlayerId(playerId)
     }
 
     // ================ FUNCIONES DE SEGURIDAD ================
 
     /**
-     * Verifica si los giros parecen haber sido manipulados
+     * ✅ CORREGIDO: Genera hash de integridad más robusto
      */
-    fun detectSpinTampering(context: Context): Boolean {
-        val currentSpins = getCurrentSpins(context)
-        val playerId = getPlayerId(context)
+    private fun generateIntegrityHash(context: Context): String {
+        return try {
+            val prefs = getPrefs(context)
+            val data = "${prefs.getInt(KEY_CURRENT_SPINS, 0)}_" +
+                    "${prefs.getString(KEY_PLAYER_ID, "")}_" +
+                    "${System.currentTimeMillis() / 86400000}_" + // Día actual
+                    "${BuildConfig.VERSION_CODE}" // Versión de la app
 
-        // ✅ REGLAS DE DETECCIÓN DE MANIPULACIÓN:
-
-        // 1. Más de 100 giros es sospechoso
-        if (currentSpins > 100) {
-            Log.w(TAG, "🚨 Posible manipulación: Demasiados giros ($currentSpins)")
-            return true
-        }
-
-        // 2. Si no hay Player ID pero hay muchos giros
-        if (playerId.isEmpty() && currentSpins > 20) {
-            Log.w(TAG, "🚨 Posible manipulación: Muchos giros sin Player ID")
-            return true
-        }
-
-        // 3. Giros negativos (ya manejado en setCurrentSpins)
-        if (currentSpins < 0) {
-            Log.w(TAG, "🚨 Posible manipulación: Giros negativos")
-            return true
-        }
-
-        return false
-    }
-
-    /**
-     * Corrige datos manipulados
-     */
-    fun fixTamperedData(context: Context) {
-        if (detectSpinTampering(context)) {
-            Log.w(TAG, "🔧 Corrigiendo datos manipulados...")
-            setCurrentSpins(context, 10) // Resetear a 10 giros seguros
-
-            // Opcional: Marcar como sospechoso
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().putBoolean("TAMPER_DETECTED", true).apply()
+            data.hashCode().toString()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error generando hash de integridad: ${e.message}")
+            "default_hash"
         }
     }
 
     /**
-     * Verifica si se detectó manipulación anteriormente
+     * Actualiza hash de integridad
      */
-    fun wasTamperDetected(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean("TAMPER_DETECTED", false)
+    private fun updateIntegrityHash(context: Context) {
+        try {
+            val newHash = generateIntegrityHash(context)
+            getPrefs(context).edit()
+                .putString(KEY_INTEGRITY_CHECK, newHash)
+                .apply() // Aquí sí podemos usar apply() porque no es crítico
+        } catch (e: Exception) {
+            Log.e(TAG, "Error actualizando hash de integridad: ${e.message}")
+        }
     }
 
-    // ================ FUNCIONES DE ESTADÍSTICAS ================
+    /**
+     * ✅ CORREGIDO: Validación y corrección más robusta
+     */
+    private fun validateAndFixData(context: Context) {
+        try {
+            val prefs = getPrefs(context)
+
+            // Verificar giros
+            val spins = prefs.getInt(KEY_CURRENT_SPINS, DEFAULT_INITIAL_SPINS)
+            if (spins < 0 || spins > MAX_ALLOWED_SPINS) {
+                Log.w(TAG, "Datos corruptos detectados - giros: $spins")
+                setCurrentSpins(context, DEFAULT_INITIAL_SPINS)
+            }
+
+            // Verificar Player ID
+            val playerId = prefs.getString(KEY_PLAYER_ID, "") ?: ""
+            if (playerId.isNotEmpty() && !isValidPlayerId(playerId)) {
+                Log.w(TAG, "Player ID corrupto detectado, limpiando")
+                prefs.edit().remove(KEY_PLAYER_ID).commit()
+            }
+
+            // Verificar Session ID
+            val sessionId = prefs.getString(KEY_SESSION_ID, "") ?: ""
+            if (sessionId.isNotEmpty()) {
+                try {
+                    UUID.fromString(sessionId)
+                } catch (e: IllegalArgumentException) {
+                    Log.w(TAG, "Session ID corrupto, generando nuevo")
+                    generateNewSession(context)
+                }
+            }
+
+            // Verificar estadísticas
+            val totalUsed = prefs.getInt(KEY_TOTAL_SPINS_USED, 0)
+            val totalEarned = prefs.getInt(KEY_TOTAL_SPINS_EARNED, DEFAULT_INITIAL_SPINS)
+
+            if (totalUsed < 0 || totalEarned < 0) {
+                Log.w(TAG, "Estadísticas corruptas, corrigiendo")
+                prefs.edit()
+                    .putInt(KEY_TOTAL_SPINS_USED, 0)
+                    .putInt(KEY_TOTAL_SPINS_EARNED, DEFAULT_INITIAL_SPINS)
+                    .commit()
+            }
+
+            updateIntegrityHash(context)
+            Log.d(TAG, "Validación de datos completada")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error validando datos: ${e.message}")
+            // En caso de error grave, resetear todo
+            clearAllData(context)
+            initializeForFirstTime(context)
+        }
+    }
 
     /**
-     * Obtiene estadísticas de uso de giros
+     * ✅ CORREGIDO: Registro de intentos de manipulación más detallado
+     */
+    private fun recordTamperAttempt(context: Context) {
+        try {
+            val prefs = getPrefs(context)
+            val attempts = prefs.getInt("TAMPER_ATTEMPTS", 0)
+            val newAttempts = attempts + 1
+
+            prefs.edit()
+                .putInt("TAMPER_ATTEMPTS", newAttempts)
+                .putLong("LAST_TAMPER_TIME", System.currentTimeMillis())
+                .putString("TAMPER_BUILD", BuildConfig.VERSION_NAME)
+                .apply()
+
+            Log.w(TAG, "Intento de manipulación registrado (#$newAttempts)")
+
+            // Si hay demasiados intentos, resetear datos
+            if (newAttempts >= 5) {
+                Log.e(TAG, "Demasiados intentos de manipulación, reseteando datos")
+                clearAllData(context)
+                initializeForFirstTime(context)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registrando intento de manipulación: ${e.message}")
+        }
+    }
+
+    /**
+     * Detecta manipulación de datos
+     */
+    fun detectTampering(context: Context): Boolean {
+        return try {
+            val prefs = getPrefs(context)
+            val attempts = prefs.getInt("TAMPER_ATTEMPTS", 0)
+            attempts > 0
+        } catch (e: Exception) {
+            Log.e(TAG, "Error detectando manipulación: ${e.message}")
+            false
+        }
+    }
+
+    // ================ ESTADÍSTICAS ================
+
+    /**
+     * Registra uso de giro
+     */
+    private fun recordSpinUsed(context: Context) {
+        try {
+            val prefs = getPrefs(context)
+            val totalUsed = prefs.getInt(KEY_TOTAL_SPINS_USED, 0)
+            prefs.edit()
+                .putInt(KEY_TOTAL_SPINS_USED, totalUsed + 1)
+                .putLong(KEY_LAST_SPIN_TIME, System.currentTimeMillis())
+                .apply()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registrando uso de giro: ${e.message}")
+        }
+    }
+
+    /**
+     * Registra giros ganados
+     */
+    private fun recordSpinsEarned(context: Context, amount: Int) {
+        try {
+            val prefs = getPrefs(context)
+            val totalEarned = prefs.getInt(KEY_TOTAL_SPINS_EARNED, DEFAULT_INITIAL_SPINS)
+            prefs.edit()
+                .putInt(KEY_TOTAL_SPINS_EARNED, totalEarned + amount)
+                .apply()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registrando giros ganados: ${e.message}")
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de uso
      */
     fun getSpinStats(context: Context): Map<String, Any> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return try {
+            val prefs = getPrefs(context)
+            mapOf(
+                "currentSpins" to getCurrentSpins(context),
+                "totalSpinsUsed" to prefs.getInt(KEY_TOTAL_SPINS_USED, 0),
+                "totalSpinsEarned" to prefs.getInt(KEY_TOTAL_SPINS_EARNED, DEFAULT_INITIAL_SPINS),
+                "lastSpinTime" to prefs.getLong(KEY_LAST_SPIN_TIME, 0),
+                "hasPlayerId" to hasPlayerIdConfigured(context),
+                "tamperAttempts" to prefs.getInt("TAMPER_ATTEMPTS", 0)
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error obteniendo estadísticas: ${e.message}")
+            emptyMap()
+        }
+    }
 
-        return mapOf(
-            "currentSpins" to getCurrentSpins(context),
-            "totalSpinsUsed" to prefs.getInt("TOTAL_SPINS_USED", 0),
-            "totalSpinsEarned" to prefs.getInt("TOTAL_SPINS_EARNED", 10), // 10 iniciales
-            "lastSpinTime" to prefs.getLong("LAST_SPIN_TIME", 0),
-            "hasPlayerId" to hasPlayerIdConfigured(context)
-        )
+    // ================ LIMPIEZA Y DEBUGGING ================
+
+    /**
+     * ✅ CORREGIDO: Limpieza segura de todos los datos
+     */
+    fun clearAllData(context: Context) {
+        try {
+            val success = getPrefs(context).edit().clear().commit()
+            if (success) {
+                Log.d(TAG, "Todos los datos limpiados")
+                prefsCache = null // Limpiar cache también
+            } else {
+                Log.e(TAG, "Error limpiando datos")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en clearAllData: ${e.message}")
+        }
     }
 
     /**
-     * Registra el uso de un giro para estadísticas
+     * Limpia solo la sesión
      */
-    fun recordSpinUsed(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val totalUsed = prefs.getInt("TOTAL_SPINS_USED", 0)
-        prefs.edit()
-            .putInt("TOTAL_SPINS_USED", totalUsed + 1)
-            .putLong("LAST_SPIN_TIME", System.currentTimeMillis())
-            .apply()
-
-        Log.d(TAG, "📊 Giro registrado. Total usado: ${totalUsed + 1}")
+    fun clearSession(context: Context) {
+        try {
+            getPrefs(context).edit()
+                .remove(KEY_SESSION_ID)
+                .commit()
+            Log.d(TAG, "Sesión limpiada")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error limpiando sesión: ${e.message}")
+        }
     }
 
     /**
-     * Registra giros ganados para estadísticas
+     * ✅ CORREGIDO: Información completa para debugging con manejo de errores
      */
-    fun recordSpinsEarned(context: Context, amount: Int) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val totalEarned = prefs.getInt("TOTAL_SPINS_EARNED", 10) // 10 iniciales
-        prefs.edit()
-            .putInt("TOTAL_SPINS_EARNED", totalEarned + amount)
-            .apply()
+    fun getSessionInfo(context: Context): String {
+        return try {
+            val prefs = getPrefs(context)
+            val playerId = getPlayerId(context)
+            val sessionId = getSessionId(context)
+            val spins = getCurrentSpins(context)
+            val stats = getSpinStats(context)
 
-        Log.d(TAG, "📊 Giros ganados registrados: $amount. Total ganado: ${totalEarned + amount}")
+            """
+            SessionManager Info:
+            - Player ID: ${if (playerId.isEmpty()) "No configurado" else "***${playerId.takeLast(3)}"}
+            - Session ID: ${sessionId.substring(0, 8)}...
+            - Giros actuales: $spins
+            - Player configurado: ${hasPlayerIdConfigured(context)}
+            - Total usado: ${stats["totalSpinsUsed"]}
+            - Total ganado: ${stats["totalSpinsEarned"]}
+            - Intentos tamper: ${stats["tamperAttempts"]}
+            - Primera vez: ${prefs.getBoolean(KEY_FIRST_LAUNCH, true)}
+            - Tipo SharedPrefs: ${if (prefsCache is EncryptedSharedPreferences) "Encrypted" else "Normal"}
+            """.trimIndent()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error obteniendo info de sesión: ${e.message}")
+            "Error obteniendo información de sesión"
+        }
+    }
+
+    /**
+     * Log del estado actual
+     */
+    private fun logCurrentState(context: Context) {
+        try {
+            val playerId = getPlayerId(context)
+            val spins = getCurrentSpins(context)
+
+            Log.d(TAG, "Estado actual - Player ID: ${
+                if (playerId.isEmpty()) "No configurado" else "Configurado"
+            }, Giros: $spins")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error logueando estado: ${e.message}")
+        }
+    }
+
+    /**
+     * Reset completo para testing - SOLO DEBUG
+     */
+    fun resetForTesting(context: Context) {
+        if (!BuildConfig.DEBUG) {
+            Log.w(TAG, "resetForTesting solo disponible en DEBUG")
+            return
+        }
+
+        try {
+            Log.w(TAG, "RESETEO COMPLETO PARA TESTING")
+            clearAllData(context)
+            initializeForFirstTime(context)
+
+            // Limpiar flags adicionales
+            val prefs = getPrefs(context)
+            prefs.edit()
+                .remove("HAS_SHOWN_WELCOME")
+                .remove("CONSENT_ACCEPTED")
+                .commit()
+
+            Log.w(TAG, "Reset completo terminado")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error en resetForTesting: ${e.message}")
+        }
     }
 }

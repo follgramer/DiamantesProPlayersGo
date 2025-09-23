@@ -9,41 +9,37 @@
     android:padding="12dp"
     android:visibility="gone">
 
-    <LinearLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:fontFamily="@font/montserrat_bold"
+        android:text="🏆 SALÓN DE CAMPEONES 🏆"
+        android:textColor="@color/gold_accent"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:fontFamily="@font/montserrat_regular"
+        android:text="Aquí se muestran los 10 ganadores más recientes de diamantes."
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- ELIMINAR EL BANNER FIJO DE ARRIBA - ESE ES EL ESPACIO NEGRO -->
+    <!-- Lista con anuncios intercalados -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/winners_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/background_container"
-        android:orientation="vertical"
-        android:padding="12dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:fontFamily="@font/montserrat_bold"
-            android:text="🏆 SALÓN DE CAMPEONES 🏆"
-            android:textColor="@color/gold_accent"
-            android:textSize="18sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:fontFamily="@font/montserrat_regular"
-            android:text="Aquí se muestran los 10 ganadores más recientes de diamantes."
-            android:textColor="@color/text_muted"
-            android:textSize="14sp" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/winners_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="8dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:itemCount="3"
-            tools:listitem="@layout/item_winner" />
-
-    </LinearLayout>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="0dp"
+        android:clipToPadding="false"
+        android:background="@android:color/transparent"
+        tools:itemCount="3"
+        tools:listitem="@layout/item_winner" />
 
 </LinearLayout>

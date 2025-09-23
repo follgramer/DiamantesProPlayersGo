@@ -25,6 +25,8 @@ dependencyResolutionManagement {
         }
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
+        // Repositorio adicional para las versiones más recientes
+        maven { url = uri("https://androidx.dev/storage/compose-compiler/repository/") }
     }
 }
 

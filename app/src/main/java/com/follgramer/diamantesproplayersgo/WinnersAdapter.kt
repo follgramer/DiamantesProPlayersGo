@@ -1,84 +1,161 @@
 package com.follgramer.diamantesproplayersgo
 
+import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
-import java.text.SimpleDateFormat
-import java.util.*
+import com.follgramer.diamantesproplayersgo.ads.RecyclerViewBannerHelper
 
-class WinnersAdapter(private val winners: List<Winner>) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+data class WinnerItem(
+    val id: String,
+    val name: String,
+    val prize: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+class WinnersAdapter(
+    private val activity: Activity,
+    private val items: MutableList<WinnerItem> = mutableListOf()
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val TYPE_WINNER = 0
         private const val TYPE_AD = 1
-    }
-
-    // ViewHolder para ganadores
-    class WinnerViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val date: TextView = view.findViewById(R.id.date)
-        val prize: TextView = view.findViewById(R.id.prize)
-        val winnerId: TextView = view.findViewById(R.id.winner_id)
-    }
-
-    // ViewHolder para anuncios
-    class AdViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val adView: AdView = view.findViewById(R.id.adViewWinnerItem)
+        private const val AD_INTERVAL = 2
     }
 
     override fun getItemViewType(position: Int): Int {
-        // Mostrar anuncio después de cada 2 ganadores
-        // Posiciones: 0,1 = ganadores, 2 = anuncio, 3,4 = ganadores, 5 = anuncio, etc.
-        return if ((position + 1) % 3 == 0) TYPE_AD else TYPE_WINNER
+        return if ((position + 1) % (AD_INTERVAL + 1) == 0) TYPE_AD else TYPE_WINNER
+    }
+
+    override fun getItemCount(): Int {
+        val winnerCount = items.size
+        val adCount = winnerCount / AD_INTERVAL
+        return winnerCount + adCount
+    }
+
+    private fun getWinnerPosition(position: Int): Int {
+        val adsBefore = position / (AD_INTERVAL + 1)
+        return position - adsBefore
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             TYPE_AD -> {
-                val adView = LayoutInflater.from(parent.context)
+                val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_winner_ad, parent, false)
-                AdViewHolder(adView)
+                BannerViewHolder(view)
             }
             else -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_winner, parent, false)
-                WinnerViewHolder(view)
+                WinnerVH(view)
             }
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is AdViewHolder -> {
-                // Cargar anuncio
-                holder.adView.loadAd(AdRequest.Builder().build())
+            is BannerViewHolder -> {
+                holder.bind()
             }
-            is WinnerViewHolder -> {
-                // Calcular el índice real del ganador (saltando las posiciones de anuncios)
-                val winnerIndex = position - (position / 3)
-
-                if (winnerIndex < winners.size) {
-                    val winner = winners[winnerIndex]
-                    val sdf = SimpleDateFormat("dd 'de' MMMM 'de' yyyy, HH:mm", Locale("es", "ES"))
-                    holder.date.text = "Sorteo del ${sdf.format(Date(winner.timestamp))}"
-                    holder.prize.text = winner.prize
-                    holder.winnerId.text = "Ganador ID: ${maskPlayerId(winner.winnerId)}"
+            is WinnerVH -> {
+                val winnerIndex = getWinnerPosition(position)
+                if (winnerIndex < items.size) {
+                    val item = items[winnerIndex]
+                    holder.bind(item)
                 }
             }
         }
     }
 
-    override fun getItemCount(): Int {
-        // Calculamos cuántos anuncios necesitamos insertar
-        val adCount = winners.size / 2 // Un anuncio cada 2 ganadores
-        return winners.size + adCount
+    class WinnerVH(view: View) : RecyclerView.ViewHolder(view) {
+        val date: TextView = view.findViewById(R.id.date)
+        val prize: TextView = view.findViewById(R.id.prize)
+        val winnerId: TextView = view.findViewById(R.id.winner_id)
+
+        fun bind(item: WinnerItem) {
+            date.text = getRelativeTimeString(item.timestamp)
+            prize.text = item.prize
+            winnerId.text = "Ganador ID: ${maskPlayerId(item.name)}"
+        }
+
+        private fun maskPlayerId(id: String): String {
+            return if (id.length > 5) {
+                "${id.substring(0, 3)}***${id.substring(id.length - 2)}"
+            } else {
+                id
+            }
+        }
+
+        private fun getRelativeTimeString(timestamp: Long): String {
+            if (timestamp <= 0) return "Fecha desconocida"
+
+            val now = System.currentTimeMillis()
+            val diff = now - timestamp
+
+            return when {
+                diff < 0 -> "Fecha futura"
+                diff < 60 * 1000 -> "Hace menos de 1 minuto"
+                diff < 2 * 60 * 1000 -> "Hace 1 minuto"
+                diff < 60 * 60 * 1000 -> "Hace ${diff / (60 * 1000)} minutos"
+                diff < 2 * 60 * 60 * 1000 -> "Hace 1 hora"
+                diff < 24 * 60 * 60 * 1000 -> "Hace ${diff / (60 * 60 * 1000)} horas"
+                diff < 2 * 24 * 60 * 60 * 1000 -> "Ayer"
+                diff < 7 * 24 * 60 * 60 * 1000 -> "Hace ${diff / (24 * 60 * 60 * 1000)} días"
+                else -> {
+                    // Mostrar fecha completa con hora para más de una semana
+                    val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                    sdf.format(java.util.Date(timestamp))
+                }
+            }
+        }
     }
 
-    private fun maskPlayerId(id: String): String {
-        return if (id.length > 5) "${id.substring(0, 3)}***${id.substring(id.length - 2)}" else id
+    class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        // CAMBIO IMPORTANTE: Ahora es FrameLayout en lugar de LinearLayout
+        private val adContainer: FrameLayout = itemView.findViewById(R.id.adContainer)
+
+        fun bind() {
+            adContainer.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            adContainer.visibility = View.VISIBLE
+
+            (itemView.context as? Activity)?.let { activity ->
+                RecyclerViewBannerHelper.loadAdaptiveBanner(
+                    activity,
+                    adContainer,
+                    viewHolderId = bindingAdapterPosition + 1000
+                )
+            }
+        }
+    }
+
+    fun submitList(newItems: List<WinnerItem>) {
+        items.clear()
+        val sortedItems = newItems.sortedByDescending { it.timestamp }
+        items.addAll(sortedItems)
+        notifyDataSetChanged()
+    }
+
+    fun addWinner(winnerItem: WinnerItem) {
+        items.add(0, winnerItem)
+        notifyItemInserted(0)
+
+        if (items.size > 50) {
+            val removedCount = items.size - 50
+            repeat(removedCount) {
+                items.removeAt(items.size - 1)
+            }
+            notifyItemRangeRemoved(50, removedCount)
+        }
+    }
+
+    fun clearAll() {
+        val count = items.size
+        items.clear()
+        notifyItemRangeRemoved(0, count)
     }
 }

@@ -3,27 +3,36 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <!-- Grupo principal de secciones visibles -->
+    <!-- ✅ Grupo principal de secciones con comportamiento correcto -->
     <group
         android:id="@+id/group_main"
-        android:checkableBehavior="single">
+        android:checkableBehavior="single"
+        android:menuCategory="container">
+
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_home"
             android:title="Inicio"
-            android:checked="true" />
+            android:checked="true"
+            android:checkable="true" />
+
         <item
             android:id="@+id/nav_tasks"
             android:icon="@drawable/ic_tasks"
-            android:title="Misiones Diarias" />
+            android:title="Misiones Diarias"
+            android:checkable="true" />
+
         <item
             android:id="@+id/nav_leaderboard"
             android:icon="@drawable/ic_leaderboard"
-            android:title="Tabla de Líderes" />
+            android:title="Tabla de Líderes"
+            android:checkable="true" />
+
         <item
             android:id="@+id/nav_winners"
             android:icon="@drawable/ic_winners"
-            android:title="Ganadores" />
+            android:title="Ganadores"
+            android:checkable="true" />
     </group>
 
 </menu>

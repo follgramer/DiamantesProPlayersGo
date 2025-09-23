@@ -14,77 +14,234 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- Sorteo Semanal -->
+        <!-- SORTEO SEMANAL REDISEÑADO -->
         <LinearLayout
             android:id="@+id/giveawayInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/background_container"
-            android:gravity="center"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/montserrat_bold"
-                android:text="SORTEO SEMANAL"
-                android:textColor="@color/purple_accent"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:fontFamily="@font/montserrat_regular"
-                android:text="Premio: Pase Élite o 1,000 Diamantes 💎"
-                android:textColor="@color/text_muted"
-                android:textSize="14sp" />
-
+            <!-- Header con badge de estado -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:fontFamily="@font/montserrat_bold"
-                    android:text="Termina en: "
+                    android:letterSpacing="0.05"
+                    android:text="SORTEO SEMANAL"
                     android:textColor="@color/text_color"
-                    android:textSize="16sp" />
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/countdown"
+                    android:id="@+id/sorteoStatusBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/montserrat_bold"
-                    android:text="Cargando..."
-                    android:textColor="@color/text_color"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:background="@drawable/background_container"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:text="ACTIVO"
+                    android:textColor="@color/green_accent"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </LinearLayout>
+
+            <!-- Contenedor de estados -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="90dp">
+
+                <!-- Estado Normal (Countdown) -->
+                <LinearLayout
+                    android:id="@+id/normalStateContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <TextView
+                        android:id="@+id/tvWeeklyPrize"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:gravity="center"
+                        android:text="@string/weekly_prize_placeholder"
+                        android:textColor="@color/gold_accent"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/countdownLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Termina en:"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/countdown"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="Cargando..."
+                        android:textColor="@color/text_color"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Estado de Procesamiento -->
+                <LinearLayout
+                    android:id="@+id/processingStateContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ProgressBar
+                        android:id="@+id/processingSpinner"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:indeterminateTint="@color/accent_color" />
+
+                    <TextView
+                        android:id="@+id/processingTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="Procesando Sorteo"
+                        android:textColor="@color/accent_color"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/processingMessage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:text="Verificando participantes..."
+                        android:textColor="@color/text_muted"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Estado de Revelación -->
+                <LinearLayout
+                    android:id="@+id/revealStateContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🏆"
+                        android:textSize="36sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="GANADOR SELECCIONADO"
+                        android:textColor="@color/gold_accent"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Revelación en:"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/revealCountdown"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="00:30"
+                        android:textColor="@color/warning_color"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Estado de Ganador Revelado -->
+                <LinearLayout
+                    android:id="@+id/winnerRevealedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="SORTEO COMPLETADO"
+                        android:textColor="@color/green_accent"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/winnerIdText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:text="Ganador: -"
+                        android:textColor="@color/gold_accent"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/prizeWonText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Premio: -"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
         </LinearLayout>
 
-        <!-- ✅ Anuncio Banner con separación reducida 50% -->
-        <com.google.android.gms.ads.AdView
-            android:id="@+id/adViewTopHome"
-            android:layout_width="wrap_content"
+        <!-- BANNER SUPERIOR - SIN BACKGROUND BLANCO -->
+        <FrameLayout
+            android:id="@+id/adInProfileContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"
-            app:adSize="BANNER"
-            app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+            android:layout_marginTop="12dp"
+            android:visibility="gone" />
+        <!-- REMOVIDO: android:minHeight="50dp" -->
+        <!-- REMOVIDO: android:background="@android:color/white" -->
+        <!-- REMOVIDO: android:elevation="1dp" -->
 
-        <!-- Progreso del Jugador -->
+        <!-- MI PROGRESO -->
         <LinearLayout
             android:id="@+id/myProgress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/background_container"
             android:orientation="vertical"
             android:padding="12dp">
@@ -104,14 +261,38 @@
                     android:textColor="@color/text_muted"
                     android:textSize="14sp" />
 
-                <TextView
-                    android:id="@+id/myPlayerId"
+                <LinearLayout
+                    android:id="@+id/player_id_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/montserrat_bold"
-                    android:text="Toca para configurar ✏️"
-                    android:textColor="@color/accent_color"
-                    android:textSize="14sp" />
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="6dp">
+
+                    <TextView
+                        android:id="@+id/myPlayerId"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/montserrat_bold"
+                        android:maxLines="1"
+                        android:text="Toca para configurar"
+                        android:textColor="@color/accent_color"
+                        android:textSize="14sp" />
+
+                    <ImageView
+                        android:id="@+id/edit_icon"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="6dp"
+                        android:contentDescription="Editar ID"
+                        android:src="@drawable/ic_edit"
+                        android:tint="@color/accent_color" />
+                </LinearLayout>
             </LinearLayout>
 
             <View
@@ -175,7 +356,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/montserrat_regular"
-                android:text="Meta Semanal 🎯: 1,000 Tickets = 1 Pase"
+                android:text="Meta: 1,000 Tickets = 1 Pase"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp" />
 
@@ -188,15 +369,14 @@
                 android:max="100"
                 android:progress="0"
                 android:progressDrawable="@drawable/background_progress" />
-
         </LinearLayout>
 
-        <!-- Juego de Ruleta -->
+        <!-- RULETA DE LA SUERTE -->
         <LinearLayout
             android:id="@+id/gameArea"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/background_container"
             android:gravity="center_horizontal"
             android:orientation="vertical"
@@ -206,9 +386,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/montserrat_bold"
-                android:text="🎰 RULETA DE LA SUERTE"
+                android:text="RULETA DE LA SUERTE"
                 android:textColor="@color/accent_color"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -217,9 +397,9 @@
                 android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_regular"
                 android:text="Gira y gana hasta 100 tickets por jugada"
+                android:textAlignment="center"
                 android:textColor="@color/text_muted"
-                android:textSize="12sp"
-                android:textAlignment="center" />
+                android:textSize="12sp" />
 
             <GridLayout
                 android:id="@+id/grid_container"
@@ -236,17 +416,16 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/selector_button_spin"
                 android:fontFamily="@font/montserrat_bold"
-                android:text="🎟️ ¡GIRAR RULETA!"
+                android:text="GIRAR RULETA"
                 android:textColor="@color/primary_bg" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/background_spins_section"
+                android:layout_marginTop="12dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="8dp">
+                android:padding="12dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -258,17 +437,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/montserrat_bold"
-                        android:text="🎰 Giros Disponibles"
+                        android:text="Giros Disponibles"
                         android:textColor="@color/pass_color"
-                        android:textSize="16sp" />
+                        android:textSize="14sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/montserrat_regular"
-                        android:text="Usa giros para jugar y ganar tickets"
+                        android:text="Usa giros para jugar"
                         android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <TextView
@@ -278,11 +457,11 @@
                     android:background="@drawable/background_spins_count"
                     android:fontFamily="@font/montserrat_extrabold"
                     android:gravity="center"
-                    android:minWidth="60dp"
-                    android:paddingHorizontal="12dp"
+                    android:minWidth="50dp"
+                    android:paddingHorizontal="10dp"
                     android:paddingVertical="4dp"
                     android:text="0"
-                    android:textColor="@color/white"
+                    android:textColor="@color/accent_color"
                     android:textSize="16sp" />
             </LinearLayout>
 
@@ -293,48 +472,45 @@
                 android:layout_marginTop="8dp"
                 android:backgroundTint="@color/gold_accent"
                 android:fontFamily="@font/montserrat_bold"
-                android:text="📺 Ver Video para Giros (+10)"
+                android:text="Ver Video para Giros (+10)"
                 android:textColor="@color/primary_bg"
                 android:visibility="gone"
                 tools:visibility="visible" />
         </LinearLayout>
 
-        <!-- Top 5 de la Semana -->
-        <LinearLayout
-            android:id="@+id/mini_leaderboard"
+        <!-- TOP 5 DE LA SEMANA -->
+        <FrameLayout
+            android:id="@+id/top5_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/background_container"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:layout_marginTop="16dp"
+            android:visibility="gone">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/montserrat_bold"
-                android:text="⚡ TOP 5 DE LA SEMANA"
-                android:textColor="@color/green_accent"
-                android:textSize="16sp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/mini_leaderboard_list"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                tools:itemCount="5"
-                tools:listitem="@layout/item_leaderboard_mini" />
+                android:background="@drawable/background_container"
+                android:orientation="vertical"
+                android:padding="12dp">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginVertical="6dp"
-                android:background="@color/border_color" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:text="TOP 5 DE LA SEMANA"
+                    android:textColor="@color/green_accent"
+                    android:textSize="14sp" />
 
-            <include
-                android:id="@+id/my_rank_status"
-                layout="@layout/item_leaderboard_mini" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/mini_leaderboard_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    tools:itemCount="5"
+                    tools:listitem="@layout/item_leaderboard_mini" />
+            </LinearLayout>
+        </FrameLayout>
 
-        </LinearLayout>
     </LinearLayout>
 </ScrollView>

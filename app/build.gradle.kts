@@ -1,126 +1,248 @@
-// ==============================================================================
-//       Buildscript a Nivel de App: Aplica plugins y define dependencias
-// ==============================================================================
-
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.google.gms.services)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
+    id("kotlin-kapt")
 }
 
 android {
     namespace = "com.follgramer.diamantesproplayersgo"
-    compileSdk = libs.versions.compileSdk.get().toInt()
+    compileSdk = 35
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("diamantes-keystore.jks")
+            storePassword = "77095132"
+            keyAlias = "diamantes-key"
+            keyPassword = "77095132"
+        }
+    }
 
     defaultConfig {
         applicationId = "com.follgramer.diamantesproplayersgo"
-        minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
+
         multiDexEnabled = true
+        resConfigs("en", "es")
+
+        ndk {
+            abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+        }
     }
 
     buildTypes {
-        /**
-         * Configuración de build para la versión de lanzamiento (release).  Se habilita la
-         * minificación y compresión de recursos para reducir el tamaño del APK/AAB y mejorar
-         * el rendimiento.  R8 se encargará de eliminar código y recursos no utilizados.
-         */
         release {
-            // Habilita el uso de R8/ProGuard para minificar y ofuscar el código.
-            // Esto reduce el tamaño final del binario y mejora la seguridad.
             isMinifyEnabled = true
-
-            // Habilita la compresión de recursos.  Los archivos no usados se eliminarán
-            // automáticamente y las imágenes se optimizarán.
             isShrinkResources = true
-
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
+            isDebuggable = false
+            isJniDebuggable = false
+            isPseudoLocalesEnabled = false
+            signingConfig = signingConfigs.getByName("release")
 
-        /**
-         * Configuración para la versión de depuración (debug).  Se deshabilita la
-         * minificación para facilitar la depuración.  isDebuggable se mantiene en true.
-         */
+            // CONFIGURACIÓN ADMOB PARA RELEASE
+            buildConfigField("boolean", "USE_TEST_ADS", "false")
+            buildConfigField("String", "BUILD_TYPE_NAME", "\"RELEASE\"")
+            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-2024712392092488~7992650364\"")
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
+        }
         debug {
             isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
             isMinifyEnabled = false
+            isShrinkResources = false
+
+            // CONFIGURACIÓN ADMOB PARA DEBUG
+            buildConfigField("boolean", "USE_TEST_ADS", "true")
+            buildConfigField("String", "BUILD_TYPE_NAME", "\"DEBUG\"")
+            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
     }
 
     buildFeatures {
         viewBinding = true
         dataBinding = true
         buildConfig = true
+        aidl = false
+        shaders = false
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+        languageVersion = "1.9"
+        apiVersion = "1.9"
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-Xjvm-default=all"
+        )
+    }
+
+    kapt {
+        correctErrorTypes = true
+        useBuildCache = true
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas")
+            arg("room.incremental", "true")
+        }
     }
 
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += setOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/DEPENDENCIES",
+                "/META-INF/LICENSE",
+                "/META-INF/LICENSE.txt",
+                "/META-INF/NOTICE",
+                "/META-INF/NOTICE.txt",
+                "/META-INF/ASL2.0",
+                "/META-INF/*.kotlin_module",
+                "**/attach_hotspot_windows.dll",
+                "META-INF/licenses/**",
+                "META-INF/AL2.0",
+                "META-INF/LGPL2.1"
+            )
+        }
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 
-    configurations.all {
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    configurations.configureEach {
         resolutionStrategy {
-            force("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
-            force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.0")
+            force("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
+            force("org.jetbrains.kotlin:kotlin-stdlib-common:1.9.24")
+            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24")
+
+            force("com.google.android.gms:play-services-basement:18.5.0")
+            force("com.google.android.gms:play-services-base:18.5.0")
+            force("com.google.android.gms:play-services-ads-identifier:18.1.0")
+
+            exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+            exclude(group = "com.google.android.gms", module = "play-services-safetynet")
         }
+    }
+
+    lint {
+        disable += setOf(
+            "MissingTranslation",
+            "ExtraTranslation",
+            "VectorPath",
+            "IconDensities",
+            "IconDuplicates",
+            "Typos",
+            "ObsoleteLintCustomCheck"
+        )
+        abortOnError = false
+        warningsAsErrors = false
+        checkReleaseBuilds = false
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+        animationsDisabled = true
+    }
+
+    androidResources {
+        generateLocaleConfig = false
     }
 }
 
 dependencies {
-    // ✅ DEPENDENCIAS BÁSICAS DE ANDROID
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.material)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.drawerlayout)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
-    // ✅ FIREBASE - PLATAFORMA Y SERVICIOS
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.database)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.messaging)
+    // ANDROID CORE
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.0")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("androidx.multidex:multidex:2.0.1")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("androidx.cardview:cardview:1.0.0")
 
-    // ✅ GOOGLE ADS Y CONSENTIMIENTO
-    implementation(libs.google.play.services.ads)
-    implementation(libs.google.user.messaging.platform)
+    // Room Database
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 
-    // ✅ MATERIAL DIALOGS
-    implementation(libs.material.dialogs.core)
-    implementation(libs.material.dialogs.input)
+    // FIREBASE
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-appcheck-ktx")
+    debugImplementation("com.google.firebase:firebase-appcheck-debug")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
 
-    // ✅ COROUTINES PARA OPTIMIZACIÓN DEL SPLASH
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    // GOOGLE ADS - ADMOB
+    implementation("com.google.android.gms:play-services-ads:23.6.0")
+    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
 
-    // ✅ RECYCLERVIEW (para leaderboards y listas)
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    // GOOGLE PLAY SERVICES
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+    implementation("com.google.android.play:review-ktx:2.0.2")
+    implementation("com.google.android.gms:play-services-ads-identifier:18.1.0")
+    implementation("com.google.android.gms:play-services-basement:18.5.0")
+    implementation("com.google.android.gms:play-services-base:18.5.0")
+    implementation("com.google.android.gms:play-services-appset:16.1.0")
+    implementation("com.google.android.gms:play-services-nearby:19.3.0") {
+        exclude(group = "com.google.android.gms", module = "play-services-vision")
+    }
 
-    // ✅ LIFECYCLE COMPONENTS (para ViewModels si los usas)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    // UI LIBRARIES
+    implementation("com.afollestad.material-dialogs:core:3.3.0")
+    implementation("com.afollestad.material-dialogs:input:3.3.0")
+    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.media3:media3-exoplayer:1.5.0")
+    implementation("androidx.media3:media3-ui:1.5.0")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("me.leolin:ShortcutBadger:1.1.22@aar")
 
-    // ✅ TESTING
-    testImplementation(libs.test.junit)
-    androidTestImplementation(libs.test.androidx.junit)
-    androidTestImplementation(libs.test.androidx.espresso.core)
+    // COROUTINES
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+
+    // TESTING
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
 }

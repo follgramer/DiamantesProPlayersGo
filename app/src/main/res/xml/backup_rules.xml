@@ -1,13 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
--->
+<?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Incluir datos importantes de la app -->
+    <include domain="sharedpref" path="DiamantesProPrefs"/>
+    <include domain="database" path="."/>
+    <include domain="file" path="."/>
+
+    <!-- Excluir datos sensibles y temporales -->
+    <exclude domain="sharedpref" path="device.xml"/>
+    <exclude domain="sharedpref" path="InstallationId"/>
+    <exclude domain="sharedpref" path="FirebaseInstallations.xml"/>
+    <exclude domain="sharedpref" path="com.google.android.gms.ads.identifier.service.START"/>
+    <exclude domain="sharedpref" path="gms_ads_flags"/>
+    <exclude domain="sharedpref" path="measurement.prefs"/>
+    <exclude domain="sharedpref" path="com.google.android.gms.measurement.prefs"/>
+    <exclude domain="sharedpref" path="com.google.firebase.auth"/>
+    <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
+    <exclude domain="sharedpref" path="FirebaseRemoteConfig"/>
+    <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+    <exclude domain="sharedpref" path="webview"/>
+    <exclude domain="sharedpref" path="androidx.work.workdb"/>
+    <exclude domain="sharedpref" path="androidx.work"/>
+
+    <!-- Excluir archivos cache -->
+    <exclude domain="file" path="cache"/>
+    <exclude domain="file" path="code_cache"/>
+    <exclude domain="file" path="no_backup"/>
+    <exclude domain="root" path="cache"/>
+    <exclude domain="root" path="code_cache"/>
 </full-backup-content>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/nav_item_selector.xml -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Estado seleccionado/checked - Color más apropiado -->
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#20FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Estado presionado - Efecto sutil al tocar -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#10FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Estado normal - Transparente -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+
+</selector>

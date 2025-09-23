@@ -116,14 +116,13 @@
 
     </LinearLayout>
 
-    <!-- ANUNCIO - Banner de AdMob -->
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adViewTasks"
-        android:layout_width="wrap_content"
+    <!-- ✅ Contenedor para el Banner -->
+    <FrameLayout
+        android:id="@+id/adTasksContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
-        app:adSize="BANNER"
-        app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
+        android:visibility="gone"/>
 
 </LinearLayout>

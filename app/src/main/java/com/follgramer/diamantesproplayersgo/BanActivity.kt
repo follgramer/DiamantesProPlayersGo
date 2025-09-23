@@ -1,218 +1,157 @@
-// ========================================
-// ARCHIVO: BanActivity.kt - VERSIÓN CORREGIDA
-// ========================================
 package com.follgramer.diamantesproplayersgo
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import com.follgramer.diamantesproplayersgo.databinding.ActivityBanBinding
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class BanActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityBanBinding
-    private var countdownTimer: CountDownTimer? = null
 
     companion object {
         const val EXTRA_BAN_TYPE = "ban_type"
         const val EXTRA_BAN_REASON = "ban_reason"
         const val EXTRA_EXPIRES_AT = "expires_at"
         const val EXTRA_PLAYER_ID = "player_id"
-
-        const val BAN_TYPE_TEMPORARY = "temporary"
-        const val BAN_TYPE_PERMANENT = "permanent"
-
-        private const val CONTACT_EMAIL = "contacto@follgramer.com"
     }
+
+    private var countDownTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityBanBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        val banType = intent.getStringExtra(EXTRA_BAN_TYPE) ?: BAN_TYPE_PERMANENT
-        val reason = intent.getStringExtra(EXTRA_BAN_REASON) ?: getString(R.string.default_ban_reason)
+        // Solución para la advertencia de deprecación
+        setupStatusBar()
+
+        // Manejo moderno del botón de retroceso
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // No hacer nada - previene que el usuario regrese
+            }
+        })
+
+        val banType = intent.getStringExtra(EXTRA_BAN_TYPE) ?: "temporary"
+        val banReason = intent.getStringExtra(EXTRA_BAN_REASON) ?: "Violación de términos de servicio"
         val expiresAt = intent.getLongExtra(EXTRA_EXPIRES_AT, 0L)
         val playerId = intent.getStringExtra(EXTRA_PLAYER_ID) ?: ""
 
-        setupUI(banType, reason, expiresAt, playerId)
-        setupClickListeners()
+        setupBanScreen(banType, banReason, expiresAt, playerId)
     }
 
-    private fun setupUI(banType: String, reason: String, expiresAt: Long, playerId: String) {
-        when (banType) {
-            BAN_TYPE_TEMPORARY -> {
-                binding.banIcon.text = "⚠️"
-                binding.banTitle.text = getString(R.string.temporary_ban_title)
-                binding.banSubtitle.text = getString(R.string.temporary_ban_subtitle)
+    private fun setupStatusBar() {
+        // Método moderno para configurar la barra de estado
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-                if (expiresAt > 0) {
-                    startCountdown(expiresAt)
-                    binding.timeRemaining.visibility = android.view.View.VISIBLE
-                    binding.countdownContainer.visibility = android.view.View.VISIBLE
+        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        windowInsetsController.isAppearanceLightStatusBars = false
+
+        // Solo usar statusBarColor en versiones que lo soportan
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            @Suppress("DEPRECATION")
+            window.statusBarColor = Color.parseColor("#1A1A1A")
+        }
+    }
+
+    private fun setupBanScreen(banType: String, reason: String, expiresAt: Long, playerId: String) {
+        val message = when (banType) {
+            "permanent" -> {
+                "Tu cuenta ha sido suspendida permanentemente.\n\nMotivo: $reason\n\nSi crees que esto es un error, contacta a soporte técnico."
+            }
+            "temporary" -> {
+                val timeRemaining = expiresAt - System.currentTimeMillis()
+                if (timeRemaining > 0) {
+                    val hours = TimeUnit.MILLISECONDS.toHours(timeRemaining)
+                    val minutes = TimeUnit.MILLISECONDS.toMinutes(timeRemaining) % 60
+                    "Tu cuenta ha sido suspendida temporalmente.\n\nMotivo: $reason\n\nTiempo restante: ${hours}h ${minutes}m"
                 } else {
-                    binding.timeRemaining.visibility = android.view.View.GONE
-                    binding.countdownContainer.visibility = android.view.View.GONE
+                    "Tu suspensión ha expirado. Puedes intentar acceder nuevamente."
                 }
-
-                binding.retryButton.visibility = android.view.View.VISIBLE
-                binding.retryButton.text = getString(R.string.verify_status)
             }
-            BAN_TYPE_PERMANENT -> {
-                binding.banIcon.text = "🚫"
-                binding.banTitle.text = getString(R.string.permanent_ban_title)
-                binding.banSubtitle.text = getString(R.string.permanent_ban_subtitle)
-                binding.timeRemaining.visibility = android.view.View.GONE
-                binding.countdownContainer.visibility = android.view.View.GONE
-                binding.retryButton.visibility = android.view.View.GONE
-            }
+            else -> "Tu cuenta está suspendida."
         }
 
-        binding.banReason.text = reason
-        binding.playerId.text = getString(R.string.player_id_format, playerId)
-        binding.contactEmail.text = CONTACT_EMAIL
+        AlertDialog.Builder(this)
+            .setTitle("Cuenta Suspendida")
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Contactar Soporte") { _, _ ->
+                openEmailApp(playerId, reason)
+            }
+            .setNegativeButton(if (banType == "temporary") "Reintentar" else "Salir") { _, _ ->
+                if (banType == "temporary" && expiresAt <= System.currentTimeMillis()) {
+                    checkBanStatusAndRetry(playerId)
+                } else {
+                    finishAffinity()
+                }
+            }
+            .show()
     }
 
-    private fun setupClickListeners() {
-        binding.contactButton.setOnClickListener {
-            sendEmailToSupport()
-        }
-
-        binding.retryButton.setOnClickListener {
-            checkBanStatusAgain()
-        }
-
-        binding.exitButton.setOnClickListener {
-            finishAffinity()
-        }
-    }
-
-    private fun startCountdown(expiresAt: Long) {
-        val currentTime = System.currentTimeMillis()
-        val timeRemaining = expiresAt - currentTime
-
-        if (timeRemaining <= 0) {
-            // El baneo ya expiró, verificar estado
-            checkBanStatusAgain()
-            return
-        }
-
-        countdownTimer = object : CountDownTimer(timeRemaining, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                updateCountdownDisplay(millisUntilFinished)
-            }
-
-            override fun onFinish() {
-                binding.countdownTimer.text = getString(R.string.suspension_ended)
-                binding.retryButton.text = getString(R.string.continue_to_app)
-                binding.retryButton.setBackgroundColor(ContextCompat.getColor(this@BanActivity, R.color.success_color))
-            }
-        }.start()
-    }
-
-    private fun updateCountdownDisplay(millisUntilFinished: Long) {
-        val hours = millisUntilFinished / (1000 * 60 * 60)
-        val minutes = (millisUntilFinished % (1000 * 60 * 60)) / (1000 * 60)
-        val seconds = (millisUntilFinished % (1000 * 60)) / 1000
-
-        binding.countdownTimer.text = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
-
-        // Mostrar fecha de expiración
-        val expiryDate = System.currentTimeMillis() + millisUntilFinished
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        binding.expiryDate.text = getString(R.string.expires_at_format, dateFormat.format(Date(expiryDate)))
-    }
-
-    private fun sendEmailToSupport() {
+    private fun openEmailApp(playerId: String, reason: String) {
         try {
-            val playerId = intent.getStringExtra(EXTRA_PLAYER_ID) ?: ""
-            val banType = intent.getStringExtra(EXTRA_BAN_TYPE) ?: BAN_TYPE_PERMANENT
-
-            val subject = getString(R.string.email_subject, playerId)
-            val body = getString(
-                R.string.email_body,
-                playerId,
-                if (banType == BAN_TYPE_TEMPORARY) getString(R.string.temporary) else getString(R.string.permanent),
-                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
-            )
+            val subject = "Solicitud de Revisión de Suspensión - ID: $playerId"
+            val body = """
+                Hola equipo de soporte,
+                
+                Mi cuenta con ID $playerId ha sido suspendida.
+                Motivo: $reason
+                Fecha: ${SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())}
+                
+                Me gustaría solicitar una revisión del caso.
+                
+                Gracias.
+            """.trimIndent()
 
             val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:")
-                putExtra(Intent.EXTRA_EMAIL, arrayOf(CONTACT_EMAIL))
+                putExtra(Intent.EXTRA_EMAIL, arrayOf("follgramer@gmail.com"))
                 putExtra(Intent.EXTRA_SUBJECT, subject)
                 putExtra(Intent.EXTRA_TEXT, body)
             }
 
-            if (emailIntent.resolveActivity(packageManager) != null) {
-                startActivity(Intent.createChooser(emailIntent, getString(R.string.send_support_email)))
-            } else {
-                // Fallback: copiar email al portapapeles
-                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                val clip = android.content.ClipData.newPlainText(getString(R.string.support_email), CONTACT_EMAIL)
-                clipboard.setPrimaryClip(clip)
-
-                android.widget.Toast.makeText(
-                    this,
-                    getString(R.string.email_copied, CONTACT_EMAIL),
-                    android.widget.Toast.LENGTH_LONG
-                ).show()
-            }
+            startActivity(Intent.createChooser(emailIntent, "Enviar email"))
         } catch (e: Exception) {
-            android.util.Log.e("BanActivity", "Error enviando email: ${e.message}")
-            android.widget.Toast.makeText(this, getString(R.string.error_sending_email), android.widget.Toast.LENGTH_SHORT).show()
+            Log.e("BanActivity", "Error opening email: ${e.message}")
         }
     }
 
-    private fun checkBanStatusAgain() {
-        val playerId = intent.getStringExtra(EXTRA_PLAYER_ID) ?: ""
-        if (playerId.isEmpty()) {
-            finishAffinity()
-            return
-        }
-
-        binding.retryButton.isEnabled = false
-        binding.retryButton.text = getString(R.string.verifying)
-
+    private fun checkBanStatusAndRetry(playerId: String) {
         BanChecker(this).checkBanStatus(playerId) { banStatus ->
-            when (banStatus) {
-                is BanChecker.BanStatus.NotBanned -> {
-                    // Usuario ya no está baneado, continuar a la app
-                    android.widget.Toast.makeText(this, getString(R.string.suspension_lifted), android.widget.Toast.LENGTH_LONG).show()
-
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                is BanChecker.BanStatus.TemporaryBan -> {
-                    // Aún está baneado temporalmente
-                    binding.retryButton.isEnabled = true
-                    binding.retryButton.text = getString(R.string.verify_status)
-                    startCountdown(banStatus.expiresAt)
-                    android.widget.Toast.makeText(this, getString(R.string.suspension_still_active), android.widget.Toast.LENGTH_SHORT).show()
-                }
-                is BanChecker.BanStatus.PermanentBan -> {
-                    // Aún está baneado permanentemente
-                    binding.retryButton.isEnabled = true
-                    binding.retryButton.text = getString(R.string.verify_status)
-                    android.widget.Toast.makeText(this, getString(R.string.permanent_suspension_active), android.widget.Toast.LENGTH_SHORT).show()
+            runOnUiThread {
+                when (banStatus) {
+                    is BanChecker.BanStatus.NotBanned -> {
+                        val intent = Intent(this, MainActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        }
+                        startActivity(intent)
+                        finish()
+                    }
+                    else -> {
+                        AlertDialog.Builder(this)
+                            .setTitle("Aún Suspendido")
+                            .setMessage("Tu cuenta sigue suspendida.")
+                            .setPositiveButton("OK") { _, _ -> finishAffinity() }
+                            .show()
+                    }
                 }
             }
         }
     }
 
     override fun onDestroy() {
+        countDownTimer?.cancel()
         super.onDestroy()
-        countdownTimer?.cancel()
     }
 
-    override fun onBackPressed() {
-        // No permitir salir de esta pantalla con el botón atrás
-        // El usuario debe usar el botón "Salir de la App"
-    }
+    // NO incluir el método onBackPressed deprecado
 }

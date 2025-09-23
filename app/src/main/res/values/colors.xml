@@ -59,6 +59,9 @@
     <color name="rank_third">#CD7F32</color>
     <color name="rank_other">#B0BEC5</color>
 
+    <!-- FONDO PARA JUGADOR ACTUAL EN LEADERBOARD -->
+    <color name="current_player_bg">#1A00A8FF</color>
+
     <!-- MODALES Y NOTIFICACIONES -->
     <color name="modal_background">#1F2937</color>
     <color name="modal_overlay">#80000000</color>
@@ -88,4 +91,6 @@
     <color name="status_offline">#6B7280</color>
     <color name="status_loading">#f59e0b</color>
 
+    <!-- ALIAS PARA COMPATIBILIDAD (evita errores de recursos faltantes) -->
+    <color name="card_bg">@color/container_bg</color>
 </resources>

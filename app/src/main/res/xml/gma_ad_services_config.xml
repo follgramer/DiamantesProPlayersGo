@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gma-ad-services-config>
+    <!-- Attribution reporting habilitado -->
+    <attribution-reporting enabled="true" />
+
+    <!-- Ad measurement habilitado -->
+    <ad-measurement enabled="true" />
+
+    <!-- Ad attribution específico -->
+    <ad-attribution enabled="true" />
+
+    <!-- App measurement delay -->
+    <delay-app-measurement-init>true</delay-app-measurement-init>
+
+    <!-- Initialize ad services -->
+    <initialize-ad-services>true</initialize-ad-services>
+</gma-ad-services-config>

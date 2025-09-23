@@ -1,4 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Tema base de la aplicación -->
     <style name="Base.Theme.Diamantesproplayersgo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_color</item>
         <item name="android:windowBackground">@color/primary_bg</item>
@@ -7,14 +9,62 @@
 
     <style name="Theme.Diamantesproplayersgo" parent="Base.Theme.Diamantesproplayersgo" />
 
-    <!-- Estilo para el texto del menú de navegación -->
+    <!-- TEMA PARA MAIN ACTIVITY CON ANUNCIOS -->
+    <style name="Theme.WithInterstitialAds" parent="Base.Theme.Diamantesproplayersgo">
+        <!-- Asegurar que respete las barras del sistema -->
+        <item name="android:fitsSystemWindows">true</item>
+
+        <!-- No permitir pantalla completa para ads -->
+        <item name="android:windowFullscreen">false</item>
+
+        <!-- Mantener barras del sistema visibles -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+
+        <!-- Colores de barras del sistema -->
+        <item name="android:statusBarColor">@color/secondary_bg</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+
+        <!-- Evitar que el modo oscuro altere creativos de anuncios -->
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+    </style>
+
+    <!-- ESTILOS PARA MENÚ DE NAVEGACIÓN -->
+    <style name="NavigationMenuTextAppearance" parent="@android:style/TextAppearance">
+        <item name="android:textColor">@color/text_color</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="NavigationDrawerItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:textColor">@color/text_color</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="NavigationDrawerLegalItem" parent="NavigationDrawerItem">
+        <item name="android:textColor">#C0C0C0</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:paddingStart">32dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
     <style name="NavigationMenuTextStyle" parent="@android:style/TextAppearance.Medium">
         <item name="android:textColor">@color/text_color</item>
         <item name="android:textSize">16sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
-    <!-- Estilo para los subheaders del menú -->
     <style name="NavigationSubheaderStyle" parent="@android:style/TextAppearance.Small">
         <item name="android:textColor">@color/text_muted</item>
         <item name="android:textSize">14sp</item>
@@ -22,12 +72,24 @@
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 
-    <!-- 🎬 TEMA PARA SPLASH - SIN SPLASH BLANCO -->
+    <!-- TEMA PARA SPLASH -->
     <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- FONDO OSCURO INMEDIATO - elimina splash blanco -->
         <item name="android:windowBackground">@color/primary_bg</item>
         <item name="android:statusBarColor">@color/primary_bg</item>
-        <!-- Sin transiciones para arranque inmediato -->
+        <item name="android:navigationBarColor">@color/primary_bg</item>
         <item name="android:windowDisablePreview">true</item>
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+    <!-- ESTILO PARA CONTENEDORES DE ANUNCIOS -->
+    <style name="BannerContainerStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_centerHorizontal">true</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:clipChildren">false</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:fitsSystemWindows">true</item>
     </style>
 </resources>
