@@ -18,7 +18,12 @@ private const val TEST_REWARDED_ID = "ca-app-pub-3940256099942544/5224354917"
 // ============================================
 // PRODUCTION IDS - TUS IDS REALES DE ADMOB
 // ============================================
+<<<<<<< HEAD
 private const val PROD_APP_ID = "ca-app-pub-2024712392092488~7992650364"
+=======
+// IMPORTANTE: Reemplaza estos IDs con los tuyos reales de tu cuenta AdMob
+private const val PROD_APP_ID = "ca-app-pub-2024712392092488~1234567890" // Tu App ID real
+>>>>>>> 999fd88ece3337ae0871be7e0514342d32569941
 private const val PROD_BANNER_TOP_ID = "ca-app-pub-2024712392092488/1328842504"
 private const val PROD_BANNER_BOTTOM_ID = "ca-app-pub-2024712392092488/4186978125"
 private const val PROD_BANNER_RECYCLER_ID = "ca-app-pub-2024712392092488/2811927139"

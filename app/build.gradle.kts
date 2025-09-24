@@ -63,8 +63,15 @@ android {
             // Para anuncios reales
             buildConfigField("Boolean", "USE_TEST_ADS", "false")
 
+<<<<<<< HEAD
             // ✅ CORREGIDO: Application ID real de AdMob
             manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
+=======
+            // IMPORTANTE: Reemplaza con tu Application ID real de AdMob
+            // Ve a https://apps.admob.com/ -> Tu app -> Configuración de la app
+            // Formato: ca-app-pub-XXXXXXXXX~YYYYYYYYYY
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~XXXXXXXXXX"
+>>>>>>> 999fd88ece3337ae0871be7e0514342d32569941
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -77,7 +84,11 @@ android {
 
     buildFeatures {
         viewBinding = true
+<<<<<<< HEAD
         buildConfig = true
+=======
+        buildConfig = true // IMPORTANTE: Habilitar BuildConfig
+>>>>>>> 999fd88ece3337ae0871be7e0514342d32569941
         dataBinding = true
         aidl = false
         shaders = false
