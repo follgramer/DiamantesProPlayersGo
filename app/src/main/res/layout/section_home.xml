@@ -14,7 +14,6 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- SORTEO SEMANAL REDISEÑADO -->
         <LinearLayout
             android:id="@+id/giveawayInfo"
             android:layout_width="match_parent"
@@ -23,7 +22,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Header con badge de estado -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -56,13 +54,11 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <!-- Contenedor de estados -->
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="90dp">
 
-                <!-- Estado Normal (Countdown) -->
                 <LinearLayout
                     android:id="@+id/normalStateContainer"
                     android:layout_width="match_parent"
@@ -103,7 +99,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Estado de Procesamiento -->
                 <LinearLayout
                     android:id="@+id/processingStateContainer"
                     android:layout_width="match_parent"
@@ -140,7 +135,6 @@
                         android:textSize="13sp" />
                 </LinearLayout>
 
-                <!-- Estado de Revelación -->
                 <LinearLayout
                     android:id="@+id/revealStateContainer"
                     android:layout_width="match_parent"
@@ -184,7 +178,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Estado de Ganador Revelado -->
                 <LinearLayout
                     android:id="@+id/winnerRevealedContainer"
                     android:layout_width="match_parent"
@@ -225,16 +218,15 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- BANNER SUPERIOR CORREGIDO -->
+        <!-- Contenedor de banner superior - SIN FONDO NI ALTURA MÍNIMA -->
         <FrameLayout
             android:id="@+id/adInProfileContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:visibility="visible" />
-        <!-- SIN background blanco ni minHeight -->
+            android:visibility="gone" />
 
-        <!-- MI PROGRESO -->
+        <!-- Resto del contenido igual... -->
         <LinearLayout
             android:id="@+id/myProgress"
             android:layout_width="match_parent"
@@ -244,6 +236,7 @@
             android:orientation="vertical"
             android:padding="12dp">
 
+            <!-- Contenido del progreso igual... -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -369,7 +362,7 @@
                 android:progressDrawable="@drawable/background_progress" />
         </LinearLayout>
 
-        <!-- RULETA DE LA SUERTE -->
+        <!-- Área del juego -->
         <LinearLayout
             android:id="@+id/gameArea"
             android:layout_width="match_parent"
@@ -476,7 +469,7 @@
                 tools:visibility="visible" />
         </LinearLayout>
 
-        <!-- TOP 5 DE LA SEMANA -->
+        <!-- Top 5 -->
         <FrameLayout
             android:id="@+id/top5_container"
             android:layout_width="match_parent"

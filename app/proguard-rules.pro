@@ -23,17 +23,25 @@
 -keep class com.google.android.gms.internal.** { *; }
 -dontwarn com.google.firebase.**
 
+# Firebase Database
+-keepattributes Signature
+-keepclassmembers class com.follgramer.diamantesproplayersgo.** {
+    @com.google.firebase.database.PropertyName <methods>;
+}
+
 # Tu aplicación - MANTENER CLASES DE ANUNCIOS
 -keep class com.follgramer.diamantesproplayersgo.ads.** { *; }
 -keep class com.follgramer.diamantesproplayersgo.DiamantesApplication { *; }
 -keep class com.follgramer.diamantesproplayersgo.MainActivity { *; }
 -keep class com.follgramer.diamantesproplayersgo.SplashActivity { *; }
 
-# Retrofit si lo usas
--dontwarn retrofit.**
--keep class retrofit.** { *; }
--keepattributes Signature
--keepattributes Exceptions
+# Room Database
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-dontwarn androidx.room.paging.**
+
+# Encrypted SharedPreferences
+-keep class androidx.security.crypto.** { *; }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
@@ -41,12 +49,19 @@
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
+-dontwarn kotlinx.coroutines.**
+
+# Material Dialogs
+-keep class com.afollestad.materialdialogs.** { *; }
+-dontwarn com.afollestad.materialdialogs.**
+
+# ShortcutBadger
+-keep class me.leolin.shortcutbadger.** { *; }
 
 # Mantener anotaciones
 -keepattributes *Annotation*
-
-# Mantener nombres de clases internas
 -keepattributes InnerClasses
+-keepattributes EnclosingMethod
 
 # Para View Binding
 -keep class * implements androidx.viewbinding.ViewBinding {
@@ -54,15 +69,46 @@
     public static *** inflate(android.view.LayoutInflater);
 }
 
-# Material Dialogs
--keep class com.afollestad.materialdialogs.** { *; }
+# Kotlin
+-keep class kotlin.Metadata { *; }
+-dontwarn kotlin.**
+-keepclassmembers class **$WhenMappings {
+    <fields>;
+}
 
-# Evitar optimización de código que pueda afectar anuncios
--dontoptimize
--dontobfuscate # Temporal para debug, quitar en producción final
+# Retrofit si lo usas en el futuro
+-dontwarn retrofit.**
+-keep class retrofit.** { *; }
+-keepattributes Exceptions
 
-# Logs en release (opcional, para debug)
+# OkHttp si lo usas
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# Gson si lo usas
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class sun.misc.Unsafe { *; }
+
+# Para producción (habilitar ofuscación y optimización)
+-optimizationpasses 5
+-dontusemixedcaseclassnames
+-verbose
+-optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
+
+# Logs en release (eliminar logs en producción)
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
     public static *** v(...);
+    public static *** i(...);
+    public static *** w(...);
 }
+
+# Mantener nombres de recursos
+-keepclassmembers class **.R$* {
+    public static <fields>;
+}
+
+# Evitar warnings comunes
+-dontwarn android.support.**
+-dontwarn androidx.**

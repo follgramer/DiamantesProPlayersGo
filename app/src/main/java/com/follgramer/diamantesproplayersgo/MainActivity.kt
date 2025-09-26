@@ -57,9 +57,7 @@ import com.afollestad.materialdialogs.input.input
 import com.follgramer.diamantesproplayersgo.ads.AdManager
 import com.follgramer.diamantesproplayersgo.ads.AdsInit
 import com.follgramer.diamantesproplayersgo.ads.BannerHelper
-import com.follgramer.diamantesproplayersgo.ads.currentBannerUnitId
-import com.follgramer.diamantesproplayersgo.ads.currentInterstitialUnitId
-import com.follgramer.diamantesproplayersgo.ads.currentRewardedUnitId
+// ... (imports de AdIds eliminados, ya no son necesarios aquí)
 import com.follgramer.diamantesproplayersgo.databinding.ActivityMainBinding
 import com.follgramer.diamantesproplayersgo.notifications.*
 import com.follgramer.diamantesproplayersgo.ui.NotificationCenterActivity
@@ -67,10 +65,12 @@ import com.follgramer.diamantesproplayersgo.ui.Onboarding
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
+import com.google.android.ump.UserMessagingPlatform
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
+import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
     private var currentPlayerId: String? = null
     private var currentSpins: Int = 0
     private var isSpinning = false
-    private var bannersLoaded = false
+    private var bannersLoaded = false // Mantenemos para control
 
     // FIREBASE LISTENERS
     private val firebaseListeners = mutableListOf<ValueEventListener>()
@@ -136,8 +136,14 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try {
+            // Verificar estado del consentimiento
+            val consentCompleted = intent.getBooleanExtra("consent_completed", false)
+            val adMobInitialized = intent.getBooleanExtra("admob_initialized", false)
+
             Log.d(TAG_MAIN, "=== INICIANDO MAINACTIVITY ===")
             Log.d(TAG_MAIN, "Build Type: ${if (BuildConfig.DEBUG) "DEBUG" else "RELEASE"}")
+            Log.d(TAG_MAIN, "Consent Completed: $consentCompleted")
+            Log.d(TAG_MAIN, "AdMob Initialized: $adMobInitialized")
 
             if (isFinishing || isDestroyed) {
                 Log.w(TAG_MAIN, "Activity en estado inválido, abortando onCreate")
@@ -167,14 +173,8 @@ class MainActivity : AppCompatActivity() {
 
             startBadgeUpdater()
 
-            // Log de configuración de anuncios
             if (BuildConfig.DEBUG) {
-                Log.d(TAG_MAIN, "=== CONFIGURACIÓN DE ANUNCIOS ===")
-                Log.d(TAG_MAIN, "Banner Top ID: ${com.follgramer.diamantesproplayersgo.ads.currentBannerTopUnitId()}")
-                Log.d(TAG_MAIN, "Banner Bottom ID: ${com.follgramer.diamantesproplayersgo.ads.currentBannerBottomUnitId()}")
-                Log.d(TAG_MAIN, "Interstitial ID: ${com.follgramer.diamantesproplayersgo.ads.currentInterstitialUnitId()}")
-                Log.d(TAG_MAIN, "Rewarded ID: ${com.follgramer.diamantesproplayersgo.ads.currentRewardedUnitId()}")
-                Log.d(TAG_MAIN, "==================================")
+                // IDs de AdMob no necesitan ser consultados desde AdIds.kt en Main, solo la lógica.
             }
 
         } catch (e: Exception) {
@@ -201,7 +201,7 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG_MAIN, "Inicializando sistemas críticos...")
             setupAudioManager()
 
-            if (!AdsInit.isInitialized()) {
+            if (!AdsInit.isAdMobReady()) {
                 Log.w(TAG_MAIN, "⚠ AdMob NO fue inicializado en SplashActivity")
             } else {
                 Log.d(TAG_MAIN, "✅ AdMob correctamente inicializado desde SplashActivity")
@@ -224,56 +224,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // REEMPLAZANDO con la versión CORREGIDA y simplificada del usuario
     private fun loadBannersWhenReady() {
         if (bannersLoaded) {
-            Log.d(TAG_MAIN, "Banners ya cargados, saltando...")
+            Log.d(TAG_MAIN, "Banners ya cargados, saltando…")
             return
         }
-
-        if (!AdsInit.isAdMobReady()) {
-            Log.w(TAG_MAIN, "AdMob no está listo, reintentando en 2 segundos...")
-            lifecycleScope.launch {
-                delay(2000)
-                withContext(Dispatchers.Main) {
-                    loadBannersWhenReady()
-                }
-            }
-            return
-        }
-
         lifecycleScope.launch(Dispatchers.Main) {
             try {
-                Log.d(TAG_MAIN, "🎯 Iniciando carga de banners...")
-                Log.d(TAG_MAIN, "Modo: ${if (BuildConfig.DEBUG) "DEBUG" else "RELEASE"}")
+                Log.d(TAG_MAIN, "🎯 Intentando cargar banners...")
 
-                // Banner superior (en perfil)
-                val homeContainer = binding.sectionHome.adInProfileContainer
-                homeContainer.apply {
-                    visibility = View.VISIBLE
-                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                    removeAllViews()
+                // Esperar a que AdMob esté listo
+                while (!AdsInit.isAdMobReady()) {
+                    Log.w(TAG_MAIN, "AdMob no listo, esperando...")
+                    delay(500)
                 }
 
-                Log.d(TAG_MAIN, "Cargando banner superior...")
-                BannerHelper.attachAdaptiveBanner(this@MainActivity, homeContainer)
+                // Esperar a que el consentimiento esté completo
+                while (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()) {
+                    Log.w(TAG_MAIN, "Consentimiento pendiente, esperando...")
+                    delay(500)
+                }
 
-                // Esperar antes de cargar el segundo banner
-                delay(1500)
+                if (bannersLoaded) {
+                    Log.d(TAG_MAIN, "Banners cargados por otra rutina, saliendo.")
+                    return@launch
+                }
 
-                // Banner inferior
+                Log.d(TAG_MAIN, "✅ Condiciones cumplidas, cargando banners...")
+
+                // Cargar banner superior
+                val topContainer = binding.sectionHome.adInProfileContainer
+                topContainer.visibility = View.VISIBLE
+                // IMPORTANTE: BannerHelper gestiona la altura y la visibilidad al cargarse.
+                BannerHelper.attachAdaptiveBanner(this@MainActivity, topContainer)
+
+                // Cargar banner inferior
                 val bottomContainer = binding.bannerBottomContainer
-                bottomContainer.apply {
-                    visibility = View.VISIBLE
-                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                    removeAllViews()
-                }
-
-                Log.d(TAG_MAIN, "Cargando banner inferior...")
+                bottomContainer.visibility = View.VISIBLE
                 BannerHelper.attachAdaptiveBanner(this@MainActivity, bottomContainer)
 
                 bannersLoaded = true
                 Log.d(TAG_MAIN, "✅ Banners programados para carga")
-
             } catch (e: Exception) {
                 Log.e(TAG_MAIN, "❌ Error cargando banners: ${e.message}", e)
             }
@@ -295,10 +287,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    // ELIMINADA: verifyBannerStatus()
-    // ELIMINADA: debugBannerStatus()
-    // ELIMINADA: logCurrentAdConfiguration()
 
     private fun setupAdminSyncListener(playerId: String) {
         try {
@@ -358,7 +346,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // REEMPLAZAR LA FUNCIÓN COMPLETA
+    // FUNCIÓN setupBasicUI() ACTUALIZADA
     private fun setupBasicUI() {
         try {
             Log.d(TAG_MAIN, "Configurando basic UI...")
@@ -369,19 +357,23 @@ class MainActivity : AppCompatActivity() {
             hideAllSections()
             showSectionSafely(binding.sectionHome.root)
 
-            // Preparar contenedores de banners
+            // Configurar contenedores de banners (mantenerlos ocultos inicialmente)
             val homeContainer = binding.sectionHome.adInProfileContainer
             val bottomContainer = binding.bannerBottomContainer
 
-            // Limpiar y configurar contenedores
+            // Limpiar contenedores
             homeContainer.removeAllViews()
             bottomContainer.removeAllViews()
 
-            // IMPORTANTE: Mantener visibles pero con altura 0 inicial
-            homeContainer.visibility = View.VISIBLE
-            bottomContainer.visibility = View.VISIBLE
+            // IMPORTANTE: Mantener OCULTOS y sin altura hasta que carguen
+            homeContainer.visibility = View.GONE
+            bottomContainer.visibility = View.GONE
             homeContainer.layoutParams.height = 0
             bottomContainer.layoutParams.height = 0
+
+            // Remover cualquier background (evitar destellos)
+            homeContainer.background = null
+            bottomContainer.background = null
 
             currentSpins = SessionManager.getCurrentSpins(this)
             val playerId = SessionManager.getPlayerId(this)
@@ -391,28 +383,6 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG_MAIN, "Basic UI configurado correctamente")
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error configurando basic UI: ${e.message}")
-        }
-    }
-
-    private fun setupBannerContainers() {
-        try {
-            Log.d(TAG_MAIN, "Preparando contenedores de banner...")
-            val homeContainer = binding.sectionHome.adInProfileContainer
-            val bottomContainer = binding.bannerBottomContainer
-            // Limpiar contenedores
-            homeContainer.removeAllViews()
-            bottomContainer.removeAllViews()
-            // IMPORTANTE: Ocultar y eliminar altura mínima
-            homeContainer.visibility = View.GONE
-            homeContainer.minimumHeight = 0
-            bottomContainer.visibility = View.GONE
-            bottomContainer.minimumHeight = 0
-            // Eliminar cualquier background que pudiera tener
-            homeContainer.background = null
-            bottomContainer.background = null
-            Log.d(TAG_MAIN, "✅ Contenedores preparados correctamente")
-        } catch (e: Exception) {
-            Log.e(TAG_MAIN, "Error preparando contenedores: ${e.message}")
         }
     }
 
@@ -428,6 +398,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 withContext(Dispatchers.Main) {
+                    // Inicializar AdManager aquí (AdsInit.init ya fue llamado en Splash)
                     AdManager.initialize(this@MainActivity)
                     finalizeUIInitialization(playerId)
 
@@ -548,13 +519,10 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG_MAIN, "📬 Unread notifications: $unreadCount")
             }
 
-            // Resumir banners si existen
-            if (::binding.isInitialized && bannersLoaded) {
+            // Resumir banners
+            if (::binding.isInitialized) {
                 Log.d(TAG_MAIN, "Resumiendo banners...")
-                val homeContainer = binding.sectionHome.adInProfileContainer
-                val bottomContainer = binding.bannerBottomContainer
-                BannerHelper.resumeBanners(homeContainer)
-                BannerHelper.resumeBanners(bottomContainer)
+                BannerHelper.resume(binding.root)
             }
 
         } catch (e: Exception) {
@@ -568,10 +536,9 @@ class MainActivity : AppCompatActivity() {
         revealCountdownTimer?.cancel()
 
         try {
-            if (::binding.isInitialized && bannersLoaded) {
+            if (::binding.isInitialized) {
                 Log.d(TAG_MAIN, "Pausando banners...")
-                BannerHelper.pauseBanners(binding.sectionHome.adInProfileContainer)
-                BannerHelper.pauseBanners(binding.bannerBottomContainer)
+                BannerHelper.pause(binding.root)
             }
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error pausando banners: ${e.message}")
@@ -594,11 +561,9 @@ class MainActivity : AppCompatActivity() {
 
             if (::binding.isInitialized) {
                 Log.d(TAG_MAIN, "Destruyendo banners...")
-                BannerHelper.destroyBanners(binding.sectionHome.adInProfileContainer)
-                BannerHelper.destroyBanners(binding.bannerBottomContainer)
+                BannerHelper.destroy(binding.root)
             }
 
-            BannerHelper.cleanup()
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error en limpieza de banners: ${e.message}")
         }
@@ -989,8 +954,6 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    // ELIMINADA: mostrarInfoSobreSesiones()
-
     private fun obtenerTop5Firebase() {
         try {
             DiamantesApplication.cachedTop5?.let { cached ->
@@ -1177,6 +1140,7 @@ class MainActivity : AppCompatActivity() {
         binding.sectionHome.apply {
             // Hide other states
             normalStateContainer.visibility = View.GONE
+            processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
 
@@ -1307,10 +1271,6 @@ class MainActivity : AppCompatActivity() {
         }, 120000)
     }
 
-    // ELIMINADA: updateTerminaEnText()
-    // ELIMINADA: showEpicWinnerCelebration()
-    // ELIMINADA: showParticipantNotification()
-    // ELIMINADA: shareWin()
     private fun showMiniNotification(message: String) {
         // Simple Toast without custom background
         Toast.makeText(this, message, Toast.LENGTH_SHORT).apply {
@@ -1897,10 +1857,6 @@ class MainActivity : AppCompatActivity() {
         binding.sectionLegal.root.visibility = View.GONE
     }
 
-    private fun showSection(sectionRoot: View) {
-        sectionRoot.visibility = View.VISIBLE
-    }
-
     private fun showLegalModal(title: String, content: String) {
         try {
             val dialog = android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
@@ -1948,15 +1904,21 @@ class MainActivity : AppCompatActivity() {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
 
-        AdManager.showRewarded(this) { amount, _ ->
-            releaseAudioFocus()
+        AdManager.showRewarded(this,
+            onReward = { rewardItem ->
+                releaseAudioFocus()
 
-            Log.d(TAG_ADMOB, "Reward of $amount spins obtained.")
-            val spinsToAdd = 10
-            SessionManager.addSpins(this, spinsToAdd)
-            currentSpins = SessionManager.getCurrentSpins(this)
-            updateSpinCountUI()
-        }
+                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                // En tu lógica actual, el rewarded solo da 10 spins, sin importar el item
+                val spinsToAdd = 10
+                SessionManager.addSpins(this, spinsToAdd)
+                currentSpins = SessionManager.getCurrentSpins(this)
+                updateSpinCountUI()
+            },
+            onDismiss = {
+                releaseAudioFocus()
+            }
+        )
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -1982,13 +1944,18 @@ class MainActivity : AppCompatActivity() {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
 
-        AdManager.showRewarded(this) { amount, _ ->
-            releaseAudioFocus()
+        AdManager.showRewarded(this,
+            onReward = { rewardItem ->
+                releaseAudioFocus()
 
-            Log.d(TAG_ADMOB, "Reward of $amount tickets obtained.")
-            val ticketsToAdd = if (amount > 0) amount else 20
-            addTicketsToPlayer(ticketsToAdd)
-        }
+                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                val ticketsToAdd = if (rewardItem.amount > 0) rewardItem.amount else 20
+                addTicketsToPlayer(ticketsToAdd)
+            },
+            onDismiss = {
+                releaseAudioFocus()
+            }
+        )
     }
 
     private fun initializeGrid() {

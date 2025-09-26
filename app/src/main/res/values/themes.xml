@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Tema base de la aplicación -->
     <style name="Base.Theme.Diamantesproplayersgo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_color</item>
         <item name="android:windowBackground">@color/primary_bg</item>
@@ -10,29 +9,23 @@
 
     <style name="Theme.Diamantesproplayersgo" parent="Base.Theme.Diamantesproplayersgo" />
 
-    <!-- TEMA ESPECÍFICO PARA ACTIVIDADES CON ANUNCIOS -->
     <style name="Theme.WithAds" parent="Base.Theme.Diamantesproplayersgo">
-        <!-- Configuración crítica para anuncios -->
         <item name="android:fitsSystemWindows">true</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowTranslucentNavigation">false</item>
 
-        <!-- Colores de barras del sistema -->
         <item name="android:statusBarColor">@color/secondary_bg</item>
         <item name="android:navigationBarColor">@android:color/black</item>
 
-        <!-- Evitar que el modo oscuro afecte anuncios -->
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
 
-        <!-- Layout in display cutout mode para Android P+ -->
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">
             shortEdges
         </item>
     </style>
 
-    <!-- TEMA PARA SPLASH -->
     <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/splash_background</item>
         <item name="android:statusBarColor">@color/primary_bg</item>
@@ -41,7 +34,6 @@
         <item name="android:fitsSystemWindows">true</item>
     </style>
 
-    <!-- ESTILO PARA CONTENEDORES DE BANNERS -->
     <style name="BannerContainer">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -53,10 +45,20 @@
         <item name="android:visibility">visible</item>
     </style>
 
-    <!-- ESTILOS DE NAVEGACIÓN -->
     <style name="NavigationMenuTextAppearance" parent="@android:style/TextAppearance">
         <item name="android:textColor">@color/text_color</item>
         <item name="android:textSize">15sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="Theme.WithInterstitialAds" parent="Base.Theme.Diamantesproplayersgo">
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
     </style>
 </resources>

@@ -18,8 +18,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.follgramer.diamantesproplayersgo.MainActivity
 import com.follgramer.diamantesproplayersgo.R
-import com.follgramer.diamantesproplayersgo.database.NotificationDatabase
-import com.follgramer.diamantesproplayersgo.database.NotificationEntity
 import com.google.firebase.database.*
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
@@ -48,8 +46,10 @@ class AppNotificationManager private constructor(private val context: Context) {
         }
     }
 
-    private val database = NotificationDatabase.getInstance(context)
-    private val notificationDao = database.notificationDao()
+    // Almacenamiento temporal en memoria (sin base de datos)
+    private val inMemoryNotifications = mutableListOf<NotificationData>()
+    private var unreadCount = 0
+
     private val systemNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
             as android.app.NotificationManager
     private val processedNotifications = ConcurrentHashMap<String, Long>()
@@ -78,13 +78,6 @@ class AppNotificationManager private constructor(private val context: Context) {
                 lightColor = Color.YELLOW
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 1000, 500, 1000)
-
-                val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
-                setSound(soundUri, audioAttributes)
             }
 
             val generalChannel = NotificationChannel(
@@ -95,8 +88,6 @@ class AppNotificationManager private constructor(private val context: Context) {
                 description = "Notificaciones generales del club"
                 enableLights(true)
                 lightColor = Color.BLUE
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 300, 200, 300)
             }
 
             val giftChannel = NotificationChannel(
@@ -107,8 +98,6 @@ class AppNotificationManager private constructor(private val context: Context) {
                 description = "Notificaciones de regalos"
                 enableLights(true)
                 lightColor = Color.GREEN
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 200, 100, 200)
             }
 
             val banChannel = NotificationChannel(
@@ -119,8 +108,6 @@ class AppNotificationManager private constructor(private val context: Context) {
                 description = "Notificaciones importantes del sistema"
                 enableLights(true)
                 lightColor = Color.RED
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 200, 500)
             }
 
             val channels = listOf(winnerChannel, generalChannel, giftChannel, banChannel)
@@ -166,7 +153,6 @@ class AppNotificationManager private constructor(private val context: Context) {
             val notifId = snapshot.key ?: return
             val data = snapshot.value as? Map<String, Any> ?: return
 
-            // Verificar si ya fue procesada
             val processed = data["processed"] as? Boolean ?: false
             if (processed) {
                 snapshot.ref.removeValue()
@@ -176,14 +162,12 @@ class AppNotificationManager private constructor(private val context: Context) {
             val timestamp = (data["timestamp"] as? Long) ?: System.currentTimeMillis()
             val age = System.currentTimeMillis() - timestamp
 
-            // Si tiene más de 24 horas, eliminar
             if (age > MAX_NOTIFICATION_AGE) {
                 Log.d(TAG, "Notificación muy vieja, eliminando: $notifId")
                 snapshot.ref.removeValue()
                 return
             }
 
-            // Verificar si ya la procesamos localmente
             if (processedNotifications.containsKey(notifId)) {
                 snapshot.ref.removeValue()
                 return
@@ -201,23 +185,28 @@ class AppNotificationManager private constructor(private val context: Context) {
                 ban_type = data["ban_type"] as? String,
                 expires_at = data["expires_at"]?.toString(),
                 sound = (data["sound"] as? Boolean) ?: true,
-                vibrate = (data["vibrate"] as? Boolean) ?: true
+                vibrate = (data["vibrate"] as? Boolean) ?: true,
+                isRead = false
             )
 
-            // Guardar en base de datos local
-            saveToDatabase(notification)
+            // Guardar en memoria
+            synchronized(inMemoryNotifications) {
+                inMemoryNotifications.add(notification)
+                if (!notification.isRead) {
+                    unreadCount++
+                }
+            }
 
-            // Mostrar notificación solo si es reciente (menos de 5 minutos)
+            // Mostrar notificación solo si es reciente
             if (age < 5 * 60 * 1000) {
                 withContext(Dispatchers.Main) {
                     showNotification(notification)
                 }
             }
 
-            // Marcar como procesada localmente
             processedNotifications[notifId] = System.currentTimeMillis()
+            NotificationEventBus.post(CounterUpdatedEvent)
 
-            // Eliminar de Firebase después de procesar
             delay(1000)
             snapshot.ref.removeValue()
 
@@ -244,27 +233,22 @@ class AppNotificationManager private constructor(private val context: Context) {
 
     private fun handleWinnerNotification(data: NotificationData) {
         val finalMessage = data.message.ifEmpty {
-            "🎉 ¡Felicitaciones! Has ganado el sorteo semanal. Te contactaremos pronto."
+            "🎉 ¡Felicitaciones! Has ganado el sorteo semanal."
         }
-
         showSystemNotification(
             channelId = CHANNEL_WINNER,
             title = "🏆 ¡FELICITACIONES, GANADOR!",
             message = finalMessage,
             priority = NotificationCompat.PRIORITY_HIGH,
-            vibrationPattern = longArrayOf(0, 500, 100, 500, 100, 1000),
-            color = Color.YELLOW,
             notificationType = "winner"
         )
-
         NotificationEventBus.post(WinnerEvent(finalMessage))
     }
 
     private fun handleLoserNotification(data: NotificationData) {
         val finalMessage = data.message.ifEmpty {
-            "El sorteo ha finalizado. ¡Sigue participando para ganar en el próximo!"
+            "El sorteo ha finalizado. ¡Sigue participando!"
         }
-
         showSystemNotification(
             channelId = CHANNEL_GENERAL,
             title = "📢 Sorteo Finalizado",
@@ -272,7 +256,6 @@ class AppNotificationManager private constructor(private val context: Context) {
             priority = NotificationCompat.PRIORITY_DEFAULT,
             notificationType = "loser"
         )
-
         NotificationEventBus.post(LoserEvent(finalMessage))
     }
 
@@ -286,16 +269,13 @@ class AppNotificationManager private constructor(private val context: Context) {
                 "¡Has recibido ${data.amount} giros!"
             else -> "¡Tienes un regalo del administrador!"
         }
-
         showSystemNotification(
             channelId = CHANNEL_GIFT,
             title = "🎁 Regalo Recibido",
             message = giftMessage,
             priority = NotificationCompat.PRIORITY_DEFAULT,
-            color = Color.GREEN,
             notificationType = "gift"
         )
-
         NotificationEventBus.post(GiftEvent(
             amount = data.amount ?: "0",
             unit = data.unit ?: "unknown",
@@ -310,10 +290,8 @@ class AppNotificationManager private constructor(private val context: Context) {
             else "⚠️ Suspensión Temporal",
             message = data.message,
             priority = NotificationCompat.PRIORITY_HIGH,
-            color = Color.RED,
             notificationType = "ban"
         )
-
         NotificationEventBus.post(BanEvent(
             banType = data.ban_type ?: "unknown",
             reason = data.message,
@@ -329,10 +307,8 @@ class AppNotificationManager private constructor(private val context: Context) {
                 "Tu cuenta ha sido reactivada. ¡Bienvenido de vuelta!"
             },
             priority = NotificationCompat.PRIORITY_DEFAULT,
-            color = Color.GREEN,
             notificationType = "unban"
         )
-
         NotificationEventBus.post(UnbanEvent)
     }
 
@@ -344,7 +320,6 @@ class AppNotificationManager private constructor(private val context: Context) {
             priority = NotificationCompat.PRIORITY_DEFAULT,
             notificationType = "general"
         )
-
         NotificationEventBus.post(GeneralEvent(
             title = data.title,
             message = data.message
@@ -379,8 +354,6 @@ class AppNotificationManager private constructor(private val context: Context) {
                 }
             )
 
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
             val notification = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
@@ -390,112 +363,12 @@ class AppNotificationManager private constructor(private val context: Context) {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
                 .setColor(color)
-                .setSound(soundUri)
-                .apply {
-                    vibrationPattern?.let { pattern ->
-                        setVibrate(pattern)
-                    } ?: run {
-                        when (notificationType) {
-                            "winner" -> setVibrate(longArrayOf(0, 500, 100, 500, 100, 1000))
-                            "loser" -> setVibrate(longArrayOf(0, 200, 100, 200))
-                            "gift" -> setVibrate(longArrayOf(0, 300, 100, 300))
-                            else -> setVibrate(longArrayOf(0, 300))
-                        }
-                    }
-                }
                 .build()
 
             systemNotificationManager.notify(System.currentTimeMillis().toInt(), notification)
 
-            // Reproducir sonido y vibración manualmente para asegurar
-            playNotificationSound(notificationType)
-            performVibration(notificationType)
-
         } catch (e: Exception) {
             Log.e(TAG, "Error mostrando notificación: ${e.message}")
-        }
-    }
-
-    private fun playNotificationSound(type: String) {
-        try {
-            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(context, uri)
-
-            ringtone.play()
-
-            if (type == "winner") {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    ringtone.play()
-                }, 1500)
-            }
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                ringtone.stop()
-            }, 4000)
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error reproduciendo sonido: ${e.message}")
-        }
-    }
-
-    private fun performVibration(type: String) {
-        try {
-            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
-                        as VibratorManager
-                vibratorManager.defaultVibrator
-            } else {
-                @Suppress("DEPRECATION")
-                context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            }
-
-            val pattern = when (type) {
-                "winner" -> longArrayOf(0, 500, 100, 500, 100, 1000)
-                "loser" -> longArrayOf(0, 200, 100, 200)
-                "gift" -> longArrayOf(0, 300, 100, 300)
-                "ban" -> longArrayOf(0, 500, 200, 500)
-                else -> longArrayOf(0, 300)
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(pattern, -1)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error vibrando: ${e.message}")
-        }
-    }
-
-    private suspend fun saveToDatabase(data: NotificationData) {
-        try {
-            val entity = NotificationEntity(
-                id = "${data.timestamp}_${data.type}_${System.currentTimeMillis()}",
-                type = data.type,
-                title = data.title,
-                message = data.message,
-                timestamp = data.timestamp,
-                isRead = false,
-                extra = buildExtraData(data)
-            )
-
-            withContext(Dispatchers.IO) {
-                notificationDao.insert(entity)
-            }
-
-            NotificationEventBus.post(CounterUpdatedEvent)
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error guardando en BD: ${e.message}")
-        }
-    }
-
-    private fun buildExtraData(data: NotificationData): String {
-        return when (data.type) {
-            "gift" -> "amount:${data.amount},unit:${data.unit}"
-            "ban" -> "ban_type:${data.ban_type},expires:${data.expires_at}"
-            else -> ""
         }
     }
 
@@ -516,13 +389,13 @@ class AppNotificationManager private constructor(private val context: Context) {
             while (isActive) {
                 try {
                     val cutoffTime = System.currentTimeMillis() - NOTIFICATION_EXPIRY
-                    notificationDao.deleteOldNotifications(cutoffTime)
-
+                    synchronized(inMemoryNotifications) {
+                        inMemoryNotifications.removeIf { it.timestamp < cutoffTime }
+                    }
                     processedNotifications.entries.removeIf {
                         System.currentTimeMillis() - it.value > MAX_NOTIFICATION_AGE
                     }
-
-                    delay(60 * 60 * 1000) // Cada hora
+                    delay(60 * 60 * 1000)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error en limpieza: ${e.message}")
                 }
@@ -532,31 +405,49 @@ class AppNotificationManager private constructor(private val context: Context) {
 
     // Funciones públicas para acceso externo
 
-    suspend fun getUnreadCount(): Int = withContext(Dispatchers.IO) {
-        notificationDao.getUnreadCount()
-    }
+    suspend fun getUnreadCount(): Int = unreadCount
 
-    suspend fun getAllNotifications(): List<NotificationEntity> = withContext(Dispatchers.IO) {
-        notificationDao.getAllNotifications()
-    }
+    suspend fun getAllNotifications(): List<NotificationData> =
+        synchronized(inMemoryNotifications) {
+            inMemoryNotifications.toList()
+        }
 
-    suspend fun markAsRead(notificationId: String) = withContext(Dispatchers.IO) {
-        notificationDao.markAsRead(notificationId)
+    suspend fun markAsRead(notificationId: String) {
+        synchronized(inMemoryNotifications) {
+            inMemoryNotifications.find { it.id == notificationId }?.let { notification ->
+                notification.isRead = true
+                unreadCount = maxOf(0, unreadCount - 1)
+            }
+        }
         NotificationEventBus.post(CounterUpdatedEvent)
     }
 
-    suspend fun markAllAsRead() = withContext(Dispatchers.IO) {
-        notificationDao.markAllAsRead()
+    suspend fun markAllAsRead() {
+        synchronized(inMemoryNotifications) {
+            inMemoryNotifications.forEach { it.isRead = true }
+            unreadCount = 0
+        }
         NotificationEventBus.post(CounterUpdatedEvent)
     }
 
-    suspend fun deleteNotification(notificationId: String) = withContext(Dispatchers.IO) {
-        notificationDao.deleteById(notificationId)
+    suspend fun deleteNotification(notificationId: String) {
+        synchronized(inMemoryNotifications) {
+            val notification = inMemoryNotifications.find { it.id == notificationId }
+            if (notification != null) {
+                if (!notification.isRead) {
+                    unreadCount = maxOf(0, unreadCount - 1)
+                }
+                inMemoryNotifications.remove(notification)
+            }
+        }
         NotificationEventBus.post(CounterUpdatedEvent)
     }
 
-    suspend fun deleteAllNotifications() = withContext(Dispatchers.IO) {
-        notificationDao.deleteAll()
+    suspend fun deleteAllNotifications() {
+        synchronized(inMemoryNotifications) {
+            inMemoryNotifications.clear()
+            unreadCount = 0
+        }
         NotificationEventBus.post(CounterUpdatedEvent)
     }
 
@@ -568,24 +459,24 @@ class AppNotificationManager private constructor(private val context: Context) {
                     return@launch
                 }
 
-                saveToDatabase(data)
+                synchronized(inMemoryNotifications) {
+                    inMemoryNotifications.add(data)
+                    if (!data.isRead) {
+                        unreadCount++
+                    }
+                }
 
                 withContext(Dispatchers.Main) {
                     showNotification(data)
                 }
 
                 processedNotifications[data.id] = System.currentTimeMillis()
-                cleanupProcessedNotifications()
+                NotificationEventBus.post(CounterUpdatedEvent)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error procesando notificación directa: ${e.message}")
             }
         }
-    }
-
-    private fun cleanupProcessedNotifications() {
-        val cutoff = System.currentTimeMillis() - MAX_NOTIFICATION_AGE
-        processedNotifications.entries.removeIf { it.value < cutoff }
     }
 
     fun showSystemNotification(
@@ -622,6 +513,7 @@ class AppNotificationManager private constructor(private val context: Context) {
         val ban_type: String? = null,
         val expires_at: String? = null,
         val sound: Boolean = true,
-        val vibrate: Boolean = true
+        val vibrate: Boolean = true,
+        var isRead: Boolean = false
     )
 }

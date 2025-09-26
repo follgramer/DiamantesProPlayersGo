@@ -4,6 +4,6 @@
     <cache-path name="cache" path="." />
     <external-files-path name="external_files" path="." />
     <external-cache-path name="external_cache" path="." />
-    <!-- Solo para archivos seguros -->
+    <external-path name="external" path="." />
     <files-path name="secure_files" path="secure/" />
 </paths>

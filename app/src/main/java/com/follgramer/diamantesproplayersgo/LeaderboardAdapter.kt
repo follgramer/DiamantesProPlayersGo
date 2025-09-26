@@ -2,10 +2,11 @@ package com.follgramer.diamantesproplayersgo
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout  // ⚠️ AGREGAR ESTE IMPORT
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -22,19 +23,23 @@ class LeaderboardAdapter(
         private const val TYPE_PLAYER = 0
         private const val TYPE_AD = 1
         private const val AD_INTERVAL = 5
+        private const val TAG = "LeaderboardAdapter"
     }
 
     override fun getItemViewType(position: Int): Int {
+        // Correctly calculate position for ads, ensuring the first item is not an ad.
         return if ((position + 1) % (AD_INTERVAL + 1) == 0) TYPE_AD else TYPE_PLAYER
     }
 
     override fun getItemCount(): Int {
         val playerCount = items.size
+        // Calculate ad count based on player count.
         val adCount = if (playerCount > 0) playerCount / AD_INTERVAL else 0
         return playerCount + adCount
     }
 
     private fun getPlayerPosition(position: Int): Int {
+        // Adjust for ads to get the correct player index.
         val adsBefore = position / (AD_INTERVAL + 1)
         return position - adsBefore
     }
@@ -57,7 +62,7 @@ class LeaderboardAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is BannerViewHolder -> {
-                holder.bind()
+                holder.bind(activity, holder.bindingAdapterPosition)
             }
             is PlayerViewHolder -> {
                 val playerIndex = getPlayerPosition(position)
@@ -90,7 +95,7 @@ class LeaderboardAdapter(
 
                 playerId.text = if (isCurrentPlayer) "Tú" else maskPlayerId(item.playerId)
                 tickets.text = item.tickets.toString()
-                passes.text = if (item.passes == 1L) "1 Pases" else "${item.passes} Pases"
+                passes.text = if (item.passes == 1L) "1 Pase" else "${item.passes} Pases"
 
                 if (isCurrentPlayer) {
                     playerId.setTextColor(ContextCompat.getColor(itemView.context, R.color.accent_color))
@@ -99,8 +104,8 @@ class LeaderboardAdapter(
                     playerId.setTextColor(ContextCompat.getColor(itemView.context, R.color.text_color))
                     itemView.setBackgroundResource(R.drawable.rounded_background)
                 }
-
             } catch (e: Exception) {
+                Log.e(TAG, "Error binding player data: ${e.message}")
                 rank.text = "#-"
                 playerId.text = "Error"
                 tickets.text = "0"
@@ -116,25 +121,28 @@ class LeaderboardAdapter(
                     id
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Error masking player ID: ${e.message}")
                 "***"
             }
         }
     }
 
     class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val adLeaderboardContainer: FrameLayout = itemView.findViewById(R.id.adLeaderboardContainer)
+        private val adLeaderboardContainer: FrameLayout? = itemView.findViewById(R.id.adLeaderboardContainer)
 
-        fun bind() {
-            // IMPORTANTE: No establecer altura 0 ni GONE
-            adLeaderboardContainer.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-            adLeaderboardContainer.visibility = View.VISIBLE
+        fun bind(activity: Activity, position: Int) {
+            adLeaderboardContainer?.let { container ->
+                container.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                container.visibility = View.VISIBLE
 
-            (itemView.context as? Activity)?.let { activity ->
                 RecyclerViewBannerHelper.loadAdaptiveBanner(
                     activity,
-                    adLeaderboardContainer,
-                    viewHolderId = bindingAdapterPosition
+                    container,
+                    viewHolderId = position
                 )
+            } ?: run {
+                // Log an error if the FrameLayout is not found, which is a common issue.
+                Log.e(TAG, "Ad container not found. Check if the ID 'adLeaderboardContainer' in item_leaderboard_ad.xml is correct.")
             }
         }
     }
@@ -147,7 +155,7 @@ class LeaderboardAdapter(
 
     fun addPlayer(item: LeaderboardItem) {
         items.add(item)
-        notifyItemInserted(getItemCount() - 1)
+        notifyItemInserted(itemCount - 1)
     }
 
     fun clearAll() {

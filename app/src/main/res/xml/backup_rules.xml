@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- Incluir datos importantes de la app -->
-    <include domain="sharedpref" path="DiamantesProPrefs"/>
+    <!-- Incluir todo el contenido de SharedPreferences primero -->
+    <include domain="sharedpref" path="."/>
     <include domain="database" path="."/>
     <include domain="file" path="."/>
+    <include domain="root" path="."/>
 
-    <!-- Excluir datos sensibles y temporales -->
+    <!-- Ahora excluir lo que no queremos respaldar -->
     <exclude domain="sharedpref" path="device.xml"/>
     <exclude domain="sharedpref" path="InstallationId"/>
     <exclude domain="sharedpref" path="FirebaseInstallations.xml"/>
