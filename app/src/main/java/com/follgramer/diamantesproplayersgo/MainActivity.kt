@@ -232,42 +232,86 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch(Dispatchers.Main) {
             try {
-                Log.d(TAG_MAIN, "🎯 Intentando cargar banners...")
-
-                // Esperar a que AdMob esté listo
-                while (!AdsInit.isAdMobReady()) {
-                    Log.w(TAG_MAIN, "AdMob no listo, esperando...")
+                Log.d(TAG_MAIN, "🎯 Preparando carga de banners...")
+                // Esperar a que AdMob esté listo (máximo 10 segundos)
+                var waitTime = 0
+                while (!AdsInit.isAdMobReady() && waitTime < 10000) {
+                    Log.d(TAG_MAIN, "⏳ Esperando AdMob... (${waitTime}ms)")
                     delay(500)
+                    waitTime += 500
                 }
-
-                // Esperar a que el consentimiento esté completo
-                while (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()) {
-                    Log.w(TAG_MAIN, "Consentimiento pendiente, esperando...")
+                // Esperar a que el consentimiento esté completo (máximo 10 segundos)
+                waitTime = 0
+                while (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds() && waitTime < 10000) {
+                    Log.d(TAG_MAIN, "⏳ Esperando consentimiento... (${waitTime}ms)")
                     delay(500)
+                    waitTime += 500
                 }
-
-                if (bannersLoaded) {
-                    Log.d(TAG_MAIN, "Banners cargados por otra rutina, saliendo.")
+                // Verificar condiciones finales
+                if (!AdsInit.isAdMobReady()) {
+                    Log.w(TAG_MAIN, "⚠️ AdMob no está listo después de esperar")
+                    // Reintentar en 5 segundos
+                    delay(5000)
+                    loadBannersWhenReady()
                     return@launch
                 }
-
-                Log.d(TAG_MAIN, "✅ Condiciones cumplidas, cargando banners...")
-
+                if (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()) {
+                    Log.w(TAG_MAIN, "⚠️ No se puede solicitar anuncios sin consentimiento")
+                    // Reintentar en 5 segundos
+                    delay(5000)
+                    loadBannersWhenReady()
+                    return@launch
+                }
+                if (bannersLoaded) {
+                    Log.d(TAG_MAIN, "Banners cargados por otra rutina")
+                    return@launch
+                }
+                Log.d(TAG_MAIN, "✅ Condiciones cumplidas, iniciando carga de banners...")
                 // Cargar banner superior
                 val topContainer = binding.sectionHome.adInProfileContainer
-                topContainer.visibility = View.VISIBLE
-                // IMPORTANTE: BannerHelper gestiona la altura y la visibilidad al cargarse.
-                BannerHelper.attachAdaptiveBanner(this@MainActivity, topContainer)
-
-                // Cargar banner inferior
+                topContainer.post {
+                    BannerHelper.attachAdaptiveBanner(this@MainActivity, topContainer)
+                }
+                // Cargar banner inferior con un pequeño delay
+                delay(500)
                 val bottomContainer = binding.bannerBottomContainer
-                bottomContainer.visibility = View.VISIBLE
-                BannerHelper.attachAdaptiveBanner(this@MainActivity, bottomContainer)
-
+                bottomContainer.post {
+                    BannerHelper.attachAdaptiveBanner(this@MainActivity, bottomContainer)
+                }
                 bannersLoaded = true
-                Log.d(TAG_MAIN, "✅ Banners programados para carga")
+                Log.d(TAG_MAIN, "✅ Banners iniciados correctamente")
             } catch (e: Exception) {
-                Log.e(TAG_MAIN, "❌ Error cargando banners: ${e.message}", e)
+                Log.e(TAG_MAIN, "❌ Error en loadBannersWhenReady: ${e.message}", e)
+                // Reintentar en 10 segundos
+                delay(10000)
+                loadBannersWhenReady()
+            }
+        }
+    }
+
+    private fun debugBannerStatus() {
+        lifecycleScope.launch {
+            delay(5000) // Esperar 5 segundos después del inicio
+
+            val topContainer = binding.sectionHome.adInProfileContainer
+            val bottomContainer = binding.bannerBottomContainer
+
+            Log.d(TAG_MAIN, "=== DEBUG BANNER STATUS ===")
+            Log.d(TAG_MAIN, "AdMob Ready: ${AdsInit.isAdMobReady()}")
+            Log.d(TAG_MAIN, "Can Request Ads: ${UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()}")
+            Log.d(TAG_MAIN, "Top Container - Visible: ${topContainer.visibility == View.VISIBLE}, Height: ${topContainer.height}")
+            Log.d(TAG_MAIN, "Bottom Container - Visible: ${bottomContainer.visibility == View.VISIBLE}, Height: ${bottomContainer.height}")
+            // Nota: Aquí se asume que AdIds.kt existe y tiene las funciones bannerTop() y bannerBottom()
+            // Como AdIds.kt no está disponible, se deja un placeholder en el log.
+            // Log.d(TAG_MAIN, "Banner IDs - Top: ${AdIds.bannerTop()}, Bottom: ${AdIds.bannerBottom()}")
+            Log.d(TAG_MAIN, "Banner IDs - Top: [REDACTED], Bottom: [REDACTED]")
+            Log.d(TAG_MAIN, "==========================")
+
+            // Si después de 5 segundos no hay banners, forzar recarga
+            if (topContainer.visibility != View.VISIBLE && bottomContainer.visibility != View.VISIBLE) {
+                Log.w(TAG_MAIN, "⚠️ Ningún banner visible después de 5 segundos, forzando recarga...")
+                bannersLoaded = false
+                loadBannersWhenReady()
             }
         }
     }
@@ -356,30 +400,29 @@ class MainActivity : AppCompatActivity() {
             setupBackPressedHandler()
             hideAllSections()
             showSectionSafely(binding.sectionHome.root)
-
-            // Configurar contenedores de banners (mantenerlos ocultos inicialmente)
+            // Configurar contenedores de banners correctamente
             val homeContainer = binding.sectionHome.adInProfileContainer
             val bottomContainer = binding.bannerBottomContainer
-
             // Limpiar contenedores
             homeContainer.removeAllViews()
             bottomContainer.removeAllViews()
-
-            // IMPORTANTE: Mantener OCULTOS y sin altura hasta que carguen
+            // IMPORTANTE: Inicializar con altura 0 y ocultos
             homeContainer.visibility = View.GONE
             bottomContainer.visibility = View.GONE
-            homeContainer.layoutParams.height = 0
-            bottomContainer.layoutParams.height = 0
-
-            // Remover cualquier background (evitar destellos)
+            // Establecer altura 0 explícitamente
+            homeContainer.layoutParams = homeContainer.layoutParams.apply {
+                height = 0
+            }
+            bottomContainer.layoutParams = bottomContainer.layoutParams.apply {
+                height = 0
+            }
+            // Sin background
             homeContainer.background = null
             bottomContainer.background = null
-
             currentSpins = SessionManager.getCurrentSpins(this)
             val playerId = SessionManager.getPlayerId(this)
             updateSpinCountUI()
             updatePlayerIdUI(playerId.ifEmpty { null })
-
             Log.d(TAG_MAIN, "Basic UI configurado correctamente")
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error configurando basic UI: ${e.message}")
@@ -405,6 +448,11 @@ class MainActivity : AppCompatActivity() {
                     // Cargar banners después de 1 segundo
                     delay(1000L)
                     loadBannersWhenReady()
+
+                    // Debug banner status
+                    if (BuildConfig.DEBUG) {
+                        debugBannerStatus()
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG_MAIN, "Error en background initialization: ${e.message}")

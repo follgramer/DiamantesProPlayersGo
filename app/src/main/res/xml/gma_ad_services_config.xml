@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <files-path name="files" path="." />
-    <cache-path name="cache" path="." />
-    <external-files-path name="external_files" path="." />
-    <external-cache-path name="external_cache" path="." />
-    <external-path name="external" path="." />
-    <files-path name="secure_files" path="secure/" />
-</paths>
+<ad-services-config>
+    <topics-api>
+        <enabled>true</enabled>
+    </topics-api>
+    <attribution-api>
+        <enabled>true</enabled>
+    </attribution-api>
+    <fledge>
+        <custom-audiences>
+            <enabled>true</enabled>
+        </custom-audiences>
+    </fledge>
+</ad-services-config>

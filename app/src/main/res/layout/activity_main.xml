@@ -90,13 +90,15 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- Banner inferior - SIN FONDO BLANCO NI ALTURA MÍNIMA -->
+        <!-- Banner inferior - CONFIGURACIÓN CORRECTA PARA ADMOB -->
         <FrameLayout
             android:id="@+id/bannerBottomContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_alignParentBottom="true"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipChildren="false"
+            android:clipToPadding="false" />
     </RelativeLayout>
 
     <LinearLayout
