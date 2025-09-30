@@ -218,13 +218,12 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- Contenedor de banner superior - CONFIGURACIÓN CORRECTA PARA ADMOB -->
         <FrameLayout
             android:id="@+id/adInProfileContainer"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:visibility="gone"
+            android:visibility="visible"
             android:clipChildren="false"
             android:clipToPadding="false" />
 
@@ -362,7 +361,6 @@
                 android:progressDrawable="@drawable/background_progress" />
         </LinearLayout>
 
-        <!-- Área del juego -->
         <LinearLayout
             android:id="@+id/gameArea"
             android:layout_width="match_parent"
@@ -469,7 +467,6 @@
                 tools:visibility="visible" />
         </LinearLayout>
 
-        <!-- Top 5 -->
         <FrameLayout
             android:id="@+id/top5_container"
             android:layout_width="match_parent"

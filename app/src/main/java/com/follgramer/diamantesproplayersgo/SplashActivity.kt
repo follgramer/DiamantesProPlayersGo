@@ -59,7 +59,7 @@ class SplashActivity : AppCompatActivity() {
                             Log.e(TAG, "Error con formulario: ${formError.message}")
                         }
 
-// Inicializar AdMob después del consentimiento
+                        // Inicializar AdMob después del consentimiento
                         if (consentInfo.canRequestAds()) {
                             AdsInit.init(this)
                             Log.d(TAG, "AdMob inicializado")

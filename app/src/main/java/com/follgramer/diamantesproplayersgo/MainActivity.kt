@@ -54,9 +54,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
-import com.follgramer.diamantesproplayersgo.ads.AdManager
-import com.follgramer.diamantesproplayersgo.ads.AdsInit
-import com.follgramer.diamantesproplayersgo.ads.BannerHelper
+import com.follgramer.diamantesproplayersgo.ads.AdManager // Importación corregida
+import com.follgramer.diamantesproplayersgo.ads.AdsInit // Importación corregida
+import com.follgramer.diamantesproplayersgo.ads.BannerHelper // Importación corregida
 // ... (imports de AdIds eliminados, ya no son necesarios aquí)
 import com.follgramer.diamantesproplayersgo.databinding.ActivityMainBinding
 import com.follgramer.diamantesproplayersgo.notifications.*
@@ -390,7 +390,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // FUNCIÓN setupBasicUI() ACTUALIZADA
+    // FUNCIÓN setupBasicUI() ACTUALIZADA Y CORREGIDA
     private fun setupBasicUI() {
         try {
             Log.d(TAG_MAIN, "Configurando basic UI...")
@@ -400,59 +400,54 @@ class MainActivity : AppCompatActivity() {
             setupBackPressedHandler()
             hideAllSections()
             showSectionSafely(binding.sectionHome.root)
-            // Configurar contenedores de banners correctamente
+
+            // CAMBIO CRÍTICO: Preparar contenedores pero SIN altura fija
             val homeContainer = binding.sectionHome.adInProfileContainer
             val bottomContainer = binding.bannerBottomContainer
+
             // Limpiar contenedores
             homeContainer.removeAllViews()
             bottomContainer.removeAllViews()
-            // IMPORTANTE: Inicializar con altura 0 y ocultos
-            homeContainer.visibility = View.GONE
-            bottomContainer.visibility = View.GONE
-            // Establecer altura 0 explícitamente
+
+            // CAMBIO: Visible pero con altura WRAP_CONTENT
+            homeContainer.visibility = View.VISIBLE
+            bottomContainer.visibility = View.VISIBLE
+
+            // CAMBIO: Altura dinámica
             homeContainer.layoutParams = homeContainer.layoutParams.apply {
-                height = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
             }
             bottomContainer.layoutParams = bottomContainer.layoutParams.apply {
-                height = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
             }
-            // Sin background
-            homeContainer.background = null
-            bottomContainer.background = null
+
             currentSpins = SessionManager.getCurrentSpins(this)
             val playerId = SessionManager.getPlayerId(this)
             updateSpinCountUI()
             updatePlayerIdUI(playerId.ifEmpty { null })
+
             Log.d(TAG_MAIN, "Basic UI configurado correctamente")
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error configurando basic UI: ${e.message}")
         }
     }
 
+    // FUNCIÓN scheduleBackgroundInitialization() ACTUALIZADA Y CORREGIDA
     private fun scheduleBackgroundInitialization() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 delay(500L)
                 initializeAdvertisingId()
-
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
                 if (playerId.isNotEmpty()) {
                     initializeUserSession(playerId)
                 }
-
                 withContext(Dispatchers.Main) {
-                    // Inicializar AdManager aquí (AdsInit.init ya fue llamado en Splash)
+                    // Inicializar AdManager
                     AdManager.initialize(this@MainActivity)
                     finalizeUIInitialization(playerId)
-
-                    // Cargar banners después de 1 segundo
-                    delay(1000L)
+                    // CAMBIO CRÍTICO: Llamar directamente a loadBannersWhenReady
                     loadBannersWhenReady()
-
-                    // Debug banner status
-                    if (BuildConfig.DEBUG) {
-                        debugBannerStatus()
-                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG_MAIN, "Error en background initialization: ${e.message}")
