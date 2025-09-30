@@ -56,8 +56,7 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
 import com.follgramer.diamantesproplayersgo.ads.AdManager // Importación corregida
 import com.follgramer.diamantesproplayersgo.ads.AdsInit // Importación corregida
-import com.follgramer.diamantesproplayersgo.ads.BannerHelper // Importación corregida
-// ... (imports de AdIds eliminados, ya no son necesarios aquí)
+import com.follgramer.diamantesproplayersgo.ads.SimpleBannerHelper // Importación AÑADIDA
 import com.follgramer.diamantesproplayersgo.databinding.ActivityMainBinding
 import com.follgramer.diamantesproplayersgo.notifications.*
 import com.follgramer.diamantesproplayersgo.ui.NotificationCenterActivity
@@ -224,94 +223,54 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // REEMPLAZANDO con la versión CORREGIDA y simplificada del usuario
+    // ✅ FUNCIÓN REEMPLAZADA
     private fun loadBannersWhenReady() {
         if (bannersLoaded) {
-            Log.d(TAG_MAIN, "Banners ya cargados, saltando…")
+            Log.d(TAG_MAIN, "Banners ya cargados")
             return
         }
         lifecycleScope.launch(Dispatchers.Main) {
             try {
-                Log.d(TAG_MAIN, "🎯 Preparando carga de banners...")
-                // Esperar a que AdMob esté listo (máximo 10 segundos)
-                var waitTime = 0
-                while (!AdsInit.isAdMobReady() && waitTime < 10000) {
-                    Log.d(TAG_MAIN, "⏳ Esperando AdMob... (${waitTime}ms)")
-                    delay(500)
-                    waitTime += 500
-                }
-                // Esperar a que el consentimiento esté completo (máximo 10 segundos)
-                waitTime = 0
-                while (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds() && waitTime < 10000) {
-                    Log.d(TAG_MAIN, "⏳ Esperando consentimiento... (${waitTime}ms)")
-                    delay(500)
-                    waitTime += 500
-                }
-                // Verificar condiciones finales
+                Log.d(TAG_MAIN, "🎯 Iniciando carga de banners con SimpleBannerHelper...")
+
+                // Espera corta para asegurar que UI esté lista
+                delay(1000)
+
+                // Verificar AdMob
                 if (!AdsInit.isAdMobReady()) {
-                    Log.w(TAG_MAIN, "⚠️ AdMob no está listo después de esperar")
-                    // Reintentar en 5 segundos
-                    delay(5000)
-                    loadBannersWhenReady()
-                    return@launch
+                    Log.w(TAG_MAIN, "AdMob no está listo, esperando...")
+                    delay(2000)
+                    if (!AdsInit.isAdMobReady()) {
+                        Log.e(TAG_MAIN, "AdMob no se inicializó, abortando carga de banners")
+                        return@launch
+                    }
                 }
-                if (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()) {
-                    Log.w(TAG_MAIN, "⚠️ No se puede solicitar anuncios sin consentimiento")
-                    // Reintentar en 5 segundos
-                    delay(5000)
-                    loadBannersWhenReady()
-                    return@launch
-                }
-                if (bannersLoaded) {
-                    Log.d(TAG_MAIN, "Banners cargados por otra rutina")
-                    return@launch
-                }
-                Log.d(TAG_MAIN, "✅ Condiciones cumplidas, iniciando carga de banners...")
-                // Cargar banner superior
-                val topContainer = binding.sectionHome.adInProfileContainer
-                topContainer.post {
-                    BannerHelper.attachAdaptiveBanner(this@MainActivity, topContainer)
-                }
-                // Cargar banner inferior con un pequeño delay
-                delay(500)
-                val bottomContainer = binding.bannerBottomContainer
-                bottomContainer.post {
-                    BannerHelper.attachAdaptiveBanner(this@MainActivity, bottomContainer)
-                }
+
+                // Usar SimpleBannerHelper para cargar banners
+                Log.d(TAG_MAIN, "Cargando banner superior...")
+                SimpleBannerHelper.loadBanner(
+                    this@MainActivity,
+                    binding.sectionHome.adInProfileContainer,
+                    if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/6300978111"
+                    else "ca-app-pub-2024712392092488/1328842504"
+                )
+
+                delay(300)
+
+                Log.d(TAG_MAIN, "Cargando banner inferior...")
+                SimpleBannerHelper.loadBanner(
+                    this@MainActivity,
+                    binding.bannerBottomContainer,
+                    if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/6300978111"
+                    else "ca-app-pub-2024712392092488/4186978125"
+                )
+
                 bannersLoaded = true
-                Log.d(TAG_MAIN, "✅ Banners iniciados correctamente")
+                Log.d(TAG_MAIN, "✅ Banners cargados con SimpleBannerHelper")
+
             } catch (e: Exception) {
-                Log.e(TAG_MAIN, "❌ Error en loadBannersWhenReady: ${e.message}", e)
-                // Reintentar en 10 segundos
-                delay(10000)
-                loadBannersWhenReady()
-            }
-        }
-    }
-
-    private fun debugBannerStatus() {
-        lifecycleScope.launch {
-            delay(5000) // Esperar 5 segundos después del inicio
-
-            val topContainer = binding.sectionHome.adInProfileContainer
-            val bottomContainer = binding.bannerBottomContainer
-
-            Log.d(TAG_MAIN, "=== DEBUG BANNER STATUS ===")
-            Log.d(TAG_MAIN, "AdMob Ready: ${AdsInit.isAdMobReady()}")
-            Log.d(TAG_MAIN, "Can Request Ads: ${UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()}")
-            Log.d(TAG_MAIN, "Top Container - Visible: ${topContainer.visibility == View.VISIBLE}, Height: ${topContainer.height}")
-            Log.d(TAG_MAIN, "Bottom Container - Visible: ${bottomContainer.visibility == View.VISIBLE}, Height: ${bottomContainer.height}")
-            // Nota: Aquí se asume que AdIds.kt existe y tiene las funciones bannerTop() y bannerBottom()
-            // Como AdIds.kt no está disponible, se deja un placeholder en el log.
-            // Log.d(TAG_MAIN, "Banner IDs - Top: ${AdIds.bannerTop()}, Bottom: ${AdIds.bannerBottom()}")
-            Log.d(TAG_MAIN, "Banner IDs - Top: [REDACTED], Bottom: [REDACTED]")
-            Log.d(TAG_MAIN, "==========================")
-
-            // Si después de 5 segundos no hay banners, forzar recarga
-            if (topContainer.visibility != View.VISIBLE && bottomContainer.visibility != View.VISIBLE) {
-                Log.w(TAG_MAIN, "⚠️ Ningún banner visible después de 5 segundos, forzando recarga...")
+                Log.e(TAG_MAIN, "❌ Error cargando banners: ${e.message}", e)
                 bannersLoaded = false
-                loadBannersWhenReady()
             }
         }
     }
@@ -390,7 +349,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // FUNCIÓN setupBasicUI() ACTUALIZADA Y CORREGIDA
+    // ✅ FUNCIÓN REEMPLAZADA
     private fun setupBasicUI() {
         try {
             Log.d(TAG_MAIN, "Configurando basic UI...")
@@ -401,7 +360,7 @@ class MainActivity : AppCompatActivity() {
             hideAllSections()
             showSectionSafely(binding.sectionHome.root)
 
-            // CAMBIO CRÍTICO: Preparar contenedores pero SIN altura fija
+            // Configurar contenedores de banners correctamente
             val homeContainer = binding.sectionHome.adInProfileContainer
             val bottomContainer = binding.bannerBottomContainer
 
@@ -409,11 +368,10 @@ class MainActivity : AppCompatActivity() {
             homeContainer.removeAllViews()
             bottomContainer.removeAllViews()
 
-            // CAMBIO: Visible pero con altura WRAP_CONTENT
+            // IMPORTANTE: Mantener visibles con altura wrap_content
             homeContainer.visibility = View.VISIBLE
             bottomContainer.visibility = View.VISIBLE
 
-            // CAMBIO: Altura dinámica
             homeContainer.layoutParams = homeContainer.layoutParams.apply {
                 height = ViewGroup.LayoutParams.WRAP_CONTENT
             }
@@ -432,7 +390,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // FUNCIÓN scheduleBackgroundInitialization() ACTUALIZADA Y CORREGIDA
+    // ✅ FUNCIÓN REEMPLAZADA
     private fun scheduleBackgroundInitialization() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -446,7 +404,8 @@ class MainActivity : AppCompatActivity() {
                     // Inicializar AdManager
                     AdManager.initialize(this@MainActivity)
                     finalizeUIInitialization(playerId)
-                    // CAMBIO CRÍTICO: Llamar directamente a loadBannersWhenReady
+                    // Cargar banners con nuevo helper
+                    delay(1000L)
                     loadBannersWhenReady()
                 }
             } catch (e: Exception) {
@@ -454,6 +413,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // ✅ FUNCIÓN ELIMINADA: debugBannerStatus() ha sido removida.
 
     private suspend fun initializeAdvertisingId() {
         try {
@@ -518,7 +479,7 @@ class MainActivity : AppCompatActivity() {
             startWeeklyCountdown()
             checkNotificationPermissions()
 
-            com.follgramer.diamantesproplayersgo.util.RatingPrompter.onAppStart(this)
+            // ✅ LÍNEA ELIMINADA: RatingPrompter.onAppStart(this)
             Onboarding.showIfNeeded(this)
 
             handleNotificationIntent(intent)
@@ -537,55 +498,43 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
 
         lifecycleScope.launch(Dispatchers.Main) {
-            com.follgramer.diamantesproplayersgo.util.RatingPrompter.maybeAsk(this@MainActivity)
-            com.follgramer.diamantesproplayersgo.util.AdminModalManager.fetchAndShow(this@MainActivity)
-            com.follgramer.diamantesproplayersgo.util.InAppUpdateHelper.check(this@MainActivity)
+            // ✅ LÍNEAS ELIMINADAS: RatingPrompter, AdminModalManager, InAppUpdateHelper
         }
     }
 
+    // ✅ FUNCIÓN MODIFICADA
     override fun onResume() {
         super.onResume()
         try {
             ensureSystemBarsVisible()
             Log.d(TAG_MAIN, "onResume - Verificando estado")
-
             currentSpins = SessionManager.getCurrentSpins(this)
             updateSpinCountUI()
             updateNotificationBadge()
-
             if (currentSorteoState == "normal") {
                 showNormalState()
             }
-
             lifecycleScope.launch {
                 val unreadCount = AppNotificationManager.getInstance(this@MainActivity).getUnreadCount()
                 Log.d(TAG_MAIN, "📬 Unread notifications: $unreadCount")
             }
-
-            // Resumir banners
-            if (::binding.isInitialized) {
-                Log.d(TAG_MAIN, "Resumiendo banners...")
-                BannerHelper.resume(binding.root)
+            // Verificar si los banners necesitan recargarse
+            if (::binding.isInitialized && !bannersLoaded) {
+                Log.d(TAG_MAIN, "Recargando banners en onResume...")
+                loadBannersWhenReady()
             }
-
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error en onResume: ${e.message}")
         }
     }
 
+    // ✅ FUNCIÓN MODIFICADA
     override fun onPause() {
         super.onPause()
         countdownTimer?.cancel()
         revealCountdownTimer?.cancel()
-
-        try {
-            if (::binding.isInitialized) {
-                Log.d(TAG_MAIN, "Pausando banners...")
-                BannerHelper.pause(binding.root)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG_MAIN, "Error pausando banners: ${e.message}")
-        }
+        // No pausar banners con SimpleBannerHelper
+        Log.d(TAG_MAIN, "onPause - Activity pausada")
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -595,6 +544,7 @@ class MainActivity : AppCompatActivity() {
         handleNotificationIntent(intent)
     }
 
+    // ✅ FUNCIÓN MODIFICADA
     override fun onDestroy() {
         commManager.cleanup()
         try {
@@ -602,15 +552,12 @@ class MainActivity : AppCompatActivity() {
             AppNotificationManager.getInstance(this).stopListening()
             NotificationEventBus.unsubscribe { }
 
-            if (::binding.isInitialized) {
-                Log.d(TAG_MAIN, "Destruyendo banners...")
-                BannerHelper.destroy(binding.root)
-            }
+            // No destruir banners con SimpleBannerHelper
+            Log.d(TAG_MAIN, "onDestroy - Limpiando recursos")
 
         } catch (e: Exception) {
-            Log.e(TAG_MAIN, "Error en limpieza de banners: ${e.message}")
+            Log.e(TAG_MAIN, "Error en onDestroy: ${e.message}")
         }
-
         cleanupResources()
         super.onDestroy()
     }
