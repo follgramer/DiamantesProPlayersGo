@@ -27,19 +27,16 @@ class LeaderboardAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        // Correctly calculate position for ads, ensuring the first item is not an ad.
         return if ((position + 1) % (AD_INTERVAL + 1) == 0) TYPE_AD else TYPE_PLAYER
     }
 
     override fun getItemCount(): Int {
         val playerCount = items.size
-        // Calculate ad count based on player count.
         val adCount = if (playerCount > 0) playerCount / AD_INTERVAL else 0
         return playerCount + adCount
     }
 
     private fun getPlayerPosition(position: Int): Int {
-        // Adjust for ads to get the correct player index.
         val adsBefore = position / (AD_INTERVAL + 1)
         return position - adsBefore
     }
@@ -105,7 +102,7 @@ class LeaderboardAdapter(
                     itemView.setBackgroundResource(R.drawable.rounded_background)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error binding player data: ${e.message}")
+                Log.e(TAG, "Error binding player: ${e.message}")
                 rank.text = "#-"
                 playerId.text = "Error"
                 tickets.text = "0"
@@ -121,19 +118,22 @@ class LeaderboardAdapter(
                     id
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error masking player ID: ${e.message}")
+                Log.e(TAG, "Error masking ID: ${e.message}")
                 "***"
             }
         }
     }
 
     class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val adLeaderboardContainer: FrameLayout? = itemView.findViewById(R.id.adLeaderboardContainer)
+        private val adLeaderboardContainer: FrameLayout? =
+            itemView.findViewById(R.id.adLeaderboardContainer)
 
         fun bind(activity: Activity, position: Int) {
             adLeaderboardContainer?.let { container ->
-                container.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                container.visibility = View.VISIBLE
+                // ✅ CRÍTICO: Iniciar completamente oculto
+                container.visibility = View.GONE
+                container.layoutParams.height = 0
+                container.background = null
 
                 RecyclerViewBannerHelper.loadAdaptiveBanner(
                     activity,
@@ -141,8 +141,7 @@ class LeaderboardAdapter(
                     viewHolderId = position
                 )
             } ?: run {
-                // Log an error if the FrameLayout is not found, which is a common issue.
-                Log.e(TAG, "Ad container not found. Check if the ID 'adLeaderboardContainer' in item_leaderboard_ad.xml is correct.")
+                Log.e(TAG, "⚠️ Ad container no encontrado")
             }
         }
     }

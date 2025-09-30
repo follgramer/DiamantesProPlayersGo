@@ -218,18 +218,16 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- Contenedor de banner superior - CONFIGURACIÓN CORREGIDA PARA ADMOB -->
+        <!-- ✅ BANNER SUPERIOR - INICIAR COMPLETAMENTE OCULTO -->
         <FrameLayout
             android:id="@+id/adInProfileContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_marginTop="12dp"
-            android:visibility="visible"
-            android:minHeight="50dp"
-            android:background="@color/secondary_bg"
+            android:visibility="gone"
+            android:background="@null"
             android:clipChildren="false"
-            android:clipToPadding="false"
-            android:paddingVertical="2dp" />
+            android:clipToPadding="false" />
 
         <LinearLayout
             android:id="@+id/myProgress"

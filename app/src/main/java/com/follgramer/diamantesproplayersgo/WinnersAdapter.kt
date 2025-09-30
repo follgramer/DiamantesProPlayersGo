@@ -1,6 +1,7 @@
 package com.follgramer.diamantesproplayersgo
 
 import android.app.Activity
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,7 @@ class WinnersAdapter(
         private const val TYPE_WINNER = 0
         private const val TYPE_AD = 1
         private const val AD_INTERVAL = 2
+        private const val TAG = "WinnersAdapter"
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -60,7 +62,7 @@ class WinnersAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is BannerViewHolder -> {
-                holder.bind()
+                holder.bind(activity, holder.bindingAdapterPosition)
             }
             is WinnerVH -> {
                 val winnerIndex = getWinnerPosition(position)
@@ -107,7 +109,6 @@ class WinnersAdapter(
                 diff < 2 * 24 * 60 * 60 * 1000 -> "Ayer"
                 diff < 7 * 24 * 60 * 60 * 1000 -> "Hace ${diff / (24 * 60 * 60 * 1000)} días"
                 else -> {
-                    // Mostrar fecha completa con hora para más de una semana
                     val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
                     sdf.format(java.util.Date(timestamp))
                 }
@@ -116,20 +117,19 @@ class WinnersAdapter(
     }
 
     class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // CAMBIO IMPORTANTE: Ahora es FrameLayout en lugar de LinearLayout
         private val adContainer: FrameLayout = itemView.findViewById(R.id.adContainer)
 
-        fun bind() {
-            adContainer.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-            adContainer.visibility = View.VISIBLE
+        fun bind(activity: Activity, position: Int) {
+            // ✅ CRÍTICO: Iniciar completamente oculto
+            adContainer.visibility = View.GONE
+            adContainer.layoutParams.height = 0
+            adContainer.background = null
 
-            (itemView.context as? Activity)?.let { activity ->
-                RecyclerViewBannerHelper.loadAdaptiveBanner(
-                    activity,
-                    adContainer,
-                    viewHolderId = bindingAdapterPosition + 1000
-                )
-            }
+            RecyclerViewBannerHelper.loadAdaptiveBanner(
+                activity,
+                adContainer,
+                viewHolderId = position + 1000
+            )
         }
     }
 

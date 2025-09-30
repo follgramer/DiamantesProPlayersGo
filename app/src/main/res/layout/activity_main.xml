@@ -90,19 +90,16 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- Banner inferior - CONFIGURACIÓN CORREGIDA PARA ADMOB -->
+        <!-- ✅ BANNER INFERIOR - INICIAR COMPLETAMENTE OCULTO -->
         <FrameLayout
             android:id="@+id/bannerBottomContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_alignParentBottom="true"
-            android:visibility="visible"
-            android:minHeight="50dp"
-            android:background="@color/secondary_bg"
+            android:visibility="gone"
+            android:background="@null"
             android:clipChildren="false"
-            android:clipToPadding="false"
-            android:paddingTop="2dp" />
-
+            android:clipToPadding="false" />
     </RelativeLayout>
 
     <LinearLayout
@@ -171,5 +168,4 @@
                 android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
-
 </androidx.drawerlayout.widget.DrawerLayout>
