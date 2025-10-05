@@ -66,13 +66,11 @@
         <FrameLayout
             android:id="@+id/bannerBottomContainer"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:layout_marginHorizontal="0dp"
-            android:visibility="gone"
-            android:background="@null"
-            android:clipChildren="false"
-            android:clipToPadding="false" />
+            android:minHeight="50dp"
+            android:background="#000000"
+            android:visibility="visible" />
 
         <!-- Contenedor principal - ENCIMA del banner inferior -->
         <FrameLayout
