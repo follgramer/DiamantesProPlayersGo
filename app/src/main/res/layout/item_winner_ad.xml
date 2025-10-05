@@ -8,8 +8,9 @@
     <FrameLayout
         android:id="@+id/adContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:gravity="center"
-        android:visibility="gone" />
+        android:visibility="gone"
+        android:background="@null" />
 
 </LinearLayout>

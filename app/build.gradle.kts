@@ -1,32 +1,29 @@
 import java.util.Properties
 import java.io.FileInputStream
 
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.gms.services)
 }
 
 android {
     namespace = "com.follgramer.diamantesproplayersgo"
-    compileSdk = 34
+    compileSdk = 35
 
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
             if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = Properties().apply {
-                    load(FileInputStream(keystorePropertiesFile))
-                }
                 storeFile = file(keystoreProperties["storeFile"].toString())
                 storePassword = keystoreProperties["storePassword"].toString()
                 keyAlias = keystoreProperties["keyAlias"].toString()
                 keyPassword = keystoreProperties["keyPassword"].toString()
-            } else {
-                storeFile = file("diamantes-keystore.jks")
-                storePassword = "77095132"
-                keyAlias = "diamantes-key"
-                keyPassword = "77095132"
             }
         }
     }
@@ -34,120 +31,111 @@ android {
     defaultConfig {
         applicationId = "com.follgramer.diamantesproplayersgo"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
-        vectorDrawables { useSupportLibrary = true }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
+
+        // ID DE PRUEBA CORRECTO PARA ANDROID
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+
         multiDexEnabled = true
+
+        buildConfigField("boolean", "USE_TEST_ADS", "true")
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
-            isShrinkResources = false
-            isDebuggable = true
             buildConfigField("boolean", "USE_TEST_ADS", "true")
+            // ID DE PRUEBA DE GOOGLE PARA ANDROID
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
-            versionNameSuffix = "-DEBUG"
         }
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
-            isDebuggable = false
-            buildConfigField("boolean", "USE_TEST_ADS", "false")
-            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            buildConfigField("boolean", "USE_TEST_ADS", "false")
+            // TU ID REAL DE PRODUCCIÓN
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~2085625019"
         }
     }
 
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     buildFeatures {
+        compose = false
         viewBinding = true
         buildConfig = true
     }
 
     packaging {
         resources {
-            excludes += setOf(
-                "META-INF/DEPENDENCIES",
-                "META-INF/LICENSE",
-                "META-INF/LICENSE.txt",
-                "META-INF/NOTICE",
-                "META-INF/NOTICE.txt",
-                "META-INF/ASL2.0",
-                "META-INF/AL2.0",
-                "META-INF/LGPL2.1",
-                "META-INF/*.kotlin_module"
-            )
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-    }
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
 }
 
 dependencies {
-    // Google Ads
-    implementation("com.google.android.gms:play-services-ads:24.5.0")
-    implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.google.material)
+
+    implementation(libs.androidx.security.crypto)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics.ktx)
+    implementation(libs.firebase.database.ktx)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.config.ktx)
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+    // AdMob con versiones más estables
+    implementation("com.google.android.gms:play-services-ads:23.5.0")
     implementation("com.google.android.ump:user-messaging-platform:3.1.0")
 
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-database-ktx")
-    implementation("com.google.firebase:firebase-config-ktx")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // AndroidX Core
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.activity:activity-ktx:1.9.2")
-    implementation("androidx.fragment:fragment-ktx:1.8.3")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.webkit:webkit:1.11.0")
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
 
-    // Security
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation(libs.androidx.work.runtime.ktx)
 
-    // Material Dialogs
-    implementation("com.afollestad.material-dialogs:core:3.3.0")
-    implementation("com.afollestad.material-dialogs:input:3.3.0")
-
-    // Utilidades
-    implementation("me.leolin:ShortcutBadger:1.1.22@aar")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation(libs.afollestad.material.dialogs.core)
+    implementation(libs.afollestad.material.dialogs.input)
+    implementation(libs.jetbrains.kotlinx.coroutines.android)
+    implementation(libs.jetbrains.kotlinx.coroutines.core)
+    implementation(libs.jetbrains.kotlinx.coroutines.play.services)
     implementation("androidx.multidex:multidex:2.0.1")
+    implementation("me.leolin:ShortcutBadger:1.1.22@aar")
 
-    // Lifecycle
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation(libs.google.play.services.base)
+    implementation(libs.google.play.services.basement)
 
-    // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    coreLibraryDesugaring(libs.android.tools.desugar.jdk.libs)
 
-    // Core Library Desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
-    // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

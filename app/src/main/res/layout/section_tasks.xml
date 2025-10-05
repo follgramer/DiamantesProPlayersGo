@@ -116,11 +116,11 @@
 
     </LinearLayout>
 
-    <!-- ✅ Contenedor para el Banner -->
+    <!-- ✅ CONTENEDOR PARA ANUNCIO NATIVO - Este es el cambio principal -->
     <FrameLayout
-        android:id="@+id/adTasksContainer"
+        android:id="@+id/native_ad_tasks_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
         android:visibility="gone"/>

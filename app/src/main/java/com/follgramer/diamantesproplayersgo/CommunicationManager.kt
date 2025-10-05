@@ -37,6 +37,9 @@ class CommunicationManager private constructor(private val context: Context) {
     // Estado actual del sorteo
     private var currentSorteoState: SorteoState? = null
 
+    // Job para countdown
+    private var countdownJob: Job? = null
+
     data class SorteoState(
         val hideCountdown: Boolean = false,
         val customMessage: String = "",
@@ -52,9 +55,6 @@ class CommunicationManager private constructor(private val context: Context) {
         val revealedAt: Long? = null
     )
 
-    /**
-     * Configura el listener principal del sorteo
-     */
     fun setupSorteoListener(
         onCountdownUpdate: (status: String, message: String) -> Unit,
         onRevealCountdown: (timeLeft: Long, winnerId: String, prize: String) -> Unit,
@@ -67,7 +67,7 @@ class CommunicationManager private constructor(private val context: Context) {
         sorteoListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    Log.d(TAG, "Sorteo data changed: ${snapshot.value}")
+                    Log.d(TAG, "Sorteo data changed")
 
                     if (!snapshot.exists()) {
                         currentSorteoState = null
@@ -75,12 +75,10 @@ class CommunicationManager private constructor(private val context: Context) {
                         return
                     }
 
-                    // Parsear estado del sorteo
                     val hideCountdown = snapshot.child("hideCountdown").getValue(Boolean::class.java) ?: false
                     val customMessage = snapshot.child("customMessage").getValue(String::class.java) ?: ""
                     val paused = snapshot.child("paused").getValue(Boolean::class.java) ?: false
 
-                    // Parsear estado de revelación si existe
                     var revealState: RevealState? = null
                     val revealSnapshot = snapshot.child("revealState")
                     if (revealSnapshot.exists()) {
@@ -95,7 +93,6 @@ class CommunicationManager private constructor(private val context: Context) {
 
                     currentSorteoState = SorteoState(hideCountdown, customMessage, paused, revealState)
 
-                    // Procesar estados
                     when {
                         revealState != null -> handleRevealState(
                             revealState,
@@ -125,14 +122,14 @@ class CommunicationManager private constructor(private val context: Context) {
         Log.d(TAG, "Sorteo listener configurado")
     }
 
-    /**
-     * Maneja el estado de revelación - FUNCIÓN MODIFICADA
-     */
     private fun handleRevealState(
         revealState: RevealState,
         onRevealCountdown: (timeLeft: Long, winnerId: String, prize: String) -> Unit,
         onWinnerRevealed: (winnerId: String, prize: String) -> Unit
     ) {
+        // Cancelar countdown previo
+        countdownJob?.cancel()
+
         when (revealState.status) {
             "countdown" -> {
                 val now = System.currentTimeMillis()
@@ -141,13 +138,19 @@ class CommunicationManager private constructor(private val context: Context) {
                 if (timeLeft > 0) {
                     onRevealCountdown(timeLeft, revealState.winnerId, revealState.prize)
 
-                    // Programar verificación
-                    scope.launch {
-                        delay(timeLeft + 1000) // Esperar hasta revelación + 1 segundo
-                        if (currentSorteoState?.revealState?.status == "countdown") {
+                    // Countdown con coroutine
+                    countdownJob = scope.launch {
+                        while (isActive && System.currentTimeMillis() < revealState.revealTime) {
+                            val remaining = revealState.revealTime - System.currentTimeMillis()
                             withContext(Dispatchers.Main) {
-                                onWinnerRevealed(revealState.winnerId, revealState.prize)
+                                onRevealCountdown(remaining, revealState.winnerId, revealState.prize)
                             }
+                            delay(1000)
+                        }
+
+                        // Cuando termina
+                        withContext(Dispatchers.Main) {
+                            onWinnerRevealed(revealState.winnerId, revealState.prize)
                         }
                     }
                 } else {
@@ -155,7 +158,6 @@ class CommunicationManager private constructor(private val context: Context) {
                 }
             }
             "revealing" -> {
-                // Estado especial para mostrar animación "GANADOR ELEGIDO"
                 onRevealCountdown(0, revealState.winnerId, revealState.prize)
             }
             "revealed" -> {
@@ -164,9 +166,6 @@ class CommunicationManager private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * Configura listener de notificaciones directas
-     */
     fun startNotificationListener(playerId: String) {
         cleanupNotificationListener()
 
@@ -196,9 +195,6 @@ class CommunicationManager private constructor(private val context: Context) {
         Log.d(TAG, "Notification listener iniciado para: $playerId")
     }
 
-    /**
-     * Procesa notificaciones directas
-     */
     private fun processDirectNotification(snapshot: DataSnapshot) {
         scope.launch {
             try {
@@ -207,10 +203,8 @@ class CommunicationManager private constructor(private val context: Context) {
 
                 if (!processed) {
                     Log.d(TAG, "Procesando notificación: ${data["type"]}")
-                    // Marcar como procesada
                     snapshot.ref.child("processed").setValue(true)
 
-                    // Eliminar después de procesar
                     delay(3000)
                     snapshot.ref.removeValue()
                 }
@@ -220,9 +214,6 @@ class CommunicationManager private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * Configura listener de sincronización de datos
-     */
     fun setupDataSyncListener(
         playerId: String,
         onDataUpdate: (tickets: Long, passes: Long, spins: Long) -> Unit
@@ -256,30 +247,9 @@ class CommunicationManager private constructor(private val context: Context) {
         Log.d(TAG, "Data sync listener configurado para: $playerId")
     }
 
-    /**
-     * Envía estado de procesamiento del sorteo (para testing)
-     */
-    fun sendSorteoStatus(message: String) {
-        scope.launch {
-            try {
-                database.child("appConfig").child("sorteo").updateChildren(
-                    mapOf(
-                        "hideCountdown" to true,
-                        "customMessage" to message,
-                        "timestamp" to ServerValue.TIMESTAMP
-                    )
-                )
-                Log.d(TAG, "Estado enviado: $message")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error enviando estado: ${e.message}")
-            }
-        }
-    }
-
-    /**
-     * Limpieza de listeners
-     */
     private fun cleanupSorteoListener() {
+        countdownJob?.cancel()
+        countdownJob = null
         sorteoListener?.let { listener ->
             sorteoRef?.removeEventListener(listener)
         }
@@ -303,9 +273,6 @@ class CommunicationManager private constructor(private val context: Context) {
         dataRef = null
     }
 
-    /**
-     * Limpieza general
-     */
     fun cleanup() {
         cleanupSorteoListener()
         cleanupNotificationListener()
@@ -315,14 +282,8 @@ class CommunicationManager private constructor(private val context: Context) {
         Log.d(TAG, "CommunicationManager limpiado")
     }
 
-    /**
-     * Verifica el estado actual del sorteo
-     */
     fun getCurrentSorteoState(): SorteoState? = currentSorteoState
 
-    /**
-     * Función de utilidad para verificar conectividad
-     */
     fun checkConnection(callback: (Boolean) -> Unit) {
         val connectedRef = database.child(".info/connected")
         connectedRef.addValueEventListener(object : ValueEventListener {

@@ -62,46 +62,54 @@
             </RelativeLayout>
         </androidx.appcompat.widget.Toolbar>
 
+        <!-- Banner inferior - ANTES del contenido para asegurar orden correcto -->
+        <FrameLayout
+            android:id="@+id/bannerBottomContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginHorizontal="0dp"
+            android:visibility="gone"
+            android:background="@null"
+            android:clipChildren="false"
+            android:clipToPadding="false" />
+
+        <!-- Contenedor principal - ENCIMA del banner inferior -->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@id/bannerBottomContainer"
-            android:layout_below="@id/toolbar">
+            android:layout_below="@id/toolbar"
+            android:layout_above="@id/bannerBottomContainer">
 
             <include
                 android:id="@+id/section_home"
                 layout="@layout/section_home" />
+
             <include
                 android:id="@+id/section_tasks"
                 layout="@layout/section_tasks"
                 android:visibility="gone" />
+
             <include
                 android:id="@+id/section_leaderboard"
                 layout="@layout/section_leaderboard"
                 android:visibility="gone" />
+
             <include
                 android:id="@+id/section_winners"
                 layout="@layout/section_winners"
                 android:visibility="gone" />
+
             <include
                 android:id="@+id/section_legal"
                 layout="@layout/section_legal"
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- ✅ BANNER INFERIOR - INICIAR COMPLETAMENTE OCULTO -->
-        <FrameLayout
-            android:id="@+id/bannerBottomContainer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_alignParentBottom="true"
-            android:visibility="gone"
-            android:background="@null"
-            android:clipChildren="false"
-            android:clipToPadding="false" />
     </RelativeLayout>
 
+    <!-- Navigation Drawer -->
     <LinearLayout
         android:layout_width="280dp"
         android:layout_height="match_parent"
@@ -168,4 +176,5 @@
                 android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
+
 </androidx.drawerlayout.widget.DrawerLayout>

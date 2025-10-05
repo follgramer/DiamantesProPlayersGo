@@ -10,7 +10,8 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.follgramer.diamantesproplayersgo.ads.RecyclerViewBannerHelper
+import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
+import com.google.android.gms.ads.nativead.NativeAdView
 
 class LeaderboardAdapter(
     private val context: Context,
@@ -22,7 +23,7 @@ class LeaderboardAdapter(
     companion object {
         private const val TYPE_PLAYER = 0
         private const val TYPE_AD = 1
-        private const val AD_INTERVAL = 5
+        private const val AD_INTERVAL = 3
         private const val TAG = "LeaderboardAdapter"
     }
 
@@ -45,8 +46,8 @@ class LeaderboardAdapter(
         return when (viewType) {
             TYPE_AD -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_leaderboard_ad, parent, false)
-                BannerViewHolder(view)
+                    .inflate(R.layout.item_leaderboard_native_ad, parent, false)
+                NativeAdViewHolder(view)
             }
             else -> {
                 val view = LayoutInflater.from(parent.context)
@@ -58,7 +59,7 @@ class LeaderboardAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is BannerViewHolder -> {
+            is NativeAdViewHolder -> {
                 holder.bind(activity, holder.bindingAdapterPosition)
             }
             is PlayerViewHolder -> {
@@ -69,6 +70,13 @@ class LeaderboardAdapter(
                     holder.bind(item, realRank, currentPlayerId)
                 }
             }
+        }
+    }
+
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        super.onViewRecycled(holder)
+        if (holder is NativeAdViewHolder) {
+            holder.destroy()
         }
     }
 
@@ -124,25 +132,41 @@ class LeaderboardAdapter(
         }
     }
 
-    class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val adLeaderboardContainer: FrameLayout? =
-            itemView.findViewById(R.id.adLeaderboardContainer)
+    class NativeAdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val adContainer: FrameLayout? = itemView.findViewById(R.id.leaderboard_native_ad_container)
+        private var holderId: Int = 0
 
         fun bind(activity: Activity, position: Int) {
-            adLeaderboardContainer?.let { container ->
-                // ✅ CRÍTICO: Iniciar completamente oculto
-                container.visibility = View.GONE
-                container.layoutParams.height = 0
-                container.background = null
+            adContainer?.let { container ->
+                try {
+                    // ✅ CRÍTICO: Iniciar completamente oculto
+                    container.visibility = View.GONE
+                    container.layoutParams.height = 0
+                    container.removeAllViews()
 
-                RecyclerViewBannerHelper.loadAdaptiveBanner(
-                    activity,
-                    container,
-                    viewHolderId = position
-                )
+                    // ID único para este holder
+                    holderId = position + 2000
+
+                    // Inflar el layout del anuncio nativo
+                    val nativeAdView = LayoutInflater.from(activity)
+                        .inflate(R.layout.ad_native_unified, container, false) as NativeAdView
+
+                    // Cargar anuncio nativo
+                    NativeAdHelper.loadNativeAd(activity, container, nativeAdView, holderId)
+
+                    Log.d(TAG, "Cargando anuncio nativo en posición $position (holder $holderId)")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error loading native ad: ${e.message}", e)
+                    container.visibility = View.GONE
+                    container.layoutParams.height = 0
+                }
             } ?: run {
                 Log.e(TAG, "⚠️ Ad container no encontrado")
             }
+        }
+
+        fun destroy() {
+            NativeAdHelper.destroyNativeAd(holderId)
         }
     }
 

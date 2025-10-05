@@ -6,7 +6,6 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import com.follgramer.diamantesproplayersgo.R
 import com.google.android.gms.ads.*
 import com.google.android.ump.UserMessagingPlatform
@@ -25,14 +24,12 @@ object BannerHelper {
         // Cancelar cualquier carga previa
         loadingJobs[containerId]?.cancel()
 
-        // Verificar si ya falló antes (reducir el tiempo de cooldown)
+        // Verificar cooldown
         if (failedContainers.contains(containerId)) {
             Log.d(TAG, "Container $containerId en cooldown temporal")
-            // Reducir el cooldown a 30 segundos en lugar de permanente
             scope.launch {
                 delay(30000)
                 failedContainers.remove(containerId)
-                // Reintentar después del cooldown
                 if (!activity.isFinishing && !activity.isDestroyed) {
                     attachAdaptiveBanner(activity, container)
                 }
@@ -43,9 +40,12 @@ object BannerHelper {
         // Verificar consentimiento
         if (!UserMessagingPlatform.getConsentInformation(activity).canRequestAds()) {
             Log.d(TAG, "⏸️ Esperando consentimiento para container $containerId")
-            // NO ocultar el contenedor, mantenerlo visible para futuros intentos
-            container.visibility = View.VISIBLE
-            container.layoutParams.height = 1 // Altura mínima
+            // Mantener oculto (100% legal)
+            container.apply {
+                visibility = View.GONE
+                layoutParams.height = 0
+                setBackgroundColor(Color.TRANSPARENT)
+            }
 
             loadingJobs[containerId] = scope.launch {
                 delay(2000)
@@ -56,11 +56,14 @@ object BannerHelper {
             return
         }
 
-        // Verificar si AdMob está listo
+        // Verificar AdMob
         if (!AdsInit.isAdMobReady()) {
             Log.d(TAG, "⏸️ AdMob no está listo para container $containerId")
-            container.visibility = View.VISIBLE
-            container.layoutParams.height = 1 // Altura mínima
+            container.apply {
+                visibility = View.GONE
+                layoutParams.height = 0
+                setBackgroundColor(Color.TRANSPARENT)
+            }
 
             loadingJobs[containerId] = scope.launch {
                 delay(1000)
@@ -71,7 +74,7 @@ object BannerHelper {
             return
         }
 
-        // Reutilizar banner existente si está disponible
+        // Reutilizar banner existente
         loadedBanners[containerId]?.let { existingAd ->
             if (existingAd.parent == null) {
                 container.removeAllViews()
@@ -88,10 +91,12 @@ object BannerHelper {
             try {
                 container.removeAllViews()
 
-                // IMPORTANTE: Mantener visible con altura mínima mientras carga
-                container.visibility = View.VISIBLE
-                container.layoutParams.height = 50.dpToPx(activity) // Altura mínima de 50dp
-                container.setBackgroundColor(Color.parseColor("#1A1A1A1A")) // Fondo semi-transparente temporal
+                // INICIAR OCULTO (100% legal para AdMob)
+                container.apply {
+                    visibility = View.GONE
+                    layoutParams.height = 0
+                    setBackgroundColor(Color.TRANSPARENT)
+                }
 
                 val adView = AdView(activity).apply {
                     adUnitId = getAdUnitId(container)
@@ -106,10 +111,12 @@ object BannerHelper {
                         Log.d(TAG, "✅ Banner cargado para container $containerId")
                         failedContainers.remove(containerId)
 
-                        // Ajustar altura al contenido real
-                        container.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                        container.setBackgroundColor(Color.TRANSPARENT)
-                        container.visibility = View.VISIBLE
+                        // SOLO AHORA mostrar con altura real
+                        container.apply {
+                            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                            setBackgroundColor(Color.TRANSPARENT)
+                            visibility = View.VISIBLE
+                        }
 
                         // Animación suave
                         container.alpha = 0f
@@ -123,10 +130,12 @@ object BannerHelper {
                         Log.e(TAG, "❌ Error cargando banner: ${error.message} (código: ${error.code})")
                         Log.e(TAG, "Dominio: ${error.domain}, Causa: ${error.cause}")
 
-                        // En caso de error, mantener una altura mínima para futuros intentos
-                        container.visibility = View.VISIBLE
-                        container.layoutParams.height = 1
-                        container.setBackgroundColor(Color.TRANSPARENT)
+                        // Mantener oculto en caso de error
+                        container.apply {
+                            visibility = View.GONE
+                            layoutParams.height = 0
+                            setBackgroundColor(Color.TRANSPARENT)
+                        }
 
                         when (error.code) {
                             AdRequest.ERROR_CODE_NO_FILL -> {
@@ -140,7 +149,6 @@ object BannerHelper {
                                 }
                             }
                             AdRequest.ERROR_CODE_NETWORK_ERROR -> {
-                                // Error de red, reintentar más rápido
                                 loadingJobs[containerId] = scope.launch {
                                     delay(5000) // 5 segundos
                                     if (!activity.isFinishing) {
@@ -149,7 +157,6 @@ object BannerHelper {
                                 }
                             }
                             else -> {
-                                // Otros errores, reintentar en 15 segundos
                                 loadingJobs[containerId] = scope.launch {
                                     delay(15000)
                                     if (!activity.isFinishing) {
@@ -184,11 +191,13 @@ object BannerHelper {
 
             } catch (e: Exception) {
                 Log.e(TAG, "💥 Error crítico: ${e.message}", e)
-                container.visibility = View.VISIBLE
-                container.layoutParams.height = 1
-                container.setBackgroundColor(Color.TRANSPARENT)
+                container.apply {
+                    visibility = View.GONE
+                    layoutParams.height = 0
+                    setBackgroundColor(Color.TRANSPARENT)
+                }
 
-                // Reintentar después de un error crítico
+                // Reintentar después de error crítico
                 loadingJobs[containerId] = scope.launch {
                     delay(30000) // 30 segundos
                     if (!activity.isFinishing) {
@@ -217,9 +226,9 @@ object BannerHelper {
 
     private fun getAdUnitId(container: ViewGroup): String {
         val adId = when (container.id) {
-            R.id.adInProfileContainer -> AdIds.bannerTop()
+            R.id.adInProfileContainer -> AdIds.banner()
             R.id.bannerBottomContainer -> AdIds.bannerBottom()
-            else -> AdIds.bannerBottom()
+            else -> AdIds.banner()
         }
         Log.d(TAG, "📌 Usando Ad Unit ID: $adId para container ${container.id}")
         return adId
@@ -264,10 +273,5 @@ object BannerHelper {
         loadingJobs[containerId]?.cancel()
         attachAdaptiveBanner(activity, container)
         Log.d(TAG, "Forzando recarga de banner para container $containerId")
-    }
-
-    // Función de extensión auxiliar para convertir dp a pixels
-    private fun Int.dpToPx(activity: Activity): Int {
-        return (this * activity.resources.displayMetrics.density).toInt()
     }
 }

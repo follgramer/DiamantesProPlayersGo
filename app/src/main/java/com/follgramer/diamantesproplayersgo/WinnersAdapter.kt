@@ -8,7 +8,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.follgramer.diamantesproplayersgo.ads.RecyclerViewBannerHelper
+import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
+import com.google.android.gms.ads.nativead.NativeAdView
 
 data class WinnerItem(
     val id: String,
@@ -48,8 +49,8 @@ class WinnersAdapter(
         return when (viewType) {
             TYPE_AD -> {
                 val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_winner_ad, parent, false)
-                BannerViewHolder(view)
+                    .inflate(R.layout.item_winner_native_ad, parent, false)
+                NativeAdViewHolder(view)
             }
             else -> {
                 val view = LayoutInflater.from(parent.context)
@@ -61,7 +62,7 @@ class WinnersAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is BannerViewHolder -> {
+            is NativeAdViewHolder -> {
                 holder.bind(activity, holder.bindingAdapterPosition)
             }
             is WinnerVH -> {
@@ -71,6 +72,13 @@ class WinnersAdapter(
                     holder.bind(item)
                 }
             }
+        }
+    }
+
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        super.onViewRecycled(holder)
+        if (holder is NativeAdViewHolder) {
+            holder.destroy()
         }
     }
 
@@ -116,20 +124,37 @@ class WinnersAdapter(
         }
     }
 
-    class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val adContainer: FrameLayout = itemView.findViewById(R.id.adContainer)
+    class NativeAdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val adContainer: FrameLayout = itemView.findViewById(R.id.winner_native_ad_container)
+        private var holderId: Int = 0
 
         fun bind(activity: Activity, position: Int) {
-            // ✅ CRÍTICO: Iniciar completamente oculto
-            adContainer.visibility = View.GONE
-            adContainer.layoutParams.height = 0
-            adContainer.background = null
+            try {
+                // ✅ CRÍTICO: Iniciar completamente oculto
+                adContainer.visibility = View.GONE
+                adContainer.layoutParams.height = 0
+                adContainer.removeAllViews()
 
-            RecyclerViewBannerHelper.loadAdaptiveBanner(
-                activity,
-                adContainer,
-                viewHolderId = position + 1000
-            )
+                // ID único para este holder
+                holderId = position + 1000
+
+                // Inflar el layout del anuncio nativo
+                val nativeAdView = LayoutInflater.from(activity)
+                    .inflate(R.layout.ad_native_unified, adContainer, false) as NativeAdView
+
+                // Cargar anuncio nativo
+                NativeAdHelper.loadNativeAd(activity, adContainer, nativeAdView, holderId)
+
+                Log.d("WinnersAdapter", "Cargando anuncio nativo en posición $position (holder $holderId)")
+            } catch (e: Exception) {
+                Log.e("WinnersAdapter", "Error loading native ad: ${e.message}", e)
+                adContainer.visibility = View.GONE
+                adContainer.layoutParams.height = 0
+            }
+        }
+
+        fun destroy() {
+            NativeAdHelper.destroyNativeAd(holderId)
         }
     }
 
