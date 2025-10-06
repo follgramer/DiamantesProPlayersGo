@@ -1,0 +1,16 @@
+CAMBIOS NECESARIOS EN app/build.gradle.kts:
+
+1. En defaultConfig {
+   Agregar si no existe:
+   manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
+
+2. En buildTypes { debug {
+   Verificar que tenga:
+   manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+
+3. En buildTypes { release {
+   Verificar que tenga:
+   manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
+
+4. Actualizar dependencia:
+   implementation("com.google.android.gms:play-services-ads:24.5.0")

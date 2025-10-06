@@ -55,7 +55,7 @@ object NativeAdHelper {
 
             if (timeSinceLastRequest < MIN_REQUEST_INTERVAL_MS) {
                 val waitTime = MIN_REQUEST_INTERVAL_MS - timeSinceLastRequest
-                Log.d(TAG, "⏳ Esperando ${waitTime}ms antes de cargar holder $holderId")
+                Log.d(TAG, "Esperando ${waitTime}ms antes de cargar holder $holderId")
                 scope.launch {
                     delay(waitTime)
                     loadNativeAd(activity, container, nativeAdView, holderId)
@@ -85,6 +85,9 @@ object NativeAdHelper {
             }
 
             loadedAds[holderId]?.let { existingAd ->
+                // CRÍTICO: Remover del parent anterior
+                (nativeAdView.parent as? ViewGroup)?.removeView(nativeAdView)
+
                 populateNativeAdView(existingAd, nativeAdView)
                 container.removeAllViews()
                 container.addView(nativeAdView)
@@ -104,11 +107,11 @@ object NativeAdHelper {
 
             val adUnitId = AdIds.native()
 
-            Log.d(TAG, "📤 Encolando anuncio nativo para holder $holderId con ID: $adUnitId")
+            Log.d(TAG, "Encolando anuncio nativo para holder $holderId con ID: $adUnitId")
 
             val adLoader = AdLoader.Builder(activity, adUnitId)
                 .forNativeAd { nativeAd ->
-                    Log.d(TAG, "✅ Anuncio nativo cargado para holder $holderId")
+                    Log.d(TAG, "Anuncio nativo cargado para holder $holderId")
 
                     loadedAds[holderId]?.destroy()
                     loadedAds[holderId] = nativeAd
@@ -119,6 +122,9 @@ object NativeAdHelper {
                     retryJobs[holderId]?.cancel()
                     retryJobs.remove(holderId)
 
+                    // CRÍTICO: Remover del parent anterior si existe
+                    (nativeAdView.parent as? ViewGroup)?.removeView(nativeAdView)
+
                     populateNativeAdView(nativeAd, nativeAdView)
                     container.removeAllViews()
                     container.addView(nativeAdView)
@@ -126,7 +132,7 @@ object NativeAdHelper {
                 }
                 .withAdListener(object : AdListener() {
                     override fun onAdFailedToLoad(error: LoadAdError) {
-                        Log.e(TAG, "❌ Error cargando anuncio nativo: ${error.message}, código: ${error.code}")
+                        Log.e(TAG, "Error cargando anuncio nativo: ${error.message}, código: ${error.code}")
                         loadingStates[holderId] = false
 
                         failCounts[holderId] = (failCounts[holderId] ?: 0) + 1
@@ -173,7 +179,6 @@ object NativeAdHelper {
                 })
                 .build()
 
-            // USAR AdRequestManager para controlar timing
             AdRequestManager.queueRequest {
                 withContext(Dispatchers.Main) {
                     try {
@@ -298,7 +303,7 @@ object NativeAdHelper {
         retryJobs[holderId] = scope.launch {
             delay(delayMs)
             if (!activity.isFinishing && !activity.isDestroyed) {
-                Log.d(TAG, "🔄 Reintentando carga de anuncio nativo para holder $holderId")
+                Log.d(TAG, "Reintentando carga de anuncio nativo para holder $holderId")
                 loadNativeAd(activity, container, nativeAdView, holderId)
             }
         }

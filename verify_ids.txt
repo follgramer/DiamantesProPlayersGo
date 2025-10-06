@@ -1,0 +1,12 @@
+VERIFICACIÓN DE IDS DE ADMOB:
+
+App ID (debe terminar con ~): ca-app-pub-2024712392092488~7992650364
+
+Ad Unit IDs (deben terminar con /):
+- Banner Top: ca-app-pub-2024712392092488/8042311663
+- Banner Bottom: ca-app-pub-2024712392092488/4186978125
+- Interstitial: ca-app-pub-2024712392092488/4116891986
+- Rewarded: ca-app-pub-2024712392092488/6270064993
+- Native: ca-app-pub-2024712392092488/6108630501
+
+IMPORTANTE: Verifica en tu consola de AdMob que estos IDs coincidan exactamente.

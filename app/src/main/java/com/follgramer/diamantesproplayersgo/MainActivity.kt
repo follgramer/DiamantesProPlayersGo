@@ -127,6 +127,9 @@ class MainActivity : AppCompatActivity() {
     // GRID DATA
     private val gridItemsData = listOf(5, 1, 10, 25, 20, 0, 50, 5, 15, 1, 100, 20)
 
+    private var leaderboardAdapter: LeaderboardAdapter? = null
+    private var winnersAdapter: WinnersAdapter? = null
+
     // CONSTANTS
     private companion object {
         private const val TAG_MAIN = "MainActivity"
@@ -225,7 +228,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ FUNCIÓN REEMPLAZADA
     private fun loadBannersWhenReady() {
         if (bannersLoaded) {
             Log.d(TAG_MAIN, "Banners ya cargados, saltando...")
@@ -367,7 +369,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ FUNCIÓN REEMPLAZADA
     private fun setupBasicUI() {
         try {
             Log.d(TAG_MAIN, "Configurando basic UI...")
@@ -498,6 +499,27 @@ class MainActivity : AppCompatActivity() {
 
             arreglarColoresDeTextos()
             initializeGrid()
+
+            // ✅ CÓDIGO AÑADIDO
+            // Cargar anuncio nativo en Tasks
+            binding.sectionTasks.root.post {
+                val tasksAdContainer = binding.sectionTasks.root.findViewById<ViewGroup>(R.id.native_ad_tasks_container)
+                if (tasksAdContainer != null) {
+                    val nativeAdView = layoutInflater.inflate(
+                        R.layout.item_leaderboard_native_ad,
+                        tasksAdContainer,
+                        false
+                    ).findViewById<com.google.android.gms.ads.nativead.NativeAdView>(R.id.leaderboard_native_ad_view)
+                    tasksAdContainer.addView(nativeAdView.parent as View)
+                    NativeAdHelper.loadNativeAd(
+                        this,
+                        tasksAdContainer,
+                        nativeAdView,
+                        System.identityHashCode(tasksAdContainer)
+                    )
+                }
+            }
+
             obtenerTop5Firebase()
             startWeeklyPrizeListener()
 
@@ -1047,9 +1069,9 @@ class MainActivity : AppCompatActivity() {
                         tickets = player.tickets
                     )
                 }
-                binding.sectionLeaderboard.leaderboardRecyclerView.adapter =
-                    LeaderboardAdapter(this@MainActivity, this@MainActivity, leaderboardItems.toMutableList(), currentPlayerId)
-
+                // Actualizar datos del adapter existente
+                leaderboardAdapter?.updateData(leaderboardItems, currentPlayerId)
+                // Mini leaderboard
                 if (jugadoresOrdenados.isNotEmpty()) {
                     val top5 = jugadoresOrdenados.take(5)
                     binding.sectionHome.miniLeaderboardList.adapter =
@@ -1063,6 +1085,7 @@ class MainActivity : AppCompatActivity() {
             Log.e("TOP5_FIREBASE", "Error updating top 5 UI: ${e.message}")
         }
     }
+
 
     private fun startWeeklyPrizeListener() {
         try {
@@ -1488,8 +1511,8 @@ class MainActivity : AppCompatActivity() {
                                         winner.timestamp ?: System.currentTimeMillis()
                                     )
                                 }
-                                binding.sectionWinners.winnersRecyclerView.adapter =
-                                    WinnersAdapter(this@MainActivity, winnerItems.toMutableList())
+                                // Actualizar datos del adapter existente
+                                winnersAdapter?.updateData(winnerItems)
                             }
                         }
                     } catch (e: Exception) {
@@ -1739,15 +1762,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews() {
+        // Leaderboard
         binding.sectionLeaderboard.leaderboardRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.sectionLeaderboard.leaderboardRecyclerView.adapter =
-            LeaderboardAdapter(this, this, mutableListOf(), null)
+        leaderboardAdapter = LeaderboardAdapter(this, this, mutableListOf(), null)
+        binding.sectionLeaderboard.leaderboardRecyclerView.adapter = leaderboardAdapter
+        // Winners
         binding.sectionWinners.winnersRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.sectionWinners.winnersRecyclerView.adapter = WinnersAdapter(this, mutableListOf())
-        // DO NOT initialize the mini leaderboard adapter
+        winnersAdapter = WinnersAdapter(this, mutableListOf())
+        binding.sectionWinners.winnersRecyclerView.adapter = winnersAdapter
+        // Mini leaderboard
         binding.sectionHome.miniLeaderboardList.layoutManager = LinearLayoutManager(this)
-        // DO NOT assign adapter here
     }
+
 
     private fun setupClickListeners() {
         try {

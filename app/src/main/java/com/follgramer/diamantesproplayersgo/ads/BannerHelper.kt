@@ -23,32 +23,21 @@ object BannerHelper {
 
         Log.d(TAG, "═══════════════════════════════════════")
         Log.d(TAG, "🎯 attachAdaptiveBanner INICIADO")
-        Log.d(TAG, "═══════════════════════════════════════")
         Log.d(TAG, "Container ID: $containerId")
-        Log.d(TAG, "Container Width: ${container.width}px")
-        Log.d(TAG, "Container Height: ${container.height}px")
-        Log.d(TAG, "Container Visible: ${container.visibility == View.VISIBLE}")
-        Log.d(TAG, "Activity: ${activity.javaClass.simpleName}")
+
+        // ✅ CRÍTICO: Empezar OCULTO, solo mostrar si el anuncio carga
+        container.visibility = View.GONE
+        container.layoutParams = container.layoutParams.apply {
+            height = 0
+        }
 
         // Cancelar cualquier carga previa
-        loadingJobs[containerId]?.let {
-            Log.d(TAG, "⚠️ Cancelando job previo para container $containerId")
-            it.cancel()
-        }
-
-        // ✅ FORZAR VISIBILIDAD Y ALTURA DESDE EL INICIO
-        Log.d(TAG, "🔧 Configurando visibilidad y altura del contenedor...")
-        container.visibility = View.VISIBLE
-        container.layoutParams = container.layoutParams.apply {
-            height = ViewGroup.LayoutParams.WRAP_CONTENT
-        }
-
-        Log.d(TAG, "✅ Contenedor configurado - Height: ${container.layoutParams.height}")
+        loadingJobs[containerId]?.cancel()
 
         // Verificar consentimiento
         val canRequestAds = try {
             val result = UserMessagingPlatform.getConsentInformation(activity).canRequestAds()
-            Log.d(TAG, "🔐 Consentimiento verificado: $result")
+            Log.d(TAG, "🔐 Consentimiento: $result")
             result
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error verificando consentimiento: ${e.message}")
@@ -56,19 +45,13 @@ object BannerHelper {
         }
 
         if (!canRequestAds) {
-            Log.w(TAG, "⚠️ SIN CONSENTIMIENTO - Reintentando en 3 segundos...")
-            loadingJobs[containerId] = scope.launch {
-                delay(3000)
-                if (!activity.isFinishing && !activity.isDestroyed) {
-                    attachAdaptiveBanner(activity, container)
-                }
-            }
+            Log.w(TAG, "⚠️ Sin consentimiento - contenedor permanecerá oculto")
             return
         }
 
         // Verificar AdMob
         if (!AdsInit.isAdMobReady()) {
-            Log.w(TAG, "⚠️ ADMOB NO LISTO - Reintentando en 2 segundos...")
+            Log.w(TAG, "⚠️ AdMob no listo - reintentando en 2s")
             loadingJobs[containerId] = scope.launch {
                 delay(2000)
                 if (!activity.isFinishing && !activity.isDestroyed) {
@@ -83,28 +66,26 @@ object BannerHelper {
         // Reutilizar banner existente
         loadedBanners[containerId]?.let { existingAd ->
             if (existingAd.parent == null) {
-                Log.d(TAG, "♻️ Reutilizando banner existente para container $containerId")
+                Log.d(TAG, "♻️ Reutilizando banner existente")
                 container.removeAllViews()
                 container.addView(existingAd)
+                // ✅ MOSTRAR solo si hay banner existente
                 container.visibility = View.VISIBLE
                 container.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
                 return
-            } else {
-                Log.d(TAG, "⚠️ Banner existente tiene parent, creando uno nuevo")
             }
         }
 
         // Crear y cargar nuevo banner
         loadingJobs[containerId] = scope.launch {
             try {
-                Log.d(TAG, "🚀 Iniciando proceso de carga de banner...")
-
+                Log.d(TAG, "🚀 Iniciando carga de nuevo banner...")
                 container.removeAllViews()
 
                 val adUnitId = getAdUnitId(container)
                 val adSize = getAdaptiveAdSize(activity, container)
 
-                Log.d(TAG, "📝 Configuración del banner:")
+                Log.d(TAG, "📋 Configuración:")
                 Log.d(TAG, "   Ad Unit ID: $adUnitId")
                 Log.d(TAG, "   Ad Size: ${adSize.width}x${adSize.height} dp")
 
@@ -115,7 +96,6 @@ object BannerHelper {
 
                 loadedBanners[containerId] = adView
 
-                // Agregar al contenedor ANTES de cargar
                 val layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.WRAP_CONTENT
@@ -128,94 +108,56 @@ object BannerHelper {
                 adView.adListener = object : AdListener() {
                     override fun onAdLoaded() {
                         Log.d(TAG, "═══════════════════════════════════════")
-                        Log.d(TAG, "✅ ¡BANNER CARGADO EXITOSAMENTE!")
+                        Log.d(TAG, "✅ ¡BANNER CARGADO! - MOSTRANDO contenedor")
                         Log.d(TAG, "═══════════════════════════════════════")
-                        Log.d(TAG, "Container ID: $containerId")
-                        Log.d(TAG, "Ad Unit ID: $adUnitId")
-                        Log.d(TAG, "AdView Size: ${adView.width}x${adView.height}px")
-                        Log.d(TAG, "Container Size: ${container.width}x${container.height}px")
 
-                        // Limpiar de lista de fallos
-                        failedContainers.removeAll { it == containerId }
-
-                        // Asegurar visibilidad
+                        // ✅ SOLO AHORA mostrar el contenedor
                         container.visibility = View.VISIBLE
-                        container.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                        container.alpha = 1f
+                        container.layoutParams = container.layoutParams.apply {
+                            height = ViewGroup.LayoutParams.WRAP_CONTENT
+                        }
 
-                        // Forzar refresh del layout
+                        adView.requestLayout()
                         container.requestLayout()
-                        container.invalidate()
 
-                        Log.d(TAG, "✅ Banner completamente visible y renderizado")
+                        failedContainers.removeAll { it == containerId }
                     }
 
                     override fun onAdFailedToLoad(error: LoadAdError) {
                         Log.e(TAG, "═══════════════════════════════════════")
                         Log.e(TAG, "❌ ERROR CARGANDO BANNER")
-                        Log.e(TAG, "═══════════════════════════════════════")
-                        Log.e(TAG, "Container ID: $containerId")
-                        Log.e(TAG, "Ad Unit ID: $adUnitId")
                         Log.e(TAG, "Código: ${error.code}")
                         Log.e(TAG, "Mensaje: ${error.message}")
-                        Log.e(TAG, "Dominio: ${error.domain}")
-                        Log.e(TAG, "Causa: ${error.cause?.message ?: "N/A"}")
-
-                        // Descripción del error
-                        val errorDesc = when (error.code) {
-                            AdRequest.ERROR_CODE_INTERNAL_ERROR -> "ERROR INTERNO (Config)"
-                            AdRequest.ERROR_CODE_INVALID_REQUEST -> "SOLICITUD INVÁLIDA (ID)"
-                            AdRequest.ERROR_CODE_NETWORK_ERROR -> "ERROR DE RED"
-                            AdRequest.ERROR_CODE_NO_FILL -> "NO FILL (Sin anuncios)"
-                            AdRequest.ERROR_CODE_APP_ID_MISSING -> "APP ID FALTANTE"
-                            else -> "CÓDIGO: ${error.code}"
-                        }
-                        Log.e(TAG, "Tipo: $errorDesc")
                         Log.e(TAG, "═══════════════════════════════════════")
 
-                        // Estrategia de reintento
+                        // ✅ MANTENER OCULTO si falla
+                        container.visibility = View.GONE
+                        container.layoutParams.height = 0
+
                         handleAdLoadError(error, containerId, activity, container)
-                    }
-
-                    override fun onAdOpened() {
-                        Log.d(TAG, "👆 Banner abierto (interacción)")
-                    }
-
-                    override fun onAdClicked() {
-                        Log.d(TAG, "🖱️ Banner clickeado")
                     }
 
                     override fun onAdImpression() {
                         Log.d(TAG, "👁️ Impresión registrada")
                     }
 
-                    override fun onAdClosed() {
-                        Log.d(TAG, "❌ Banner cerrado")
+                    override fun onAdClicked() {
+                        Log.d(TAG, "🖱️ Banner clickeado")
                     }
                 }
 
-                // Construir y enviar solicitud
                 val adRequest = AdRequest.Builder().build()
-
                 Log.d(TAG, "📤 Enviando solicitud de banner...")
-                Log.d(TAG, "   Timestamp: ${System.currentTimeMillis()}")
-
                 adView.loadAd(adRequest)
 
             } catch (e: Exception) {
-                Log.e(TAG, "═══════════════════════════════════════")
-                Log.e(TAG, "💥 EXCEPCIÓN CRÍTICA")
-                Log.e(TAG, "═══════════════════════════════════════")
-                Log.e(TAG, "Mensaje: ${e.message}")
-                Log.e(TAG, "Tipo: ${e.javaClass.simpleName}")
-                e.printStackTrace()
-                Log.e(TAG, "═══════════════════════════════════════")
+                Log.e(TAG, "💥 EXCEPCIÓN CRÍTICA: ${e.message}", e)
+                container.visibility = View.GONE
+                container.layoutParams.height = 0
 
-                // Reintentar después de excepción
                 loadingJobs[containerId] = scope.launch {
                     delay(10000)
                     if (!activity.isFinishing && !activity.isDestroyed) {
-                        Log.w(TAG, "🔄 Reintentando después de excepción...")
                         attachAdaptiveBanner(activity, container)
                     }
                 }
@@ -230,13 +172,11 @@ object BannerHelper {
         container: ViewGroup
     ) {
         when (error.code) {
-            AdRequest.ERROR_CODE_NO_FILL -> {
+            3 -> { // No Fill - común en producción nueva
                 val attempts = failedContainers.count { it == containerId }
-
-                if (attempts < 3) {
-                    Log.w(TAG, "⚠️ No Fill - Intento ${attempts + 1}/3 en 60s")
+                if (attempts < 2) {
+                    Log.w(TAG, "⚠️ No Fill - Intento ${attempts + 1}/2 en 60s")
                     failedContainers.add(containerId)
-
                     loadingJobs[containerId] = scope.launch {
                         delay(60000)
                         if (!activity.isFinishing && !activity.isDestroyed) {
@@ -244,13 +184,11 @@ object BannerHelper {
                         }
                     }
                 } else {
-                    Log.e(TAG, "❌ No Fill persistente - Ocultando")
-                    container.visibility = View.GONE
-                    container.layoutParams.height = 0
+                    Log.e(TAG, "❌ No Fill persistente - contenedor permanecerá oculto")
                 }
             }
 
-            AdRequest.ERROR_CODE_NETWORK_ERROR -> {
+            2 -> { // Network Error
                 Log.w(TAG, "⚠️ Error de red - Reintentando en 10s")
                 loadingJobs[containerId] = scope.launch {
                     delay(10000)
@@ -260,21 +198,13 @@ object BannerHelper {
                 }
             }
 
-            AdRequest.ERROR_CODE_INVALID_REQUEST -> {
-                Log.e(TAG, "❌ Solicitud inválida - VERIFICAR:")
-                Log.e(TAG, "   1. ¿Ad Unit ID correcto?")
-                Log.e(TAG, "   2. ¿APP ID en Manifest?")
-                Log.e(TAG, "   3. ¿Cuenta AdMob activa?")
-                container.visibility = View.GONE
-            }
-
-            AdRequest.ERROR_CODE_APP_ID_MISSING -> {
-                Log.e(TAG, "❌ APP ID FALTANTE en AndroidManifest.xml")
-                container.visibility = View.GONE
+            1 -> { // Invalid Request
+                Log.e(TAG, "❌ Solicitud inválida - Verificar configuración")
+                // Dejar oculto permanentemente
             }
 
             else -> {
-                Log.w(TAG, "⚠️ Error genérico - Reintentando en 30s")
+                Log.w(TAG, "⚠️ Error desconocido (${error.code}) - Reintento en 30s")
                 loadingJobs[containerId] = scope.launch {
                     delay(30000)
                     if (!activity.isFinishing && !activity.isDestroyed) {
@@ -299,7 +229,7 @@ object BannerHelper {
 
         val adWidth = (adWidthPixels / density).toInt()
 
-        Log.d(TAG, "📏 Tamaño de banner calculado:")
+        Log.d(TAG, "📏 Tamaño calculado:")
         Log.d(TAG, "   Screen: ${outMetrics.widthPixels}px")
         Log.d(TAG, "   Container: ${container.width}px")
         Log.d(TAG, "   Density: $density")
@@ -320,19 +250,17 @@ object BannerHelper {
             }
             else -> {
                 Log.w(TAG, "⚠️ Container ID desconocido: ${container.id}")
-                Log.w(TAG, "   Usando bannerBottom() por defecto")
                 AdIds.bannerBottom()
             }
         }
-        Log.d(TAG, "📌 Ad Unit ID seleccionado: $adId")
+        Log.d(TAG, "📌 Ad Unit ID: $adId")
         return adId
     }
 
     fun pause(parent: ViewGroup) {
         try {
-            val count = loadedBanners.size
             loadedBanners.values.forEach { it.pause() }
-            Log.d(TAG, "⏸️ $count banners pausados")
+            Log.d(TAG, "⏸️ ${loadedBanners.size} banners pausados")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error pausando: ${e.message}")
         }
@@ -340,9 +268,8 @@ object BannerHelper {
 
     fun resume(parent: ViewGroup) {
         try {
-            val count = loadedBanners.size
             loadedBanners.values.forEach { it.resume() }
-            Log.d(TAG, "▶️ $count banners resumidos")
+            Log.d(TAG, "▶️ ${loadedBanners.size} banners resumidos")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error resumiendo: ${e.message}")
         }
@@ -351,20 +278,11 @@ object BannerHelper {
     fun destroy(parent: ViewGroup) {
         try {
             Log.d(TAG, "🗑️ Destruyendo BannerHelper...")
-
             loadingJobs.values.forEach { it?.cancel() }
             loadingJobs.clear()
-
-            loadedBanners.values.forEach {
-                try {
-                    it.destroy()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error destruyendo banner: ${e.message}")
-                }
-            }
+            loadedBanners.values.forEach { it.destroy() }
             loadedBanners.clear()
             failedContainers.clear()
-
             Log.d(TAG, "✅ BannerHelper destruido")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error destruyendo: ${e.message}")
@@ -374,29 +292,8 @@ object BannerHelper {
     fun forceRefresh(activity: Activity, container: ViewGroup) {
         val containerId = System.identityHashCode(container)
         Log.d(TAG, "🔄 Forzando recarga - Container: $containerId")
-
         failedContainers.removeAll { it == containerId }
         loadedBanners.remove(containerId)?.destroy()
-
         attachAdaptiveBanner(activity, container)
-    }
-
-    fun getDebugInfo(): String {
-        return """
-            ═══════════════════════════════════════
-            BannerHelper Debug Info
-            ═══════════════════════════════════════
-            Banners cargados: ${loadedBanners.size}
-            Jobs activos: ${loadingJobs.size}
-            Contenedores fallidos: ${failedContainers.size}
-            
-            Banners activos:
-            ${loadedBanners.entries.joinToString("\n") {
-            "  • ID ${it.key}: ${it.value.adUnitId}"
-        }}
-            
-            Fallos: ${failedContainers.joinToString(", ")}
-            ═══════════════════════════════════════
-        """.trimIndent()
     }
 }
