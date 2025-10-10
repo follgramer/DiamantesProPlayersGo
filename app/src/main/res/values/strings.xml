@@ -4,14 +4,11 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <!-- NECESARIO: usado por el AndroidManifest -->
     <string name="admob_app_id">ca-app-pub-2024712392092488~7992650364</string>
 
-    <!-- AÑADIDO: Strings para activity_main.xml -->
     <string name="privacy_policy">Políticas de Privacidad</string>
     <string name="terms_conditions">Términos y Condiciones</string>
 
-    <!-- Strings para BanActivity -->
     <string name="default_ban_reason">Violación de las normas de la comunidad</string>
     <string name="temporary_ban_title">Advertencia Temporal</string>
     <string name="temporary_ban_subtitle">Tu cuenta está temporalmente suspendida</string>
@@ -362,7 +359,7 @@
         <b>10.2 Arbitraje y Mediación:</b><br>
         • Disputas que no puedan resolverse amistosamente serán sometidas a mediación.<br>
         • Si la mediación falla, las disputas serán resueltas mediante arbitraje vinculante.<br>
-        • El arbitraje se realizará según reglas de la institución arbitral local aplicable.<br><br>
+        • El arbitraje se realizará segundo reglas de la institución arbitral local aplicable.<br><br>
 
         <b>10.3 Ley Aplicable:</b><br>
         • Estos términos se rigen por las leyes del país donde está establecida la empresa.<br>
@@ -383,7 +380,7 @@
 
         <b>11.3 Efectos de la Terminación:</b><br>
         • Pérdida inmediata de acceso a la aplicación y servicios.<br>
-        • Eliminación de datos según nuestra Política de Privacidad.<br>
+        • Eliminación de datos segundo nuestra Política de Privacidad.<br>
         • Supervivencia de términos que por naturaleza deben continuar (indemnización, limitaciones de responsabilidad).<br><br>
 
         <b>12. DESCARGO DE RESPONSABILIDAD Y AFILIACIÓN CON GARENA</b><br><br>
@@ -447,4 +444,16 @@
         <b>Al usar Diamantes pro players Go, usted confirma que ha leído, entendido y acepta estar legalmente vinculado por estos Términos y Condiciones.</b>
         ]]>
     </string>
+
+    <string name="sorteo_title">SORTEO SEMANAL</string>
+    <string name="ends_in">Ends in:</string>
+    <string name="premio_semana">Premios de esta semana</string>
+    <string name="primer_lugar">1º LUGAR</string>
+    <string name="segundo_lugar">2º LUGAR</string>
+    <string name="tercer_lugar">3º LUGAR</string>
+    <string name="badge_activo">ACTIVO</string>
+    <string name="sorteo_en_curso">Sorteo en curso</string>
+    <string name="default_countdown">5d 20h 20m</string>
+
+    <string name="facebook_app_id">4267800920118134</string>
 </resources>

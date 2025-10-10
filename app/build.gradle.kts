@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.follgramer.diamantesproplayersgo"
-    compileSdk = 34
+    compileSdk = 35
 
     signingConfigs {
         create("release") {
@@ -34,7 +34,7 @@ android {
     defaultConfig {
         applicationId = "com.follgramer.diamantesproplayersgo"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -52,7 +52,6 @@ android {
         debug {
             isMinifyEnabled = false
             buildConfigField("boolean", "USE_TEST_ADS", "true")
-            // ID DE PRUEBA DE GOOGLE PARA ANDROID
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
         release {
@@ -64,19 +63,18 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("boolean", "USE_TEST_ADS", "false")
-            // TU ID REAL DE PRODUCCIÓN - PROBLEMA: ESTE ID ESTÁ MAL
             manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~2085625019"
         }
     }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 
     buildFeatures {
@@ -102,55 +100,61 @@ android {
 }
 
 dependencies {
-    // Google Ads - ACTUALIZADA
+    // ========== Google Ads y Mediación ==========
+    // ✅ AdMob más reciente - Mediación manejada por AdMob Console
     implementation("com.google.android.gms:play-services-ads:24.5.0")
     implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
     implementation("com.google.android.ump:user-messaging-platform:3.1.0")
 
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
+    // ✅ Facebook Audience Network SDK (requerido para mediación server-side)
+    // NO incluir adaptador - AdMob Console maneja la mediación vía servidor
+    implementation("com.facebook.android:audience-network-sdk:6.17.0")
+    implementation("androidx.annotation:annotation:1.9.1")
+
+    // ========== Firebase ==========
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-config-ktx")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
 
-    // AndroidX Core
+    // ========== AndroidX Core ==========
     implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.activity:activity-ktx:1.9.2")
-    implementation("androidx.fragment:fragment-ktx:1.8.3")
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.webkit:webkit:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.0")
+    implementation("androidx.webkit:webkit:1.12.1")
 
-    // Security
+    // ========== Security ==========
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Material Dialogs
+    // ========== Material Dialogs ==========
     implementation("com.afollestad.material-dialogs:core:3.3.0")
     implementation("com.afollestad.material-dialogs:input:3.3.0")
 
-    // Utilidades
+    // ========== Utilidades ==========
     implementation("me.leolin:ShortcutBadger:1.1.22@aar")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
     implementation("androidx.multidex:multidex:2.0.1")
 
-    // Lifecycle
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    // ========== Lifecycle ==========
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
 
-    // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    // ========== WorkManager ==========
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
 
-    // Core Library Desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    // ========== Core Library Desugaring ==========
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
-    // Testing
+    // ========== Testing ==========
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

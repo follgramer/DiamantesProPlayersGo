@@ -21,7 +21,7 @@ class LeaderboardAdapter(
     companion object {
         private const val TYPE_PLAYER = 0
         private const val TYPE_AD = 1
-        private const val AD_INTERVAL = 3
+        private const val AD_INTERVAL = 5 // ✅ Anuncio cada 5 items
         private const val TAG = "LeaderboardAdapter"
     }
 
@@ -80,57 +80,81 @@ class LeaderboardAdapter(
 
         fun bind(item: LeaderboardItem, rank: Int, currentPlayerId: String?) {
             rankText.text = "#$rank"
-            playerIdText.text = item.playerName
+            playerIdText.text = item.getMaskedPlayerId()
             passesText.text = item.passes.toString()
             ticketsText.text = item.tickets.toString()
 
+            // Highlight del jugador actual
             if (item.playerId == currentPlayerId) {
-                itemView.setBackgroundResource(R.drawable.bg_modal_rounded)
+                itemView.setBackgroundResource(R.drawable.bg_highlighted_player)
             } else {
-                itemView.background = null
+                itemView.setBackgroundResource(R.drawable.background_container)
             }
         }
     }
 
     inner class AdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val container: ViewGroup = itemView.findViewById(R.id.leaderboard_native_ad_container)
+        // ✅ Obtener el NativeAdView directamente desde itemView
+        private val nativeAdView: NativeAdView? = itemView.findViewById(R.id.leaderboard_native_ad_view)
 
         fun bind(position: Int) {
             val holderId = System.identityHashCode(this)
 
             try {
+                // ✅ Verificar que el NativeAdView existe
+                if (nativeAdView == null) {
+                    Log.e(TAG, "❌ NativeAdView no encontrado en el layout inflado")
+                    itemView.visibility = View.GONE
+                    itemView.layoutParams = itemView.layoutParams.apply {
+                        height = 0
+                    }
+                    return
+                }
+
+                if (activity.isFinishing || activity.isDestroyed) {
+                    Log.w(TAG, "⚠️ Activity está finalizando, no se puede cargar anuncio")
+                    itemView.visibility = View.GONE
+                    itemView.layoutParams = itemView.layoutParams.apply {
+                        height = 0
+                    }
+                    return
+                }
+
+                // ✅ Obtener el container padre (FrameLayout)
+                val container = nativeAdView.parent as? ViewGroup
+                if (container == null) {
+                    Log.e(TAG, "❌ Container no encontrado")
+                    itemView.visibility = View.GONE
+                    itemView.layoutParams = itemView.layoutParams.apply {
+                        height = 0
+                    }
+                    return
+                }
+
+                // Configurar visibilidad y altura
                 container.visibility = View.VISIBLE
                 container.layoutParams = container.layoutParams.apply {
                     height = ViewGroup.LayoutParams.WRAP_CONTENT
                 }
 
-                if (activity.isFinishing || activity.isDestroyed) {
-                    Log.w(TAG, "Activity está finalizando, no se puede cargar anuncio")
-                    container.visibility = View.GONE
-                    return
-                }
-
-                // Buscar el NativeAdView dentro del container
-                val nativeAdView = container.findViewById<NativeAdView>(R.id.leaderboard_native_ad_view)
-                if (nativeAdView != null) {
-                    container.post {
-                        NativeAdHelper.loadNativeAd(activity, container, nativeAdView, holderId)
-                        Log.d(TAG, "Cargando anuncio nativo en posición $position (holder $holderId)")
-                    }
-                } else {
-                    Log.e(TAG, "NativeAdView no encontrado en el layout")
-                    container.visibility = View.GONE
+                // ✅ Cargar el anuncio nativo
+                container.post {
+                    NativeAdHelper.loadNativeAd(activity, container, nativeAdView, holderId)
+                    Log.d(TAG, "✅ Cargando anuncio nativo en posición $position (holder $holderId)")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading native ad: ${e.message}", e)
-                container.visibility = View.GONE
-                container.layoutParams.height = 0
+                Log.e(TAG, "❌ Error loading native ad: ${e.message}", e)
+                itemView.visibility = View.GONE
+                itemView.layoutParams = itemView.layoutParams.apply {
+                    height = 0
+                }
             }
         }
 
         fun destroy() {
             val holderId = System.identityHashCode(this)
             NativeAdHelper.destroyNativeAd(holderId)
+            Log.d(TAG, "🗑️ Anuncio nativo destruido para holder $holderId")
         }
     }
 

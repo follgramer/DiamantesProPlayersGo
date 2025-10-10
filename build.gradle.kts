@@ -5,7 +5,6 @@ plugins {
     id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
-// Tarea para limpiar
 tasks.register("clean", Delete::class) {
     delete(layout.buildDirectory)
     doLast {

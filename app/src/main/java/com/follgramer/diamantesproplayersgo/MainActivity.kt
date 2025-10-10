@@ -54,6 +54,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
+import com.follgramer.diamantesproplayersgo.ads.AdFallbackStrategy
 import com.follgramer.diamantesproplayersgo.ads.AdManager
 import com.follgramer.diamantesproplayersgo.ads.AdsInit
 import com.follgramer.diamantesproplayersgo.ads.BannerHelper
@@ -1097,28 +1098,8 @@ class MainActivity : AppCompatActivity() {
             weeklyPrizeListener?.let { listener ->
                 weeklyPrizeRef?.removeEventListener(listener)
             }
-            val ref = database.child("appConfig").child("weeklyPrize").child("text")
-            val listener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val prize = snapshot.getValue(String::class.java)?.trim().orEmpty()
-                    runOnUiThread {
-                        if (prize.isNotEmpty()) {
-                            binding.sectionHome.tvWeeklyPrize.text = getString(R.string.weekly_prize_template, prize)
-                        } else {
-                            binding.sectionHome.tvWeeklyPrize.text = "Prize: 1,000 Diamonds ✨"
-                        }
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    runOnUiThread {
-                        binding.sectionHome.tvWeeklyPrize.text = "Prize: 1,000 Diamonds ✨"
-                    }
-                }
-            }
-            ref.addValueEventListener(listener)
-            weeklyPrizeRef = ref
-            weeklyPrizeListener = listener // Assign the listener to the variable
+            // YA NO ACTUALIZAMOS tvWeeklyPrize dinámicamente
+            // El texto estático "Premios de esta semana" está en el XML
         } catch (e: Exception) {
             Log.e("WEEKLY_PRIZE", "Error: ${e.message}")
         }
@@ -1167,21 +1148,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun showNormalState() {
         binding.sectionHome.apply {
-            // Hide all states
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-
-            // Show normal state
             normalStateContainer.visibility = View.VISIBLE
-            sorteoStatusBadge.visibility = View.GONE
-
-            // Reset texts
-            countdownLabel.text = "Ends in:"
-            countdownLabel.setTextColor(Color.parseColor("#8B949E"))
+            sorteoStatusBadge.apply {
+                text = "ACTIVO"
+                setTextColor(Color.WHITE)
+                setBackgroundResource(R.drawable.background_badge_active_pulse)
+                // ✅ ANIMACIÓN SUAVE DE APARECER/DESAPARECER (COMO LIVE)
+                val fadeAnimation = android.view.animation.AlphaAnimation(1.0f, 0.3f).apply {
+                    duration = 1000
+                    repeatMode = android.view.animation.Animation.REVERSE
+                    repeatCount = android.view.animation.Animation.INFINITE
+                }
+                startAnimation(fadeAnimation)
+            }
         }
-
-        // Restart countdown if not running
         if (countdownTimer == null) {
             startWeeklyCountdown()
         }
@@ -1189,134 +1172,86 @@ class MainActivity : AppCompatActivity() {
 
     private fun showProcessingState() {
         binding.sectionHome.apply {
-            // Hide other states
+            // Ocultar contenedores viejos
             normalStateContainer.visibility = View.GONE
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-
-            // Show processing state
-            processingStateContainer.visibility = View.VISIBLE
-
-            // Update badge
-            sorteoStatusBadge.visibility = View.VISIBLE
-            sorteoStatusBadge.text = "IN PROCESS"
-            sorteoStatusBadge.setTextColor(Color.parseColor("#f59e0b"))
-
-            // Update message
-            processingMessage.text = "Processing draw..." // You can add more detailed messages here if needed
-
-            // Update title based on message
-            processingTitle.text = "Processing Draw"
+            // ✅ Solo actualizar el badge visible
+            sorteoStatusBadge.apply {
+                visibility = View.VISIBLE
+                text = "PROCESANDO"
+                setTextColor(Color.parseColor("#f59e0b"))
+                setBackgroundColor(Color.parseColor("#1A2A35"))
+            }
         }
     }
 
     private fun showPausedState(message: String) {
         currentSorteoState = "paused"
         binding.sectionHome.apply {
-            // Show normal state but with modifications
             normalStateContainer.visibility = View.VISIBLE
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-
-            // Update badge
             sorteoStatusBadge.visibility = View.VISIBLE
-            sorteoStatusBadge.text = "PAUSED"
+            sorteoStatusBadge.text = "PAUSADO"
             sorteoStatusBadge.setTextColor(Color.parseColor("#f59e0b"))
-
-            // Change countdown
-            countdown.text = "PAUSED"
+            countdown.text = "PAUSADO"
             countdown.setTextColor(Color.parseColor("#f59e0b"))
-            countdownLabel.text = message.ifEmpty { "Draw temporarily paused" }
+            countdownLabel.text = message.ifEmpty { "Sorteo temporalmente pausado" }
         }
     }
 
     private fun showRevealState(remaining: Long, winnerId: String, prize: String) {
         binding.sectionHome.apply {
-            // Hide other states
+            // Ocultar contenedores viejos
             normalStateContainer.visibility = View.GONE
             processingStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-
-            // Show reveal state
-            revealStateContainer.visibility = View.VISIBLE
-
-            // Update badge
-            sorteoStatusBadge.visibility = View.VISIBLE
-            sorteoStatusBadge.text = "LIVE!"
-            sorteoStatusBadge.setTextColor(Color.parseColor("#e74c3c"))
-
-            // Update countdown
+            // ✅ Solo actualizar el badge y countdown visible
+            sorteoStatusBadge.apply {
+                visibility = View.VISIBLE
+                text = "LIVE!"
+                setTextColor(Color.parseColor("#e74c3c"))
+                setBackgroundColor(Color.parseColor("#1A2A35"))
+            }
+            // Actualizar el countdown que SÍ está visible en el nuevo diseño
             val seconds = (remaining / 1000).toInt()
-            revealCountdown.text = String.format("%02d:%02d", seconds / 60, seconds % 60)
-            revealCountdown.textSize = 28f
-
-            // Change color based on remaining time
+            countdown.text = String.format("%02d:%02d", seconds / 60, seconds % 60)
             val countdownColor = when {
                 seconds > 60 -> Color.parseColor("#f59e0b")
                 seconds > 30 -> Color.parseColor("#FFD700")
                 seconds > 10 -> Color.parseColor("#ff9800")
                 else -> Color.parseColor("#e74c3c")
             }
-            revealCountdown.setTextColor(countdownColor)
-
-            // Pulsing animation in the last 10 seconds
-            if (seconds <= 10 && seconds > 0) {
-                revealCountdown.animate()
-                    .scaleX(1.1f).scaleY(1.1f)
-                    .setDuration(300)
-                    .withEndAction {
-                        revealCountdown.animate()
-                            .scaleX(1f).scaleY(1f)
-                            .setDuration(300)
-                    }
-            }
-            if (remaining <= 3000) {
-                // Show "WINNER CHOSEN" animation at the end
-                revealCountdown.text = "WINNER CHOSEN!"
-                revealCountdown.textSize = 20f
-                revealCountdown.setTextColor(Color.parseColor("#FFD700"))
-                vibratePattern(longArrayOf(0, 200, 100, 200, 100, 200))
-            }
+            countdown.setTextColor(countdownColor)
         }
     }
 
     private fun showWinnerRevealedState(winnerId: String, prize: String) {
         binding.sectionHome.apply {
-            // Hide other states
             normalStateContainer.visibility = View.GONE
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
-
-            // Show winner revealed state
-            winnerRevealedContainer.visibility = View.VISIBLE
-
-            // Update badge
-            sorteoStatusBadge.visibility = View.VISIBLE
-            sorteoStatusBadge.text = "COMPLETED"
-            sorteoStatusBadge.setTextColor(Color.parseColor("#2ecc71"))
-
-            // Update texts
-            winnerIdText.text = "Winner: $winnerId"
-            prizeWonText.text = "Prize: $prize"
-
-            // If we are the winner
+            sorteoStatusBadge.apply {
+                visibility = View.VISIBLE
+                text = "COMPLETADO"
+                setTextColor(Color.parseColor("#2ecc71"))
+                setBackgroundColor(Color.parseColor("#1A2A35"))
+            }
+            countdown.text = "Ganador: $winnerId"
+            countdown.setTextColor(Color.parseColor("#FFD700"))
             if (currentPlayerId == winnerId) {
                 vibratePattern(longArrayOf(0, 500, 100, 500, 100, 1000))
-                // Change spin button color
                 spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFD700"))
-                spinButton.text = "🏆 YOU ARE THE WINNER! 🏆"
-
-                // Restore button after 30 seconds
+                spinButton.text = "🏆 ¡ERES EL GANADOR! 🏆"
                 Handler(Looper.getMainLooper()).postDelayed({
                     spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
-                    spinButton.text = "SPIN THE WHEEL!"
+                    spinButton.text = "GIRAR RULETA"
                 }, 30000)
             }
         }
-
-        // Return to normal state after 2 minutes
         Handler(Looper.getMainLooper()).postDelayed({
             showNormalState()
         }, 120000)
@@ -1382,57 +1317,41 @@ class MainActivity : AppCompatActivity() {
 
     private fun startWeeklyCountdown() {
         countdownTimer?.cancel()
-
-        // Get draw configuration from Firebase
         database.child("appConfig").child("weeklyPrize").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val drawDay = snapshot.child("day").getValue(Int::class.java) ?: 0 // Sunday by default (0)
+                val drawDay = snapshot.child("day").getValue(Int::class.java) ?: 0
                 val drawTime = snapshot.child("time").getValue(String::class.java) ?: "18:00"
                 val timeParts = drawTime.split(":")
                 val hour = timeParts.getOrNull(0)?.toIntOrNull() ?: 18
                 val minute = timeParts.getOrNull(1)?.toIntOrNull() ?: 0
-
                 val calendar = Calendar.getInstance()
                 val now = calendar.timeInMillis
-
-                // Configure next draw
-                calendar.set(Calendar.DAY_OF_WEEK, drawDay + 1) // Calendar uses 1=Sunday, our panel 0=Sunday
+                calendar.set(Calendar.DAY_OF_WEEK, drawDay + 1)
                 calendar.set(Calendar.HOUR_OF_DAY, hour)
                 calendar.set(Calendar.MINUTE, minute)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
-
-
-                // If it has already passed, schedule for next week
                 if (calendar.timeInMillis < now) {
                     calendar.add(Calendar.WEEK_OF_YEAR, 1)
                 }
-
                 val diff = calendar.timeInMillis - now
-
-                countdownTimer = object : CountDownTimer(diff, 60000) {
+                countdownTimer = object : CountDownTimer(diff, 1000) { // ✅ CAMBIADO A 1000ms
                     override fun onTick(millisUntilFinished: Long) {
                         val days = TimeUnit.MILLISECONDS.toDays(millisUntilFinished)
                         val hours = TimeUnit.MILLISECONDS.toHours(millisUntilFinished) % 24
                         val minutes = TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished) % 60
-
                         binding.sectionHome.countdown.text = String.format("%dd %dh %dm", days, hours, minutes)
                     }
-
                     override fun onFinish() {
-                        binding.sectionHome.countdown.text = "Draw in Progress!"
+                        binding.sectionHome.countdown.text = "¡En curso!"
                         binding.sectionHome.countdown.setTextColor(Color.parseColor("#FFD700"))
-
-                        // Restart for next week
                         Handler(Looper.getMainLooper()).postDelayed({
                             startWeeklyCountdown()
-                        }, 60000) // Wait 1 minute before restarting
+                        }, 60000)
                     }
                 }.start()
             }
-
             override fun onCancelled(error: DatabaseError) {
-                // Use default configuration if it fails
                 startDefaultWeeklyCountdown()
             }
         })
@@ -1952,36 +1871,43 @@ class MainActivity : AppCompatActivity() {
             promptForPlayerId()
             return
         }
-
         if (!isNetworkAvailable()) {
-            MaterialDialog(this).show {
-                title(text = "No connection")
-                message(text = "Connect to the internet to continue.")
-                positiveButton(text = "Understood")
-            }
+            AdFallbackStrategy.showNoInternetModal(this)
             return
         }
-
         val audioFocusGranted = requestAudioFocus()
         if (!audioFocusGranted) {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
-
-        AdManager.showRewarded(this,
-            onReward = { rewardItem ->
-                releaseAudioFocus()
-
-                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
-                // En tu lógica actual, el rewarded solo da 10 spins, sin importar el item
-                val spinsToAdd = 10
-                SessionManager.addSpins(this, spinsToAdd)
-                currentSpins = SessionManager.getCurrentSpins(this)
-                updateSpinCountUI()
-            },
-            onDismiss = {
-                releaseAudioFocus()
-            }
-        )
+        // ✅ Intentar mostrar rewarded con fallback
+        if (AdManager.isRewardedReady()) {
+            AdManager.showRewarded(this,
+                onReward = { rewardItem ->
+                    releaseAudioFocus()
+                    Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                    val spinsToAdd = 10
+                    SessionManager.addSpins(this, spinsToAdd)
+                    currentSpins = SessionManager.getCurrentSpins(this)
+                    updateSpinCountUI()
+                },
+                onDismiss = {
+                    releaseAudioFocus()
+                }
+            )
+        } else {
+            // ✅ No hay rewarded disponible, activar fallback
+            releaseAudioFocus()
+            AdFallbackStrategy.handleRewardedAdUnavailable(
+                activity = this,
+                rewardType = "spins",
+                rewardAmount = 10,
+                onSuccess = {
+                    // ✅ Dar solo 3 giros (recompensa reducida)
+                    SessionManager.addSpins(this, 3)
+                    currentSpins = SessionManager.getCurrentSpins(this)
+                    updateSpinCountUI()
+                })
+        }
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -2001,24 +1927,39 @@ class MainActivity : AppCompatActivity() {
             promptForPlayerId()
             return
         }
-
+        if (!isNetworkAvailable()) {
+            AdFallbackStrategy.showNoInternetModal(this)
+            return
+        }
         val audioFocusGranted = requestAudioFocus()
         if (!audioFocusGranted) {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
-
-        AdManager.showRewarded(this,
-            onReward = { rewardItem ->
-                releaseAudioFocus()
-
-                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
-                val ticketsToAdd = if (rewardItem.amount > 0) rewardItem.amount else 20
-                addTicketsToPlayer(ticketsToAdd)
-            },
-            onDismiss = {
-                releaseAudioFocus()
-            }
-        )
+        // ✅ Intentar mostrar rewarded con fallback
+        if (AdManager.isRewardedReady()) {
+            AdManager.showRewarded(this,
+                onReward = { rewardItem ->
+                    releaseAudioFocus()
+                    Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                    val ticketsToAdd = if (rewardItem.amount > 0) rewardItem.amount else 20
+                    addTicketsToPlayer(ticketsToAdd)
+                },
+                onDismiss = {
+                    releaseAudioFocus()
+                }
+            )
+        } else {
+            // ✅ No hay rewarded disponible, activar fallback
+            releaseAudioFocus()
+            AdFallbackStrategy.handleRewardedAdUnavailable(
+                activity = this,
+                rewardType = "tickets",
+                rewardAmount = 20,
+                onSuccess = {
+                    // ✅ Dar solo 10 tickets (recompensa reducida)
+                    addTicketsToPlayer(10)
+                })
+        }
     }
 
     private fun initializeGrid() {
@@ -2045,10 +1986,10 @@ class MainActivity : AppCompatActivity() {
         }
         if (currentSpins <= 0) {
             MaterialDialog(this).show {
-                title(text = "No Spins!")
-                message(text = "You need more spins to play. Do you want to watch a video to get more spins?")
-                positiveButton(text = "Watch Video") { requestSpinsByWatchingAd() }
-                negativeButton(text = "Not now")
+                title(text = "¡Sin Giros!")
+                message(text = "Necesitas más giros para jugar. ¿Quieres ver un video para obtener más giros?")
+                positiveButton(text = "Ver Video") { requestSpinsByWatchingAd() }
+                negativeButton(text = "Ahora no")
             }
             return
         }
@@ -2065,7 +2006,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.sectionHome.spinButton.isEnabled = false
-        binding.sectionHome.spinButton.text = "SPINNING..."
+        binding.sectionHome.spinButton.text = "GIRANDO..."
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#424242"))
 
         object : CountDownTimer(3000, 80) {
@@ -2114,7 +2055,7 @@ class MainActivity : AppCompatActivity() {
     private fun resetSpinButton() {
         isSpinning = false
         binding.sectionHome.spinButton.isEnabled = true
-        binding.sectionHome.spinButton.text = "GIRAR RULETA" // No special characters
+        binding.sectionHome.spinButton.text = "GIRAR RULETA"
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
     }
 
@@ -2172,9 +2113,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun promptForPlayerId() {
         MaterialDialog(this).show {
-            title(text = if (currentPlayerId != null) "Edit Player ID" else "Configure your ID")
+            title(text = if (currentPlayerId != null) "Editar ID de Jugador" else "Configura tu ID")
             input(
-                hint = "Enter your numeric ID",
+                hint = "Ingresa tu ID numérico",
                 prefill = currentPlayerId ?: "",
                 inputType = InputType.TYPE_CLASS_NUMBER
             ) { _, text ->
@@ -2182,16 +2123,16 @@ class MainActivity : AppCompatActivity() {
                 if (newPlayerId.length >= 5 && newPlayerId.matches(Regex("\\d+"))) {
                     if (currentPlayerId != null && currentPlayerId!!.isNotEmpty()) {
                         AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Confirm ID change")
-                            .setMessage("Are you sure you want to change the player ID from $currentPlayerId to $newPlayerId?")
-                            .setPositiveButton("Yes") { _, _ ->
+                            .setTitle("Confirmar cambio de ID")
+                            .setMessage("¿Estás seguro de cambiar el ID de jugador de $currentPlayerId a $newPlayerId?")
+                            .setPositiveButton("Sí") { _, _ ->
                                 SessionManager.clearAllData(this@MainActivity)
                                 SessionManager.setPlayerId(this@MainActivity, newPlayerId)
                                 currentPlayerId = newPlayerId
                                 updatePlayerIdUI(newPlayerId)
                                 loadUserData(newPlayerId)
                             }
-                            .setNegativeButton("Cancel", null)
+                            .setNegativeButton("Cancelar", null)
                             .show()
                     } else {
                         SessionManager.setPlayerId(this@MainActivity, newPlayerId)
@@ -2201,8 +2142,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            positiveButton(text = "Save")
-            negativeButton(text = "Cancel")
+            positiveButton(text = "Guardar")
+            negativeButton(text = "Cancelar")
         }
     }
 
@@ -2440,7 +2381,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showCelebrationEffects() {
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFD700"))
-        binding.sectionHome.spinButton.text = "YOU ARE THE WINNER!"
+        binding.sectionHome.spinButton.text = "¡ERES EL GANADOR!"
         binding.sectionHome.spinButton.postDelayed({
             binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
             binding.sectionHome.spinButton.text = "GIRAR RULETA"
