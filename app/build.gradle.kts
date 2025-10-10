@@ -101,13 +101,11 @@ android {
 
 dependencies {
     // ========== Google Ads y Mediación ==========
-    // ✅ AdMob más reciente - Mediación manejada por AdMob Console
     implementation("com.google.android.gms:play-services-ads:24.5.0")
     implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
     implementation("com.google.android.ump:user-messaging-platform:3.1.0")
 
-    // ✅ Facebook Audience Network SDK (requerido para mediación server-side)
-    // NO incluir adaptador - AdMob Console maneja la mediación vía servidor
+    // ========== Facebook Audience Network SDK ==========
     implementation("com.facebook.android:audience-network-sdk:6.17.0")
     implementation("androidx.annotation:annotation:1.9.1")
 

@@ -2,6 +2,7 @@ package com.follgramer.diamantesproplayersgo
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -32,6 +33,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -39,7 +41,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -65,25 +66,20 @@ import com.follgramer.diamantesproplayersgo.ui.Onboarding
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
+import com.google.android.gms.ads.rewarded.RewardItem
+import com.google.android.gms.ads.nativead.NativeAdView
 import com.google.android.ump.UserMessagingPlatform
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
-import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import me.leolin.shortcutbadger.ShortcutBadger
 import java.io.IOException
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.TimeUnit
-import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
-import com.google.android.gms.ads.nativead.NativeAdView
 
 // Agregar esta extensión después de los imports
 private fun Activity.ensureSystemBarsVisible() {
@@ -131,6 +127,9 @@ class MainActivity : AppCompatActivity() {
     private var leaderboardAdapter: LeaderboardAdapter? = null
     private var winnersAdapter: WinnersAdapter? = null
 
+    // Agregar estas propiedades al inicio de tu MainActivity
+    private var onlineStatusJob: Job? = null
+
     // CONSTANTS
     private companion object {
         private const val TAG_MAIN = "MainActivity"
@@ -141,50 +140,59 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try {
-            // Verificar estado del consentimiento
-            val consentCompleted = intent.getBooleanExtra("consent_completed", false)
-            val adMobInitialized = intent.getBooleanExtra("admob_initialized", false)
-
-            Log.d(TAG_MAIN, "=== INICIANDO MAINACTIVITY ===")
-            Log.d(TAG_MAIN, "Build Type: ${if (BuildConfig.DEBUG) "DEBUG" else "RELEASE"}")
-            Log.d(TAG_MAIN, "Consent Completed: $consentCompleted")
-            Log.d(TAG_MAIN, "AdMob Initialized: $adMobInitialized")
-
-            if (isFinishing || isDestroyed) {
-                Log.w(TAG_MAIN, "Activity en estado inválido, abortando onCreate")
-                return
-            }
-
+            // ... initial setup and logging ...
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
-
-            window.apply {
-                statusBarColor = Color.parseColor("#0A0F14")
-            }
+            window.apply { statusBarColor = Color.parseColor("#0A0F14") }
 
             setupWindowInsets()
-            initializeCriticalSystems()
+            initializeCriticalSystems() // Initializes Firebase auth and database
 
-            binding.root.post {
-                try {
-                    setupBasicUI()
-                    scheduleBackgroundInitialization()
-                    Log.d(TAG_MAIN, "onCreate completado exitosamente")
-                } catch (e: Exception) {
-                    Log.e(TAG_MAIN, "Error en post-onCreate: ${e.message}")
-                    handleCriticalError(e)
+            // VERIFICAR BANEO ANTES DE CONTINUAR
+            checkBanStatus {
+                // Solo continuar si NO está baneado
+                binding.root.post {
+                    try {
+                        setupBasicUI()
+                        scheduleBackgroundInitialization()
+                        Log.d(TAG_MAIN, "onCreate completado exitosamente")
+                    } catch (e: Exception) {
+                        Log.e(TAG_MAIN, "Error en post-onCreate: ${e.message}")
+                        handleCriticalError(e)
+                    }
                 }
+
+                startBadgeUpdater()
+
+                startOnlineStatusUpdates()
+                setupNotificationListener()
+                showLastNotificationOnOpen()
+                loadWeeklyPrizes()
+                loadSorteoButtonConfig()
             }
 
-            startBadgeUpdater()
-
             if (BuildConfig.DEBUG) {
-                // IDs de AdMob no necesitan ser consultados desde AdIds.kt en Main, solo la lógica.
+                // ... debug stuff ...
             }
 
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error crítico en onCreate: ${e.message}")
             handleCriticalError(e)
+        }
+    }
+
+    private fun startOnlineStatusUpdates() {
+        val userId = auth.currentUser?.uid ?: return
+        onlineStatusJob = lifecycleScope.launch {
+            while (isActive) {
+                // Actualizar estado online cada 30 segundos
+                database
+                    .child("onlineUsers")
+                    .child(userId)
+                    .child("lastActivity")
+                    .setValue(com.google.firebase.database.ServerValue.TIMESTAMP)
+                delay(30000) // 30 segundos
+            }
         }
     }
 
@@ -492,51 +500,22 @@ class MainActivity : AppCompatActivity() {
     private fun finalizeUIInitialization(playerId: String) {
         try {
             Log.d(TAG_MAIN, "Finalizando inicialización de UI...")
-
             if (!::binding.isInitialized) {
                 Log.e(TAG_MAIN, "Binding no disponible en finalizeUIInitialization")
                 return
             }
-
             arreglarColoresDeTextos()
             initializeGrid()
-
-            // ✅ CÓDIGO AÑADIDO
-            // Cargar anuncio nativo en Tasks
-            binding.sectionTasks.root.post {
-                val tasksAdContainer = binding.sectionTasks.root.findViewById<ViewGroup>(R.id.native_ad_tasks_container)
-                if (tasksAdContainer != null) {
-                    val nativeAdView = layoutInflater.inflate(
-                        R.layout.item_leaderboard_native_ad,
-                        tasksAdContainer,
-                        false
-                    ).findViewById<com.google.android.gms.ads.nativead.NativeAdView>(R.id.leaderboard_native_ad_view)
-                    tasksAdContainer.addView(nativeAdView.parent as View)
-                    NativeAdHelper.loadNativeAd(
-                        this,
-                        tasksAdContainer,
-                        nativeAdView,
-                        System.identityHashCode(tasksAdContainer)
-                    )
-                }
-            }
-
             obtenerTop5Firebase()
             startWeeklyPrizeListener()
-
-            // Asegurar que el listener del sorteo esté activo
             Handler(Looper.getMainLooper()).postDelayed({
                 setupSorteoControlListener()
             }, 2000)
-
             fetchAllData()
             startWeeklyCountdown()
             checkNotificationPermissions()
-
             Onboarding.showIfNeeded(this)
-
             handleNotificationIntent(intent)
-
             if (playerId.isEmpty() && auth.currentUser == null) {
                 // Se autenticará desde setupFirebase si es necesario
             }
@@ -603,6 +582,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        super.onDestroy()
+        onlineStatusJob?.cancel()
         commManager.cleanup()
         try {
             if (::binding.isInitialized) {
@@ -618,7 +599,6 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG_MAIN, "Error en onDestroy: ${e.message}")
         }
         cleanupResources()
-        super.onDestroy()
     }
 
 
@@ -630,7 +610,6 @@ class MainActivity : AppCompatActivity() {
             revealCountdownTimer?.cancel()
             countdownTimer = null
             revealCountdownTimer = null
-            // Corregir esta parte
             weeklyPrizeListener?.let { listener ->
                 weeklyPrizeRef?.removeEventListener(listener)
             }
@@ -651,7 +630,7 @@ class MainActivity : AppCompatActivity() {
             audioFocusRequest = null
             hasAudioFocus = false
             AdManager.cleanup()
-            NativeAdHelper.cleanup()
+            // NativeAdHelper.cleanup() // ❌ COMENTADO
             marcarSesionInactiva()
             Log.d(TAG_MAIN, "Resources cleaned successfully")
         } catch (e: Exception) {
@@ -2542,5 +2521,213 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("GENERAL_MODAL", "Error: ${e.message}")
         }
+    }
+
+    private fun setupNotificationListener() {
+        val userId = auth.currentUser?.uid ?: return
+        database
+            .child("notificationQueue")
+            .child(userId)
+            .addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    handleIncomingNotification(snapshot)
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onChildRemoved(snapshot: DataSnapshot) {}
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
+    private fun handleIncomingNotification(snapshot: DataSnapshot) {
+        val title = snapshot.child("title").getValue(String::class.java) ?: return
+        val message = snapshot.child("message").getValue(String::class.java) ?: ""
+        val type = snapshot.child("type").getValue(String::class.java) ?: "general"
+        val processed = snapshot.child("processed").getValue(Boolean::class.java) ?: false
+        if (processed) return // Ya fue procesada
+        // Marcar como procesada
+        snapshot.ref.child("processed").setValue(true)
+        // Mostrar notificación según el tipo
+        when (type) {
+            "gift" -> {
+                val giftType = snapshot.child("data").child("giftType").getValue(String::class.java)
+                val amount = snapshot.child("data").child("amount").getValue(Int::class.java) ?: 0
+                showGiftNotification(title, message, giftType, amount)
+            }
+            "warning" -> showWarningDialog(title, message)
+            "ban" -> showBanDialog(message)
+            else -> showGeneralNotification(title, message)
+        }
+    }
+
+    private fun showGiftNotification(title: String, message: String, giftType: String?, amount: Int) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("🎁 $title")
+            .setMessage(message)
+            .setPositiveButton("¡Genial!") { dialog, _ ->
+                dialog.dismiss()
+                // Recargar datos del usuario para ver el regalo
+                currentPlayerId?.let { loadUserData(it) }
+            }
+            .show()
+    }
+
+    private fun showWarningDialog(title: String, message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("⚠️ $title")
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Entendido") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showBanDialog(message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("🚫 Cuenta Suspendida")
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Cerrar Sesión") { _, _ ->
+                auth.signOut()
+                finish()
+            }
+            .show()
+    }
+
+    private fun showGeneralNotification(title: String, message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showLastNotificationOnOpen() {
+        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        database
+            .child("appConfig")
+            .child("lastNotification")
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (!snapshot.exists()) return
+                    val title = snapshot.child("title").getValue(String::class.java) ?: return
+                    val message = snapshot.child("message").getValue(String::class.java) ?: ""
+                    val timestamp = snapshot.child("timestamp").getValue(Long::class.java) ?: 0L
+                    // Solo mostrar si es nueva
+                    val lastShown = prefs.getLong("last_notification_shown", 0L)
+                    if (timestamp > lastShown) {
+                        showLastNotificationDialog(title, message)
+                        prefs.edit().putLong("last_notification_shown", timestamp).apply()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
+    }
+
+    private fun showLastNotificationDialog(title: String, message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("📢 $title")
+            .setMessage(message)
+            .setPositiveButton("Entendido") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun loadWeeklyPrizes() {
+        database
+            .child("appConfig")
+            .child("prizes")
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val firstPrize = snapshot.child("first").getValue(String::class.java) ?: "1,000 💎"
+                    val secondPrize = snapshot.child("second").getValue(String::class.java) ?: "500 💎"
+                    val thirdPrize = snapshot.child("third").getValue(String::class.java) ?: "200 💎"
+                    Log.d("WEEKLY_PRIZES", "✅ Prizes loaded from admin: 1st=$firstPrize, 2nd=$secondPrize, 3rd=$thirdPrize")
+                    // Los premios están disponibles en Firebase, tu app puede usarlos cuando sea necesario
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("WEEKLY_PRIZES", "Error loading prizes: ${error.message}")
+                }
+            })
+    }
+    private fun loadSorteoButtonConfig() {
+        database
+            .child("appConfig")
+            .child("button")
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val buttonText = snapshot.child("text").getValue(String::class.java) ?: "SORTEO EN CURSO"
+                    val subtext = snapshot.child("subtext").getValue(String::class.java) ?: "Gira y gana"
+                    val enabled = snapshot.child("enabled").getValue(Boolean::class.java) ?: true
+                    runOnUiThread {
+                        try {
+                            // Solo actualizar si el botón no está en medio de una acción
+                            val currentText = binding.sectionHome.spinButton.text.toString()
+                            if (!currentText.contains("GIRANDO") && !currentText.contains("GANADOR")) {
+                                binding.sectionHome.spinButton.text = buttonText
+                            }
+                            // Habilitar/deshabilitar según configuración del admin Y si tiene giros
+                            binding.sectionHome.spinButton.isEnabled = enabled && currentSpins > 0 && !isSpinning
+                            Log.d("SORTEO_CONFIG", "✅ Button configured: text=$buttonText, enabled=$enabled")
+                        } catch (e: Exception) {
+                            Log.e("SORTEO_CONFIG", "Error updating button: ${e.message}")
+                        }
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("SORTEO_CONFIG", "Error loading config: ${error.message}")
+                }
+            })
+    }
+
+    private fun checkBanStatus(onNotBanned: () -> Unit) {
+        val userId = auth.currentUser?.uid ?: return
+        database
+            .child("bannedUsers")
+            .child(userId)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val type = snapshot.child("type").getValue(String::class.java)
+                        val reason = snapshot.child("reason").getValue(String::class.java) ?: "Violación de términos"
+                        val expiresAt = snapshot.child("expiresAt").getValue(Long::class.java)
+                        // Si es temporal y ya expiró, eliminar el baneo
+                        if (type == "temporary" && expiresAt != null && System.currentTimeMillis() > expiresAt) {
+                            snapshot.ref.removeValue()
+                            onNotBanned()
+                            return
+                        }
+                        // Mostrar diálogo de baneo
+                        val message = if (type == "permanent") {
+                            "Tu cuenta ha sido baneada permanentemente.\n\nRazón: $reason"
+                        } else {
+                            val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                                .format(java.util.Date(expiresAt ?: 0L))
+                            "Tu cuenta está suspendida.\n\nRazón: $reason\n\nExpira: $date"
+                        }
+                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                            .setTitle("🚫 Cuenta Suspendida")
+                            .setMessage(message)
+                            .setCancelable(false)
+                            .setPositiveButton("Cerrar Sesión") { _, _ ->
+                                auth.signOut()
+                                finish()
+                            }
+                            .show()
+                    } else {
+                        onNotBanned()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    onNotBanned()
+                }
+            })
     }
 }
