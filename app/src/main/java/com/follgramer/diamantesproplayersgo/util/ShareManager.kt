@@ -140,4 +140,4 @@ object ShareManager {
         """.trimIndent(),
         val playStoreUrl: String = "https://play.google.com/store/apps/details?id=com.follgramer.diamantesproplayersgo"
     )
-}
+}// Updated: 2025-10-15 14:29:27

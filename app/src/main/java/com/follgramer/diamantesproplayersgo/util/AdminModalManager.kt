@@ -127,4 +127,4 @@ object AdminModalManager {
             Log.e(TAG, "Error reseteando: ${e.message}")
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27

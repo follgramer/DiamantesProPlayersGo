@@ -152,4 +152,4 @@ class MiniLeaderboardAdapter(
             else -> ContextCompat.getColor(context, R.color.rank_other)
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27

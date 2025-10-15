@@ -537,4 +537,4 @@ class AppNotificationManager private constructor(private val context: Context) {
         val vibrate: Boolean = true,
         var isRead: Boolean = false
     )
-}
+}// Updated: 2025-10-15 14:29:27

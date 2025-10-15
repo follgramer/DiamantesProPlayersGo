@@ -327,4 +327,4 @@ object AdManager {
             - Puede mostrar interstitial: ${System.currentTimeMillis() - lastInterstitialTime >= MIN_INTERSTITIAL_INTERVAL}
         """.trimIndent()
     }
-}
+}// Updated: 2025-10-15 14:29:27

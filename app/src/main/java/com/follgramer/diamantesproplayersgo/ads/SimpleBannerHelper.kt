@@ -182,4 +182,4 @@ object SimpleBannerHelper {
             Log.e(TAG, "Error en cleanup: ${e.message}")
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27

@@ -331,4 +331,4 @@ object BannerHelper {
         loadedBanners.remove(containerId)?.destroy()
         attachAdaptiveBanner(activity, container)
     }
-}
+}// Updated: 2025-10-15 14:29:27

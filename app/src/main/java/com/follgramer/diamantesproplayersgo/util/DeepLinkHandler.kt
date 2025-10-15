@@ -69,4 +69,4 @@ object DeepLinkHandler {
             Log.e(TAG, "Error handling referral code: ${e.message}")
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27

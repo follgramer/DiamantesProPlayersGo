@@ -311,4 +311,4 @@ object ReferralManager {
         val timestamp: Long,
         val rewardGranted: Boolean
     )
-}
+}// Updated: 2025-10-15 14:29:27

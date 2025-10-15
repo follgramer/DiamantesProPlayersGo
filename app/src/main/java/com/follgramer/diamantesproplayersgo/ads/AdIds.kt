@@ -109,4 +109,4 @@ object AdIds {
         Log.d(TAG, "Native (Facebook): $id (${if (useTest()) "TEST" else "PROD"})")
         return id
     }
-}
+}// Updated: 2025-10-15 14:29:27

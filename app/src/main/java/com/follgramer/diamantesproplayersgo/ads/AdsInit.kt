@@ -148,4 +148,4 @@ object AdsInit {
      * Verifica si Facebook está listo
      */
     fun isFacebookReady() = isFacebookInitialized
-}
+}// Updated: 2025-10-15 14:29:27

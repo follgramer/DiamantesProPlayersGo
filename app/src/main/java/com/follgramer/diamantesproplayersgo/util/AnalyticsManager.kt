@@ -246,4 +246,4 @@ object AnalyticsManager {
             Log.e(TAG, "❌ Error estableciendo User ID: ${e.message}")
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27
