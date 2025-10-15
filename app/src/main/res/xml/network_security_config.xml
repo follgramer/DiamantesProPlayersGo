@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Configuración principal para todos los dominios -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>
     </base-config>
 
-    <!-- Dominios específicos de Google/AdMob/Firebase -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">doubleclick.net</domain>
         <domain includeSubdomains="true">googleads.g.doubleclick.net</domain>
@@ -22,7 +20,6 @@
         <domain includeSubdomains="true">admob.com</domain>
         <domain includeSubdomains="true">app-measurement.com</domain>
         <domain includeSubdomains="true">firebaseinstallations.googleapis.com</domain>
-
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>

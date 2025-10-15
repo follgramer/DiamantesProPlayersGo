@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.StrictMode
 import android.util.Log
 import androidx.multidex.MultiDexApplication
-import com.follgramer.diamantesproplayersgo.ads.AdsInit
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
@@ -23,6 +22,7 @@ import kotlinx.coroutines.tasks.await
 
 class DiamantesApplication : MultiDexApplication() {
 
+    // Clase para el cache del TOP 5
     data class CachedPlayer(
         val playerId: String,
         val tickets: Long,
@@ -32,13 +32,14 @@ class DiamantesApplication : MultiDexApplication() {
     companion object {
         private const val TAG = "DiamantesApp"
 
+        // Cache del TOP 5
         @Volatile
         var cachedTop5: List<CachedPlayer>? = null
 
         @Volatile
         var top5LastUpdate: Long = 0
 
-        const val CACHE_DURATION = 30000L
+        const val CACHE_DURATION = 30000L // 30 segundos
 
         @JvmStatic
         var isAdMobInitialized = false
@@ -88,11 +89,6 @@ class DiamantesApplication : MultiDexApplication() {
             appContext = this
             applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-            // Inicializar AdMob
-            AdsInit.init(this)
-            markAdMobAsInitialized()
-            Log.d(TAG, "AdMob inicializado desde Application")
-
             if (BuildConfig.DEBUG) {
                 enableStrictMode()
             }
@@ -141,6 +137,7 @@ class DiamantesApplication : MultiDexApplication() {
                 delay(500)
                 initializeAnonymousAuth()
 
+                // Iniciar pre-carga del TOP 5
                 preloadTop5Data()
 
                 Log.d(TAG, "Stack completo de Firebase inicializado correctamente")
@@ -154,7 +151,7 @@ class DiamantesApplication : MultiDexApplication() {
 
     private fun preloadTop5Data() {
         try {
-            Log.d(TAG, "Iniciando pre-carga del TOP 5...")
+            Log.d(TAG, "📊 Iniciando pre-carga del TOP 5...")
 
             val database = FirebaseDatabase.getInstance(
                 "https://diamantes-pro-players-go-f3510-default-rtdb.firebaseio.com/"
@@ -177,6 +174,7 @@ class DiamantesApplication : MultiDexApplication() {
                             }
                         }
 
+                        // Ordenar y tomar TOP 5
                         cachedTop5 = players.sortedWith(
                             compareByDescending<CachedPlayer> { it.passes }
                                 .thenByDescending { it.tickets }
@@ -184,7 +182,7 @@ class DiamantesApplication : MultiDexApplication() {
 
                         top5LastUpdate = System.currentTimeMillis()
 
-                        Log.d(TAG, "TOP 5 pre-cargado: ${cachedTop5?.size} jugadores")
+                        Log.d(TAG, "✅ TOP 5 pre-cargado: ${cachedTop5?.size} jugadores")
                         cachedTop5?.forEachIndexed { index, player ->
                             Log.d(TAG, "  ${index + 1}. ${player.playerId} - ${player.passes} pases")
                         }
@@ -210,7 +208,7 @@ class DiamantesApplication : MultiDexApplication() {
         try {
             if (FirebaseApp.getApps(this@DiamantesApplication).isEmpty()) {
                 FirebaseApp.initializeApp(this@DiamantesApplication)
-                Log.d(TAG, "Firebase Core inicializado")
+                Log.d(TAG, "✅ Firebase Core inicializado")
             } else {
                 Log.d(TAG, "Firebase Core ya estaba inicializado")
             }
@@ -218,7 +216,7 @@ class DiamantesApplication : MultiDexApplication() {
             isFirebaseInitialized = true
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error inicializando Firebase Core: ${e.message}")
+            Log.e(TAG, "❌ Error inicializando Firebase Core: ${e.message}")
             throw e
         }
     }
@@ -231,19 +229,19 @@ class DiamantesApplication : MultiDexApplication() {
                 PlayIntegrityAppCheckProviderFactory.getInstance()
             )
 
-            Log.d(TAG, "Firebase App Check configurado con Play Integrity provider")
+            Log.d(TAG, "✅ Firebase App Check configurado con Play Integrity provider")
 
             try {
                 val token = firebaseAppCheck.getAppCheckToken(false).await()
-                Log.d(TAG, "Token obtenido correctamente")
+                Log.d(TAG, "🔑 Token obtenido correctamente")
             } catch (e: Exception) {
-                Log.w(TAG, "Error obteniendo token: ${e.message}")
+                Log.w(TAG, "⚠️ Error obteniendo token: ${e.message}")
             }
 
             isAppCheckInitialized = true
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error configurando App Check: ${e.message}")
+            Log.e(TAG, "❌ Error configurando App Check: ${e.message}")
             isAppCheckInitialized = false
         }
     }
@@ -253,15 +251,15 @@ class DiamantesApplication : MultiDexApplication() {
             val auth = Firebase.auth
 
             if (auth.currentUser == null) {
-                Log.d(TAG, "Iniciando autenticación anónima...")
+                Log.d(TAG, "🔐 Iniciando autenticación anónima...")
 
                 val authResult = auth.signInAnonymously().await()
 
                 if (authResult.user != null) {
-                    Log.d(TAG, "Autenticación anónima exitosa: ${authResult.user?.uid?.take(8)}...")
+                    Log.d(TAG, "✅ Autenticación anónima exitosa: ${authResult.user?.uid?.take(8)}...")
                     isAuthInitialized = true
                 } else {
-                    Log.e(TAG, "Autenticación anónima falló: Usuario nulo")
+                    Log.e(TAG, "❌ Autenticación anónima falló: Usuario nulo")
                     isAuthInitialized = false
                 }
             } else {
@@ -270,7 +268,7 @@ class DiamantesApplication : MultiDexApplication() {
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error en autenticación anónima: ${e.message}")
+            Log.e(TAG, "❌ Error en autenticación anónima: ${e.message}")
             isAuthInitialized = false
 
             try {
@@ -278,11 +276,11 @@ class DiamantesApplication : MultiDexApplication() {
                 val auth = Firebase.auth
                 val retryResult = auth.signInAnonymously().await()
                 if (retryResult.user != null) {
-                    Log.d(TAG, "Autenticación anónima exitosa en reintento")
+                    Log.d(TAG, "✅ Autenticación anónima exitosa en reintento")
                     isAuthInitialized = true
                 }
             } catch (retryException: Exception) {
-                Log.e(TAG, "Reintento de auth también falló: ${retryException.message}")
+                Log.e(TAG, "❌ Reintento de auth también falló: ${retryException.message}")
             }
         }
     }
@@ -298,20 +296,20 @@ class DiamantesApplication : MultiDexApplication() {
                 if (!isFirebaseInitialized) {
                     FirebaseApp.initializeApp(this@DiamantesApplication)
                     isFirebaseInitialized = true
-                    Log.d(TAG, "Firebase inicializado en modo emergencia")
+                    Log.d(TAG, "✅ Firebase inicializado en modo emergencia")
                 }
 
                 if (!isAuthInitialized) {
                     Firebase.auth.signInAnonymously().addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             isAuthInitialized = true
-                            Log.d(TAG, "Auth emergencia exitosa")
+                            Log.d(TAG, "✅ Auth emergencia exitosa")
                         }
                     }
                 }
 
             } catch (e: Exception) {
-                Log.e(TAG, "Incluso el modo emergencia falló: ${e.message}")
+                Log.e(TAG, "❌ Incluso el modo emergencia falló: ${e.message}")
             }
         }
     }
@@ -338,11 +336,11 @@ class DiamantesApplication : MultiDexApplication() {
 
     override fun onTerminate() {
         try {
+            // Limpiar listener del TOP 5
             top5Listener?.let { listener ->
                 top5Reference?.removeEventListener(listener)
             }
 
-            AdsInit.cleanup()
             applicationScope?.cancel()
             Log.d(TAG, "DiamantesApplication terminada correctamente")
         } catch (e: Exception) {

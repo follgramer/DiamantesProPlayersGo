@@ -8,11 +8,15 @@
     android:fillViewport="true"
     android:scrollbars="none">
 
+    <!-- PADDING VERTICAL PARA CONTENIDO, PERO SIN PADDING HORIZONTAL -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
 
         <LinearLayout
             android:id="@+id/giveawayInfo"
@@ -98,7 +102,7 @@
                             android:layout_marginBottom="4dp"
                             android:fontFamily="@font/montserrat_semibold"
                             android:text="Premios de esta semana"
-                            android:textColor="#FFD700"
+                            android:textColor="#00A8FF"
                             android:textSize="10sp"
                             android:textStyle="bold"
                             tools:ignore="SmallSp" />
@@ -120,15 +124,15 @@
                                 android:padding="4dp">
 
                                 <TextView
+                                    android:id="@+id/prize1Text"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginBottom="2dp"
                                     android:fontFamily="@font/montserrat_bold"
                                     android:text="1,000 💎"
-                                    android:textColor="#FFD700"
+                                    android:textColor="#00A8FF"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"
-                                    tools:ignore="HardcodedText" />
+                                    android:textStyle="bold" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -150,6 +154,7 @@
                                 android:padding="4dp">
 
                                 <TextView
+                                    android:id="@+id/prize2Text"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginBottom="2dp"
@@ -157,8 +162,7 @@
                                     android:text="500 💎"
                                     android:textColor="#00A8FF"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"
-                                    tools:ignore="HardcodedText" />
+                                    android:textStyle="bold" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -179,6 +183,7 @@
                                 android:padding="4dp">
 
                                 <TextView
+                                    android:id="@+id/prize3Text"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginBottom="2dp"
@@ -186,8 +191,7 @@
                                     android:text="200 💎"
                                     android:textColor="#0088cc"
                                     android:textSize="14sp"
-                                    android:textStyle="bold"
-                                    tools:ignore="HardcodedText" />
+                                    android:textStyle="bold" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -209,25 +213,45 @@
                         android:orientation="vertical"
                         android:padding="4dp">
 
-                        <TextView
-                            android:id="@+id/sorteoStatusBadge"
+                        <FrameLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="4dp"
-                            android:background="@drawable/background_badge_active_pulse"
-                            android:fontFamily="@font/montserrat_bold"
-                            android:paddingHorizontal="8dp"
-                            android:paddingVertical="4dp"
-                            android:text="ACTIVO"
-                            android:textColor="#FFFFFF"
-                            android:textSize="8sp"
-                            android:textStyle="bold"
-                            tools:ignore="SmallSp" />
+                            android:minHeight="32dp">
+
+                            <LinearLayout
+                                android:id="@+id/sorteoButtonContainer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:background="@drawable/background_badge_active_pulse"
+                                android:gravity="center"
+                                android:orientation="vertical"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="4dp"
+                                android:visibility="visible">
+
+                                <TextView
+                                    android:id="@+id/sorteoButtonText"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/montserrat_bold"
+                                    android:text="ACTIVO"
+                                    android:textAlignment="center"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="8sp"
+                                    android:textStyle="bold"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
+                        </FrameLayout>
 
                         <TextView
+                            android:id="@+id/sorteoButtonSubtext"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_regular"
                             android:text="Sorteo en curso"
+                            android:textAlignment="center"
                             android:textColor="#99FFFFFF"
                             android:textSize="7sp"
                             tools:ignore="SmallSp" />
@@ -311,7 +335,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/montserrat_bold"
                         android:text="Ganador: 12345"
-                        android:textColor="#FFD700"
+                        android:textColor="#00A8FF"
                         android:textSize="17sp"
                         android:textStyle="bold" />
 
@@ -327,11 +351,14 @@
             </FrameLayout>
         </LinearLayout>
 
+        <!-- BANNER TOP HOME - ID ÚNICO CORREGIDO -->
         <FrameLayout
-            android:id="@+id/adInProfileContainer"
+            android:id="@+id/home_banner_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:minHeight="50dp"
+            android:maxHeight="90dp"
             android:visibility="gone" />
 
         <LinearLayout
@@ -444,7 +471,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/montserrat_bold"
                     android:text="0"
-                    android:textColor="@color/gold_accent"
+                    android:textColor="@color/accent_color"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -566,7 +593,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:backgroundTint="@color/gold_accent"
+                android:backgroundTint="@color/accent_color"
                 android:fontFamily="@font/montserrat_bold"
                 android:text="Ver Video para Giros (+10)"
                 android:textColor="@color/primary_bg"
@@ -574,18 +601,21 @@
                 tools:visibility="visible" />
         </LinearLayout>
 
+        <!-- TOP 5 DE LA SEMANA - ID ÚNICO INDEPENDIENTE -->
         <FrameLayout
             android:id="@+id/top5_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:visibility="gone">
+            android:visibility="visible">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/background_container"
                 android:orientation="vertical"
                 android:padding="12dp">
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -594,6 +624,7 @@
                     android:text="TOP 5 DE LA SEMANA"
                     android:textColor="@color/green_accent"
                     android:textSize="14sp" />
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/mini_leaderboard_list"
                     android:layout_width="match_parent"

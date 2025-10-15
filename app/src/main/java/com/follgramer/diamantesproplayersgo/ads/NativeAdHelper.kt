@@ -20,8 +20,8 @@ import kotlinx.coroutines.*
 
 object NativeAdHelper {
     private const val TAG = "NativeAdHelper"
-    private const val MAX_NATIVE_ADS = 3
-    private const val MIN_REQUEST_INTERVAL_MS = 3000L
+    private const val MAX_NATIVE_ADS = 2
+    private const val MIN_REQUEST_INTERVAL_MS = 15000L
 
     private val loadedAds = mutableMapOf<Int, NativeAd>()
     private val loadingStates = mutableMapOf<Int, Boolean>()
@@ -38,6 +38,9 @@ object NativeAdHelper {
         holderId: Int
     ) {
         try {
+            Log.d(TAG, "🎯 loadNativeAd llamado para holder $holderId")
+
+            // Limpiar contenedor
             container.apply {
                 visibility = View.GONE
                 layoutParams = layoutParams?.apply {
@@ -55,7 +58,7 @@ object NativeAdHelper {
 
             if (timeSinceLastRequest < MIN_REQUEST_INTERVAL_MS) {
                 val waitTime = MIN_REQUEST_INTERVAL_MS - timeSinceLastRequest
-                Log.d(TAG, "Esperando ${waitTime}ms antes de cargar holder $holderId")
+                Log.d(TAG, "⏳ Esperando ${waitTime}ms antes de cargar holder $holderId")
                 scope.launch {
                     delay(waitTime)
                     loadNativeAd(activity, container, nativeAdView, holderId)
@@ -64,14 +67,14 @@ object NativeAdHelper {
             }
 
             if (loadingStates[holderId] == true) {
-                Log.d(TAG, "Ya cargando anuncio nativo para holder $holderId")
+                Log.d(TAG, "⚠️ Ya cargando anuncio nativo para holder $holderId")
                 return
             }
 
             val currentFailCount = failCounts[holderId] ?: 0
             if (currentFailCount >= 3) {
                 if (noFillHolders.contains(holderId)) {
-                    Log.d(TAG, "Holder $holderId en cooldown extendido")
+                    Log.d(TAG, "🚫 Holder $holderId en cooldown extendido")
                     return
                 }
 
@@ -85,20 +88,19 @@ object NativeAdHelper {
             }
 
             loadedAds[holderId]?.let { existingAd ->
-                // CRÍTICO: Remover del parent anterior
+                Log.d(TAG, "♻️ Reutilizando anuncio existente para holder $holderId")
                 (nativeAdView.parent as? ViewGroup)?.removeView(nativeAdView)
 
                 populateNativeAdView(existingAd, nativeAdView)
                 container.removeAllViews()
                 container.addView(nativeAdView)
                 showContainerWithAnimation(container)
-                Log.d(TAG, "Reutilizando anuncio nativo existente para holder $holderId")
                 return
             }
 
             val activeAds = loadingStates.count { it.value }
             if (activeAds >= MAX_NATIVE_ADS) {
-                Log.d(TAG, "Demasiados anuncios nativos activos ($activeAds)")
+                Log.d(TAG, "⚠️ Demasiados anuncios nativos activos ($activeAds)")
                 return
             }
 
@@ -107,11 +109,12 @@ object NativeAdHelper {
 
             val adUnitId = AdIds.native()
 
-            Log.d(TAG, "Encolando anuncio nativo para holder $holderId con ID: $adUnitId")
+            Log.d(TAG, "📢 Iniciando carga de anuncio nativo para holder $holderId")
+            Log.d(TAG, "🔑 Ad Unit ID: $adUnitId")
 
             val adLoader = AdLoader.Builder(activity, adUnitId)
                 .forNativeAd { nativeAd ->
-                    Log.d(TAG, "Anuncio nativo cargado para holder $holderId")
+                    Log.d(TAG, "✅ Anuncio nativo cargado para holder $holderId")
 
                     loadedAds[holderId]?.destroy()
                     loadedAds[holderId] = nativeAd
@@ -122,7 +125,6 @@ object NativeAdHelper {
                     retryJobs[holderId]?.cancel()
                     retryJobs.remove(holderId)
 
-                    // CRÍTICO: Remover del parent anterior si existe
                     (nativeAdView.parent as? ViewGroup)?.removeView(nativeAdView)
 
                     populateNativeAdView(nativeAd, nativeAdView)
@@ -132,7 +134,12 @@ object NativeAdHelper {
                 }
                 .withAdListener(object : AdListener() {
                     override fun onAdFailedToLoad(error: LoadAdError) {
-                        Log.e(TAG, "Error cargando anuncio nativo: ${error.message}, código: ${error.code}")
+                        Log.e(TAG, "❌ Error cargando anuncio nativo holder $holderId")
+                        Log.e(TAG, "   Mensaje: ${error.message}")
+                        Log.e(TAG, "   Código: ${error.code}")
+                        Log.e(TAG, "   Domain: ${error.domain}")
+                        Log.e(TAG, "   Cause: ${error.cause}")
+
                         loadingStates[holderId] = false
 
                         failCounts[holderId] = (failCounts[holderId] ?: 0) + 1
@@ -144,7 +151,8 @@ object NativeAdHelper {
                         }
 
                         when (error.code) {
-                            3 -> { // No Fill
+                            3 -> {
+                                Log.w(TAG, "⚠️ NO FILL - No hay anuncios disponibles")
                                 if (failCounts[holderId] ?: 0 >= 2) {
                                     noFillHolders.add(holderId)
                                     scope.launch {
@@ -156,25 +164,27 @@ object NativeAdHelper {
                                     scheduleRetry(activity, container, nativeAdView, holderId, 30000)
                                 }
                             }
-                            1 -> { // Invalid Request - Rate Limiting
-                                Log.e(TAG, "Rate limiting detectado, esperando 10 segundos")
-                                scheduleRetry(activity, container, nativeAdView, holderId, 10000)
+                            1 -> {
+                                Log.e(TAG, "⚠️ INVALID REQUEST - Revisa la configuración")
+                                scheduleRetry(activity, container, nativeAdView, holderId, 15000)
                             }
-                            2 -> { // Network Error
+                            2 -> {
+                                Log.e(TAG, "⚠️ NETWORK ERROR - Problema de conexión")
                                 scheduleRetry(activity, container, nativeAdView, holderId, 10000)
                             }
                             else -> {
+                                Log.e(TAG, "⚠️ ERROR DESCONOCIDO - Código ${error.code}")
                                 scheduleRetry(activity, container, nativeAdView, holderId, 60000)
                             }
                         }
                     }
 
                     override fun onAdClicked() {
-                        Log.d(TAG, "Anuncio nativo clickeado - holder $holderId")
+                        Log.d(TAG, "👆 Anuncio nativo clickeado - holder $holderId")
                     }
 
                     override fun onAdImpression() {
-                        Log.d(TAG, "Impresión registrada - holder $holderId")
+                        Log.d(TAG, "👁️ Impresión registrada - holder $holderId")
                     }
                 })
                 .build()
@@ -184,16 +194,17 @@ object NativeAdHelper {
                     try {
                         val adRequest = AdRequest.Builder().build()
                         adLoader.loadAd(adRequest)
-                        Log.d(TAG, "Request de anuncio nativo ejecutada para holder $holderId")
+                        Log.d(TAG, "📡 Request enviada para holder $holderId")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error en loadAd: ${e.message}")
+                        Log.e(TAG, "❌ Error en loadAd: ${e.message}", e)
                         loadingStates[holderId] = false
                     }
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error crítico: ${e.message}", e)
+            Log.e(TAG, "❌ Error crítico: ${e.message}", e)
+            e.printStackTrace()
 
             container.apply {
                 visibility = View.GONE
@@ -207,75 +218,89 @@ object NativeAdHelper {
     }
 
     private fun populateNativeAdView(nativeAd: NativeAd, nativeAdView: NativeAdView) {
-        nativeAdView.findViewById<ImageView>(R.id.ad_app_icon)?.let {
-            if (nativeAd.icon != null) {
-                it.setImageDrawable(nativeAd.icon?.drawable)
-                it.visibility = View.VISIBLE
-            } else {
-                it.visibility = View.GONE
+        Log.d(TAG, "🎨 Poblando NativeAdView...")
+
+        try {
+            nativeAdView.findViewById<ImageView>(R.id.ad_app_icon)?.let {
+                if (nativeAd.icon != null) {
+                    it.setImageDrawable(nativeAd.icon?.drawable)
+                    it.visibility = View.VISIBLE
+                    Log.d(TAG, "  ✅ Icon configurado")
+                } else {
+                    it.visibility = View.GONE
+                }
+                nativeAdView.iconView = it
             }
-            nativeAdView.iconView = it
-        }
 
-        nativeAdView.findViewById<TextView>(R.id.ad_headline)?.let {
-            it.text = nativeAd.headline
-            nativeAdView.headlineView = it
-        }
-
-        nativeAdView.findViewById<TextView>(R.id.ad_body)?.let {
-            if (nativeAd.body != null) {
-                it.text = nativeAd.body
-                it.visibility = View.VISIBLE
-            } else {
-                it.visibility = View.GONE
+            nativeAdView.findViewById<TextView>(R.id.ad_headline)?.let {
+                it.text = nativeAd.headline
+                nativeAdView.headlineView = it
+                Log.d(TAG, "  ✅ Headline: ${nativeAd.headline}")
             }
-            nativeAdView.bodyView = it
-        }
 
-        nativeAdView.findViewById<MediaView>(R.id.ad_media)?.let {
-            if (nativeAd.mediaContent != null) {
-                it.setMediaContent(nativeAd.mediaContent!!)
-                it.visibility = View.VISIBLE
-            } else {
-                it.visibility = View.GONE
+            nativeAdView.findViewById<TextView>(R.id.ad_body)?.let {
+                if (nativeAd.body != null) {
+                    it.text = nativeAd.body
+                    it.visibility = View.VISIBLE
+                } else {
+                    it.visibility = View.GONE
+                }
+                nativeAdView.bodyView = it
             }
-            nativeAdView.mediaView = it
-        }
 
-        nativeAdView.findViewById<Button>(R.id.ad_call_to_action)?.let {
-            if (nativeAd.callToAction != null) {
-                it.text = nativeAd.callToAction
-                it.visibility = View.VISIBLE
-            } else {
-                it.visibility = View.GONE
+            nativeAdView.findViewById<MediaView>(R.id.ad_media)?.let {
+                if (nativeAd.mediaContent != null) {
+                    it.setMediaContent(nativeAd.mediaContent!!)
+                    it.visibility = View.VISIBLE
+                    Log.d(TAG, "  ✅ Media configurado")
+                } else {
+                    it.visibility = View.GONE
+                }
+                nativeAdView.mediaView = it
             }
-            nativeAdView.callToActionView = it
-        }
 
-        nativeAdView.findViewById<RatingBar>(R.id.ad_stars)?.let {
-            if (nativeAd.starRating != null && nativeAd.starRating!! > 0) {
-                it.rating = nativeAd.starRating!!.toFloat()
-                it.visibility = View.VISIBLE
-            } else {
-                it.visibility = View.GONE
+            nativeAdView.findViewById<Button>(R.id.ad_call_to_action)?.let {
+                if (nativeAd.callToAction != null) {
+                    it.text = nativeAd.callToAction
+                    it.visibility = View.VISIBLE
+                    Log.d(TAG, "  ✅ CTA: ${nativeAd.callToAction}")
+                } else {
+                    it.visibility = View.GONE
+                }
+                nativeAdView.callToActionView = it
             }
-            nativeAdView.starRatingView = it
-        }
 
-        nativeAdView.findViewById<TextView>(R.id.ad_advertiser)?.let {
-            if (nativeAd.advertiser != null) {
-                it.text = nativeAd.advertiser
-                it.visibility = View.VISIBLE
-            } else {
-                it.visibility = View.GONE
+            nativeAdView.findViewById<RatingBar>(R.id.ad_stars)?.let {
+                if (nativeAd.starRating != null && nativeAd.starRating!! > 0) {
+                    it.rating = nativeAd.starRating!!.toFloat()
+                    it.visibility = View.VISIBLE
+                } else {
+                    it.visibility = View.GONE
+                }
+                nativeAdView.starRatingView = it
             }
-            nativeAdView.advertiserView = it
-        }
 
-        nativeAdView.setNativeAd(nativeAd)
+            nativeAdView.findViewById<TextView>(R.id.ad_advertiser)?.let {
+                if (nativeAd.advertiser != null) {
+                    it.text = nativeAd.advertiser
+                    it.visibility = View.VISIBLE
+                } else {
+                    it.visibility = View.GONE
+                }
+                nativeAdView.advertiserView = it
+            }
+
+            nativeAdView.setNativeAd(nativeAd)
+            Log.d(TAG, "✅ NativeAdView completamente configurado")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error poblando NativeAdView: ${e.message}", e)
+        }
     }
 
     private fun showContainerWithAnimation(container: ViewGroup) {
+        Log.d(TAG, "🎬 Mostrando contenedor con animación...")
+
         container.apply {
             layoutParams = layoutParams?.apply {
                 height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -287,6 +312,9 @@ object NativeAdHelper {
             animate()
                 .alpha(1f)
                 .setDuration(300)
+                .withEndAction {
+                    Log.d(TAG, "✅ Animación completada")
+                }
                 .start()
         }
     }
@@ -300,10 +328,12 @@ object NativeAdHelper {
     ) {
         retryJobs[holderId]?.cancel()
 
+        Log.d(TAG, "🔄 Programando reintento para holder $holderId en ${delayMs}ms")
+
         retryJobs[holderId] = scope.launch {
             delay(delayMs)
             if (!activity.isFinishing && !activity.isDestroyed) {
-                Log.d(TAG, "Reintentando carga de anuncio nativo para holder $holderId")
+                Log.d(TAG, "🔄 Reintentando carga para holder $holderId")
                 loadNativeAd(activity, container, nativeAdView, holderId)
             }
         }
@@ -322,9 +352,9 @@ object NativeAdHelper {
             failCounts.remove(holderId)
             lastRequestTime.remove(holderId)
 
-            Log.d(TAG, "Anuncio nativo destruido para holder $holderId")
+            Log.d(TAG, "🗑️ Anuncio nativo destruido para holder $holderId")
         } catch (e: Exception) {
-            Log.e(TAG, "Error destruyendo anuncio nativo: ${e.message}")
+            Log.e(TAG, "❌ Error destruyendo anuncio nativo: ${e.message}")
         }
     }
 
@@ -343,9 +373,9 @@ object NativeAdHelper {
             failCounts.clear()
             lastRequestTime.clear()
 
-            Log.d(TAG, "NativeAdHelper limpiado completamente")
+            Log.d(TAG, "🧹 NativeAdHelper limpiado completamente")
         } catch (e: Exception) {
-            Log.e(TAG, "Error en cleanup: ${e.message}")
+            Log.e(TAG, "❌ Error en cleanup: ${e.message}")
         }
     }
 

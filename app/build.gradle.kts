@@ -5,6 +5,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -35,51 +37,72 @@ android {
         applicationId = "com.follgramer.diamantesproplayersgo"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 10
+        versionName = "1.0.9"
 
         vectorDrawables { useSupportLibrary = true }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
-
         multiDexEnabled = true
 
-        buildConfigField("boolean", "USE_TEST_ADS", "true")
+        renderscriptTargetApi = 24
+        renderscriptSupportModeEnabled = false
+
+        // Deep Links para referidos
+        manifestPlaceholders["deepLinkScheme"] = "diamantespro"
+        manifestPlaceholders["deepLinkHost"] = "refer"
+
+        buildConfigField("String", "REFERRAL_SCHEME", "\"diamantespro\"")
+        buildConfigField("String", "REFERRAL_HOST", "\"refer\"")
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = true
             buildConfigField("boolean", "USE_TEST_ADS", "true")
+            buildConfigField("boolean", "ENABLE_REFERRAL_TESTING", "true")
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+            versionNameSuffix = "-DEBUG"
+            applicationIdSuffix = ".debug"
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
+            buildConfigField("boolean", "USE_TEST_ADS", "false")
+            buildConfigField("boolean", "ENABLE_REFERRAL_TESTING", "false")
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("boolean", "USE_TEST_ADS", "false")
-            manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~2085625019"
+            signingConfig = signingConfigs.getByName("release")
+
+            // Optimizaciones nativas
+            ndk {
+                abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+            }
         }
-    }
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        dataBinding = true
+    }
+
+    // App Bundle Configuration
+    bundle {
+        language {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
     }
 
     packaging {
@@ -93,32 +116,36 @@ android {
                 "META-INF/ASL2.0",
                 "META-INF/AL2.0",
                 "META-INF/LGPL2.1",
-                "META-INF/*.kotlin_module"
+                "META-INF/*.kotlin_module",
+                "META-INF/INDEX.LIST",
+                "META-INF/io.netty.versions.properties"
             )
         }
+    }
+
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-Xjvm-default=all"
+        )
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+        disable += setOf("MissingTranslation", "ExtraTranslation")
     }
 }
 
 dependencies {
-    // ========== Google Ads y Mediación ==========
-    implementation("com.google.android.gms:play-services-ads:24.5.0")
-    implementation("com.google.android.gms:play-services-ads-identifier:18.0.1")
-    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
-
-    // ========== Facebook Audience Network SDK ==========
-    implementation("com.facebook.android:audience-network-sdk:6.17.0")
-    implementation("androidx.annotation:annotation:1.9.1")
-
-    // ========== Firebase ==========
-    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-database-ktx")
-    implementation("com.google.firebase:firebase-config-ktx")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-
-    // ========== AndroidX Core ==========
+    // ==================== CORE ANDROID ====================
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.activity:activity-ktx:1.9.3")
@@ -128,32 +155,98 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("androidx.webkit:webkit:1.12.1")
 
-    // ========== Security ==========
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // Navigation
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.5")
+    implementation("androidx.navigation:navigation-ui-ktx:2.8.5")
+    implementation("androidx.drawerlayout:drawerlayout:1.2.0")
 
-    // ========== Material Dialogs ==========
-    implementation("com.afollestad.material-dialogs:core:3.3.0")
-    implementation("com.afollestad.material-dialogs:input:3.3.0")
+    // ==================== GOOGLE ADS Y REFERIDOS ====================
+    implementation("com.google.android.gms:play-services-ads:24.5.0")
+    implementation("com.google.android.gms:play-services-ads-identifier:18.1.0") // CRÍTICO PARA REFERIDOS
+    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
+    implementation("com.google.android.gms:play-services-base:18.5.0")
 
-    // ========== Utilidades ==========
-    implementation("me.leolin:ShortcutBadger:1.1.22@aar")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
-    implementation("androidx.multidex:multidex:2.0.1")
+    // Facebook Audience Network (Mediación)
+    implementation("com.facebook.android:audience-network-sdk:6.17.0")
 
-    // ========== Lifecycle ==========
+    // ==================== FIREBASE ====================
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-database-ktx") // CRÍTICO PARA REFERIDOS
+    implementation("com.google.firebase:firebase-config-ktx")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
+
+    // ==================== LIFECYCLE Y COROUTINES ====================
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-common-java8:2.8.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
-    // ========== WorkManager ==========
+    // ==================== SECURITY ====================
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // ==================== MATERIAL DIALOGS ====================
+    implementation("com.afollestad.material-dialogs:core:3.3.0")
+    implementation("com.afollestad.material-dialogs:input:3.3.0")
+
+    // ==================== IN-APP UPDATES & REVIEW ====================
+    implementation("com.google.android.play:review-ktx:2.0.2")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+    implementation("com.google.android.play:integrity:1.4.0")
+
+    // ==================== INSTALL REFERRER (PARA REFERIDOS) ====================
+    implementation("com.android.installreferrer:installreferrer:2.2")
+
+    // ==================== UTILIDADES ====================
+    implementation("me.leolin:ShortcutBadger:1.1.22@aar")
+    implementation("androidx.multidex:multidex:2.0.1")
+
+    // ==================== WORKMANAGER ====================
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
-    // ========== Core Library Desugaring ==========
+    // ==================== STARTUP ====================
+    implementation("androidx.startup:startup-runtime:1.2.0")
+
+    // ==================== NETWORKING ====================
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // ==================== IMAGE LOADING ====================
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
+    // ==================== CORE LIBRARY DESUGARING ====================
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
-    // ========== Testing ==========
+    // ==================== TESTING ====================
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.8.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
+}
+
+tasks.register("printVersionInfo") {
+    doLast {
+        println("╔══════════════════════════════════════╗")
+        println("📦 Build Information")
+        println("╠══════════════════════════════════════╣")
+        println("App: ${android.defaultConfig.applicationId}")
+        println("Version: ${android.defaultConfig.versionName} (${android.defaultConfig.versionCode})")
+        println("Min SDK: ${android.defaultConfig.minSdk}")
+        println("Target SDK: ${android.defaultConfig.targetSdk}")
+        println("Java Version: 17")
+        println("Referral Scheme: diamantespro://refer")
+        println("╚══════════════════════════════════════╝")
+    }
 }

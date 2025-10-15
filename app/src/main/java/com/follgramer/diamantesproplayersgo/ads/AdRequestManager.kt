@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 
 object AdRequestManager {
     private const val TAG = "AdRequestManager"
-    private const val MIN_INTERVAL_MS = 5000L // 5 segundos entre cualquier request
+    private const val MIN_INTERVAL_MS = 10000L // 10 segundos entre requests
 
     private var lastRequestTime = 0L
     private val requestQueue = mutableListOf<suspend () -> Unit>()
@@ -48,7 +48,6 @@ object AdRequestManager {
                     Log.e(TAG, "Error procesando request: ${e.message}")
                 }
 
-                // Delay adicional para asegurar spacing
                 delay(MIN_INTERVAL_MS)
             }
             isProcessing = false

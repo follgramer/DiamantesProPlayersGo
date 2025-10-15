@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Diamantes pro players Go</string>
     <string name="header_title">Diamantes pro players</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="navigation_drawer_open">Abrir menú de navegación</string>
+    <string name="navigation_drawer_close">Cerrar menú de navegación</string>
 
     <string name="admob_app_id">ca-app-pub-2024712392092488~7992650364</string>
 
@@ -34,6 +34,146 @@
     <string name="weekly_prize_template">Premio de esta semana: %1$s</string>
     <string name="weekly_prize_placeholder">Premio de esta semana: —</string>
 
+    <!-- Menu Items -->
+    <string name="menu_home">Inicio</string>
+    <string name="menu_tasks">Misiones Diarias</string>
+    <string name="menu_leaderboard">Tabla de Líderes</string>
+    <string name="menu_winners">Ganadores</string>
+    <string name="menu_referrals">Referidos</string>
+    <string name="menu_share">Compartir App</string>
+
+    <!-- Home Section -->
+    <string name="my_progress">Mi Progreso</string>
+    <string name="my_tickets">Tickets</string>
+    <string name="my_passes">Pases</string>
+    <string name="spins_available">Giros Disponibles</string>
+    <string name="spin_wheel">GIRAR RULETA</string>
+    <string name="get_more_spins">OBTENER MÁS GIROS</string>
+    <string name="top_5_players">Top 5 Jugadores</string>
+    <string name="view_full_leaderboard">Ver Clasificación Completa</string>
+
+    <!-- Tasks Section -->
+    <string name="daily_tasks">Misiones Diarias</string>
+    <string name="watch_video_for_tickets">Ver Video por Tickets</string>
+    <string name="task_description">Ve un video corto y gana tickets para participar en el sorteo semanal</string>
+
+    <!-- Leaderboard Section -->
+    <string name="leaderboard_title">Clasificación Global</string>
+    <string name="player_rank">Rango</string>
+    <string name="player_name">Jugador</string>
+    <string name="player_passes">Pases</string>
+    <string name="player_tickets">Tickets</string>
+
+    <!-- Winners Section -->
+    <string name="recent_winners">Ganadores Recientes</string>
+    <string name="winner_id">ID Ganador</string>
+    <string name="prize_won">Premio</string>
+    <string name="date_won">Fecha</string>
+
+    <!-- Referrals Section -->
+    <string name="referrals_title">Sistema de Referidos</string>
+    <string name="referrals_subtitle">Invita amigos y gana recompensas</string>
+    <string name="my_referral_code">Mi Código de Referido</string>
+    <string name="generating_code">Generando código...</string>
+    <string name="share_referral">Compartir con Mi Código</string>
+    <string name="my_stats">Mis Estadísticas</string>
+    <string name="invited_friends">Amigos Invitados</string>
+    <string name="passes_earned">Pases Ganados</string>
+    <string name="share_app">Compartir App</string>
+    <string name="share_choose_app">Compartir sin Código</string>
+    <string name="have_referral_code">¿Tienes un Código?</string>
+    <string name="referral_code_hint">Código de referido</string>
+    <string name="use_code">Usar</string>
+    <string name="how_it_works">¿Cómo Funciona?</string>
+    <string name="referral_explanation">1. Comparte tu código con amigos\n2. Cuando se registren y ganen 1 pase\n3. Tú recibes 1 pase gratis\n4. Sin límite de referidos</string>
+
+    <!-- Referidos originales corregidos -->
+    <string name="code_copied">Código copiado al portapapeles</string>
+    <string name="enter_referral_code">Ingresa un código de referido</string>
+    <string name="invalid_referral_code">Código no válido o ya usado</string>
+    <string name="referral_code_applied">Código aplicado exitosamente</string>
+    <string name="processing_code">Procesando...</string>
+    <string name="referral_bonus_received">¡Has recibido 1 pase por referir a un amigo!</string>
+
+    <!-- Compartir -->
+    <string name="share_app_title">Compartir Diamantes Pro</string>
+    <string name="share_with_referral">Compartir con mi código</string>
+    <string name="share_without_referral">Compartir solo la app</string>
+
+    <!-- Buttons and Actions -->
+    <string name="copy">Copiar</string>
+    <string name="share">Compartir</string>
+    <string name="close">Cerrar</string>
+    <string name="understood">Entendido</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="continue_text">Continuar</string>
+    <string name="back">Atrás</string>
+
+    <!-- Messages -->
+    <string name="loading">Cargando...</string>
+    <string name="error">Error</string>
+    <string name="success">Éxito</string>
+    <string name="no_internet">Sin conexión a internet</string>
+    <string name="try_again">Intentar de nuevo</string>
+    <string name="coming_soon">Próximamente</string>
+
+    <!-- Notifications -->
+    <string name="notification_title">Diamantes Pro</string>
+    <string name="notification_winner">¡Ganaste el sorteo semanal!</string>
+    <string name="notification_gift">¡Recibiste un regalo!</string>
+    <string name="notification_reminder">No olvides girar la ruleta</string>
+
+    <!-- Ad Messages -->
+    <string name="ad_loading">Cargando anuncio...</string>
+    <string name="ad_failed">Error al cargar anuncio</string>
+    <string name="ad_reward_earned">¡Recompensa obtenida!</string>
+
+    <!-- Validation Messages -->
+    <string name="invalid_player_id">ID de Jugador inválido</string>
+    <string name="player_id_required">ID de Jugador requerido</string>
+    <string name="player_id_too_short">ID debe tener al menos 5 dígitos</string>
+    <string name="player_id_numeric_only">ID debe contener solo números</string>
+
+    <!-- Time Units -->
+    <string name="days">días</string>
+    <string name="hours">horas</string>
+    <string name="minutes">minutos</string>
+    <string name="seconds">segundos</string>
+
+    <!-- Game States -->
+    <string name="draw_active">Sorteo Activo</string>
+    <string name="draw_processing">Procesando Sorteo</string>
+    <string name="draw_completed">Sorteo Completado</string>
+    <string name="draw_paused">Sorteo Pausado</string>
+
+    <!-- Referral Messages -->
+    <string name="referral_code_copied">Código de referido copiado al portapapeles</string>
+    <string name="referral_code_used_successfully">Código de referido aplicado exitosamente</string>
+    <string name="referral_code_invalid">Código de referido inválido o ya usado</string>
+    <string name="referral_code_own">No puedes usar tu propio código de referido</string>
+    <string name="referral_device_already_used">Este dispositivo ya ha usado un código de referido</string>
+    <string name="referral_reward_earned">¡Recompensa de referido obtenida!</string>
+
+    <!-- Share Messages -->
+    <string name="share_app_text">¡Únete a Diamantes Pro Players Go y gana premios increíbles! Descarga ahora:</string>
+    <string name="share_referral_text">¡Únete a Diamantes Pro Players Go con mi código de referido y obtén recompensas bonus!</string>
+
+    <!-- Sorteo Section -->
+    <string name="sorteo_title">SORTEO SEMANAL</string>
+    <string name="ends_in">Termina en:</string>
+    <string name="premio_semana">Premios de esta semana</string>
+    <string name="primer_lugar">1º LUGAR</string>
+    <string name="segundo_lugar">2º LUGAR</string>
+    <string name="tercer_lugar">3º LUGAR</string>
+    <string name="badge_activo">ACTIVO</string>
+    <string name="sorteo_en_curso">Sorteo en curso</string>
+    <string name="default_countdown">5d 20h 20m</string>
+
+    <!-- Facebook -->
+    <string name="facebook_app_id">4267800920118134</string>
+
+    <!-- Legal Content (mantengo el contenido legal original) -->
     <string name="privacy_policy_content">
         <![CDATA[
         <b>POLÍTICA DE PRIVACIDAD</b><br><br>
@@ -46,16 +186,19 @@
 
         <b>1.1 Información Personal Proporcionada Voluntariamente:</b><br>
         • <b>ID de Jugador de Free Fire:</b> Número de identificación único que usted proporciona voluntariamente para participar en sorteos y recibir premios.<br>
-        • <b>Datos de Contacto:</b> Información necesaria para coordinar la entrega de premios cuando corresponda.<br><br>
+        • <b>Datos de Contacto:</b> Información necesaria para coordinar la entrega de premios cuando corresponda.<br>
+        • <b>Códigos de Referido:</b> Información sobre invitaciones y códigos de referencia utilizados.<br><br>
 
         <b>1.2 Información de Uso de la Aplicación:</b><br>
         • <b>Progreso del Juego:</b> Tickets acumulados, pases generados, participación en actividades.<br>
         • <b>Interacciones:</b> Clics, tiempo de uso, secciones visitadas (datos agregados y anónimos).<br>
-        • <b>Preferencias:</b> Configuraciones y ajustes de la aplicación.<br><br>
+        • <b>Preferencias:</b> Configuraciones y ajustes de la aplicación.<br>
+        • <b>Actividad de Referidos:</b> Participación en programa de referidos, códigos utilizados y generados.<br><br>
 
         <b>1.3 Información Técnica Automatizada:</b><br>
         • <b>Datos del Dispositivo:</b> Modelo, sistema operativo, versión de la aplicación, identificador único de dispositivo.<br>
         • <b>Datos de Conexión:</b> Dirección IP, información de red, datos de rendimiento.<br>
+        • <b>Identificadores de Dispositivo:</b> Para prevenir fraude en el programa de referidos (un premio por dispositivo).<br>
         • <b>Cookies y Tecnologías Similares:</b> Para mejorar la funcionalidad y personalizar la experiencia.<br><br>
 
         <b>2. CÓMO UTILIZAMOS SU INFORMACIÓN</b><br><br>
@@ -63,42 +206,67 @@
         <b>2.1 Funcionalidad de la Aplicación:</b><br>
         • Gestionar su participación en sorteos y actividades.<br>
         • Calcular y otorgar tickets, pases y recompensas.<br>
+        • Administrar el programa de referidos y otorgar bonificaciones.<br>
         • Mantener clasificaciones y estadísticas de juego.<br>
         • Proporcionar soporte técnico y resolver problemas.<br><br>
 
-        <b>2.2 Comunicaciones:</b><br>
+        <b>2.2 Programa de Referidos:</b><br>
+        • Generar códigos únicos de referencia para cada usuario.<br>
+        • Validar y procesar invitaciones entre usuarios.<br>
+        • Otorgar recompensas cuando se cumplan las condiciones establecidas.<br>
+        • Prevenir fraude mediante identificación única de dispositivos.<br><br>
+
+        <b>2.3 Comunicaciones:</b><br>
         • Notificar sobre premios ganados y coordinar entregas.<br>
+        • Informar sobre bonificaciones por referidos exitosos.<br>
         • Enviar actualizaciones importantes sobre la aplicación.<br>
         • Responder a consultas y solicitudes de soporte.<br><br>
 
-        <b>2.3 Mejora del Servicio:</b><br>
+        <b>2.4 Mejora del Servicio:</b><br>
         • Analizar patrones de uso para mejorar la experiencia del usuario.<br>
         • Desarrollar nuevas funcionalidades y características.<br>
-        • Detectar y prevenir fraudes o uso indebido.<br><br>
+        • Detectar y prevenir fraudes o uso indebido del programa de referidos.<br><br>
 
-        <b>2.4 Cumplimiento Legal:</b><br>
+        <b>2.5 Cumplimiento Legal:</b><br>
         • Cumplir con obligaciones legales aplicables.<br>
         • Responder a solicitudes legales válidas de autoridades.<br><br>
 
-        <b>3. SERVICIOS DE TERCEROS</b><br><br>
+        <b>3. PROGRAMA DE REFERIDOS</b><br><br>
 
-        <b>3.1 Google AdMob:</b><br>
+        <b>3.1 Funcionamiento:</b><br>
+        • Los usuarios pueden invitar amigos usando códigos únicos o enlaces especiales.<br>
+        • Cuando el usuario referido alcanza 1 pase completo, el referidor recibe 1 pase como bonificación.<br>
+        • Solo se otorga una recompensa por dispositivo único para prevenir fraude.<br><br>
+
+        <b>3.2 Identificación de Dispositivos:</b><br>
+        • Utilizamos identificadores únicos de dispositivo para garantizar una recompensa por dispositivo.<br>
+        • Esta información se procesa de forma segura y no se comparte con terceros.<br>
+        • Los identificadores se generan mediante hash criptográfico para proteger la privacidad.<br><br>
+
+        <b>3.3 Datos de Referidos:</b><br>
+        • Almacenamos información sobre códigos de referencia generados y utilizados.<br>
+        • Registramos estadísticas de invitaciones exitosas para fines del programa.<br>
+        • Esta información se utiliza exclusivamente para administrar el programa de referidos.<br><br>
+
+        <b>4. SERVICIOS DE TERCEROS</b><br><br>
+
+        <b>4.1 Google AdMob:</b><br>
         • <b>Propósito:</b> Mostrar anuncios personalizados y relevantes.<br>
         • <b>Información Recopilada:</b> Identificadores de dispositivo, información de uso, datos de ubicación aproximada.<br>
         • <b>Política de Privacidad:</b> https://policies.google.com/privacy<br>
         • <b>Control del Usuario:</b> Puede optar por no recibir anuncios personalizados en Configuración > Google > Anuncios.<br><br>
 
-        <b>3.2 Firebase (Google):</b><br>
+        <b>4.2 Firebase (Google):</b><br>
         • <b>Propósito:</b> Almacenamiento de datos, análisis, notificaciones push, autenticación.<br>
-        • <b>Información Recopilada:</b> Datos de uso, información de dispositivo, eventos de aplicación.<br>
+        • <b>Información Recopilada:</b> Datos de uso, información de dispositivo, eventos de aplicación, datos del programa de referidos.<br>
         • <b>Política de Privacidad:</b> https://firebase.google.com/support/privacy<br><br>
 
-        <b>3.3 Otros Proveedores de Servicios:</b><br>
+        <b>4.3 Otros Proveedores de Servicios:</b><br>
         • Proveedores de análisis y métricas de aplicación.<br>
         • Servicios de soporte técnico y mantenimiento.<br>
         • Procesadores de pagos (si aplicable en el futuro).<br><br>
 
-        <b>4. COMPARTIR INFORMACIÓN</b><br><br>
+        <b>5. COMPARTIR INFORMACIÓN</b><br><br>
 
         <b>No vendemos, alquilamos ni comercializamos su información personal.</b> Podemos compartir información limitada en los siguientes casos:<br><br>
 
@@ -107,23 +275,25 @@
         • <b>Protección:</b> Para prevenir fraudes, abuso o actividades ilegales.<br>
         • <b>Transacciones Comerciales:</b> En caso de fusión, adquisición o venta de activos (con notificación previa).<br><br>
 
-        <b>5. SEGURIDAD Y PROTECCIÓN DE DATOS</b><br><br>
+        <b>6. SEGURIDAD Y PROTECCIÓN DE DATOS</b><br><br>
 
-        <b>5.1 Medidas de Seguridad:</b><br>
+        <b>6.1 Medidas de Seguridad:</b><br>
         • Encriptación de datos sensibles en tránsito y en reposo.<br>
         • Acceso restringido a información personal solo a personal autorizado.<br>
         • Monitoreo continuo de sistemas para detectar vulnerabilidades.<br>
-        • Copias de seguridad regulares y planes de recuperación de desastres.<br><br>
+        • Copias de seguridad regulares y planes de recuperación de desastres.<br>
+        • Protección especial para identificadores de dispositivo del programa de referidos.<br><br>
 
-        <b>5.2 Retención de Datos:</b><br>
+        <b>6.2 Retención de Datos:</b><br>
         • Información de cuenta activa: Durante el tiempo que use la aplicación.<br>
         • Datos de transacciones: 7 años para cumplimiento legal y contable.<br>
+        • Datos del programa de referidos: 3 años para validación y prevención de fraude.<br>
         • Datos analíticos: 26 meses en forma agregada y anónima.<br>
         • Datos de soporte: 3 años después de la resolución del caso.<br><br>
 
-        <b>6. SUS DERECHOS Y CONTROLES</b><br><br>
+        <b>7. SUS DERECHOS Y CONTROLES</b><br><br>
 
-        <b>6.1 Derechos del Usuario:</b><br>
+        <b>7.1 Derechos del Usuario:</b><br>
         • <b>Acceso:</b> Solicitar una copia de la información personal que tenemos sobre usted.<br>
         • <b>Rectificación:</b> Corregir información inexacta o incompleta.<br>
         • <b>Eliminación:</b> Solicitar la eliminación de su cuenta y datos personales.<br>
@@ -131,44 +301,45 @@
         • <b>Limitación:</b> Restringir ciertos tipos de procesamiento de datos.<br>
         • <b>Oposición:</b> Oponerse al procesamiento de datos para marketing directo.<br><br>
 
-        <b>6.2 Cómo Ejercer Sus Derechos:</b><br>
+        <b>7.2 Cómo Ejercer Sus Derechos:</b><br>
         • A través de la configuración de la aplicación.<br>
         • Contactando nuestro equipo de soporte.<br>
         • Enviando una solicitud por escrito (verificaremos su identidad).<br><br>
 
-        <b>6.3 Controles de Privacidad:</b><br>
+        <b>7.3 Controles de Privacidad:</b><br>
         • Configurar notificaciones push.<br>
         • Gestionar preferencias de comunicación.<br>
+        • Controlar participación en el programa de referidos.<br>
         • Controlar compartir datos con terceros (donde sea técnicamente posible).<br><br>
 
-        <b>7. USUARIOS MENORES DE EDAD</b><br><br>
+        <b>8. USUARIOS MENORES DE EDAD</b><br><br>
 
         • Esta aplicación está dirigida a usuarios de 13 años en adelante.<br>
         • No recopilamos intencionalmente información de niños menores de 13 años.<br>
         • Si descubrimos que hemos recopilado información de un menor de 13 años, la eliminaremos inmediatamente.<br>
         • Los padres pueden contactarnos si creen que su hijo ha proporcionado información personal.<br><br>
 
-        <b>8. TRANSFERENCIAS INTERNACIONALES</b><br><br>
+        <b>9. TRANSFERENCIAS INTERNACIONALES</b><br><br>
 
         • Sus datos pueden ser transferidos y procesados en países diferentes al suyo.<br>
         • Implementamos salvaguardas apropiadas para proteger sus datos durante transferencias internacionales.<br>
         • Las transferencias se realizan bajo marcos legales reconocidos (cláusulas contractuales estándar, decisiones de adecuación).<br><br>
 
-        <b>9. CAMBIOS EN ESTA POLÍTICA</b><br><br>
+        <b>10. CAMBIOS EN ESTA POLÍTICA</b><br><br>
 
         • Podemos actualizar esta política ocasionalmente para reflejar cambios en nuestras prácticas o por razones legales.<br>
         • Los cambios importantes serán notificados con al menos 30 días de anticipación.<br>
         • La fecha de "Última actualización" al inicio indica cuándo se modificó por última vez.<br>
         • El uso continuado de la aplicación después de los cambios constituye aceptación de la política actualizada.<br><br>
 
-        <b>10. CONTACTO Y SOPORTE</b><br><br>
+        <b>11. CONTACTO Y SOPORTE</b><br><br>
 
         <b>Para consultas sobre privacidad o ejercer sus derechos, contáctenos:</b><br>
         • A través de la sección "Soporte" en la aplicación<br>
         • Email: follgramer@gmail.com<br>
         • Tiempo de respuesta: Máximo 30 días hábiles<br><br>
 
-        <b>11. DESCARGO DE RESPONSABILIDAD Y AFILIACIÓN</b><br><br>
+        <b>12. DESCARGO DE RESPONSABILIDAD Y AFILIACIÓN</b><br><br>
 
         • <b>NO AFILIACIÓN OFICIAL:</b> Esta aplicación NO está oficialmente afiliada, respaldada, patrocinada o aprobada por Garena International I Private Limited, Free Fire, o cualquiera de sus subsidiarias o marcas relacionadas.<br>
         • <b>MARCAS REGISTRADAS:</b> "Free Fire" y todos los elementos relacionados son marcas comerciales registradas de Garena International I Private Limited. Su uso es únicamente con fines descriptivos y de referencia.<br>
@@ -176,7 +347,7 @@
         • <b>MÉTODO DE ENTREGA:</b> Los premios son adquiridos y entregados por los desarrolladores a través de https://pagostore.garena.com/<br>
         • <b>RESPONSABILIDAD FINANCIERA:</b> Todos los costos son cubiertos por los desarrolladores, sin costo para Garena.<br><br>
 
-        <b>12. BASE LEGAL PARA EL PROCESAMIENTO (GDPR/LGPD)</b><br><br>
+        <b>13. BASE LEGAL PARA EL PROCESAMIENTO (GDPR/LGPD)</b><br><br>
 
         • <b>Consentimiento:</b> Para marketing y comunicaciones promocionales.<br>
         • <b>Ejecución de Contrato:</b> Para proporcionar servicios de la aplicación.<br>
@@ -219,9 +390,16 @@
         • <b>Diamantes pro players Go</b> es una aplicación de entretenimiento que ofrece la oportunidad de participar en sorteos semanales.<br>
         • Los usuarios pueden acumular "tickets" mediante actividades en la aplicación.<br>
         • Los tickets se convierten automáticamente en "pases" de sorteo (1,000 tickets = 1 pase).<br>
-        • Los sorteos ofrecen premios relacionados con el juego Free Fire (diamantes, pases, etc.).<br><br>
+        • Los sorteos ofrecen premios relacionados con el juego Free Fire (diamantes, pases, etc.).<br>
+        • Incluye un programa de referidos donde los usuarios pueden invitar amigos y recibir bonificaciones.<br><br>
 
-        <b>2.2 Disponibilidad del Servicio:</b><br>
+        <b>2.2 Programa de Referidos:</b><br>
+        • Los usuarios pueden generar códigos únicos para invitar amigos.<br>
+        • Cuando un usuario referido alcanza 1 pase completo, el referidor recibe 1 pase como bonificación.<br>
+        • Solo se otorga una recompensa por dispositivo único para prevenir fraude.<br>
+        • El programa está sujeto a términos específicos de elegibilidad y validación.<br><br>
+
+        <b>2.3 Disponibilidad del Servicio:</b><br>
         • El servicio se proporciona "tal como está" y "según disponibilidad".<br>
         • No garantizamos disponibilidad ininterrumpida o libre de errores.<br>
         • Podemos suspender temporalmente el servicio por mantenimiento o mejoras.<br>
@@ -233,13 +411,15 @@
         • Usar la aplicación solo para fines de entretenimiento personal y no comerciales.<br>
         • Proporcionar información veraz y actualizada.<br>
         • Mantener la confidencialidad de su cuenta.<br>
-        • Cumplir con todas las leyes aplicables.<br><br>
+        • Cumplir con todas las leyes aplicables.<br>
+        • Participar honestamente en el programa de referidos.<br><br>
 
         <b>3.2 Conducta Prohibida:</b><br>
         • <b>Fraude y Trampa:</b> Uso de bots, scripts, exploits, hacks o cualquier software automatizado.<br>
         • <b>Múltiples Cuentas:</b> Crear o mantener más de una cuenta por persona.<br>
         • <b>Información Falsa:</b> Proporcionar datos falsos, especialmente ID de Free Fire inválidos.<br>
         • <b>Abuso del Sistema:</b> Intentar manipular sorteos, sistemas de puntuación o algoritmos.<br>
+        • <b>Abuso de Referidos:</b> Crear cuentas falsas, usar múltiples dispositivos para auto-referirse, o cualquier forma de manipular el programa de referidos.<br>
         • <b>Actividades Ilegales:</b> Usar la aplicación para cualquier propósito ilegal o no autorizado.<br>
         • <b>Comportamiento Abusivo:</b> Acoso, spam, comportamiento ofensivo hacia otros usuarios o nuestro equipo.<br>
         • <b>Violación de Propiedad Intelectual:</b> Infringir derechos de autor, marcas comerciales u otros derechos de propiedad.<br><br>
@@ -255,7 +435,8 @@
         • Solo usuarios con ID de Free Fire válido y verificable pueden participar.<br>
         • Debe tener al menos 1 pase completo para participar en sorteos semanales.<br>
         • Empleados de la empresa y familiares directos están excluidos de premios.<br>
-        • Restricciones geográficas pueden aplicar según regulaciones locales.<br><br>
+        • Restricciones geográficas pueden aplicar según regulaciones locales.<br>
+        • Los premios del programa de referidos están sujetos a validación de dispositivo único.<br><br>
 
         <b>4.2 Mecánica de Sorteos:</b><br>
         • <b>Frecuencia:</b> Sorteos semanales realizados cada domingo a las 23:59 GMT-3.<br>
@@ -263,13 +444,20 @@
         • <b>Transparencia:</b> Proceso documentado y auditable (disponible bajo solicitud).<br>
         • <b>Límites:</b> Máximo un premio mayor por usuario cada 30 días.<br><br>
 
-        <b>4.3 Entrega de Premios:</b><br>
+        <b>4.3 Programa de Referidos - Términos Específicos:</b><br>
+        • <b>Elegibilidad:</b> Usuarios con ID de Free Fire válido pueden participar.<br>
+        • <b>Recompensa:</b> 1 pase cuando el usuario referido alcance 1 pase completo.<br>
+        • <b>Limitación:</b> Una recompensa por dispositivo único, identificado mediante hash criptográfico.<br>
+        • <b>Validación:</b> Proceso automatizado de verificación para prevenir fraude.<br>
+        • <b>Tiempo:</b> Las recompensas se otorgan automáticamente cuando se cumplen las condiciones.<br><br>
+
+        <b>4.4 Entrega de Premios:</b><br>
         • <b>Plazo:</b> Premios entregados dentro de 24-72 horas hábiles.<br>
         • <b>Verificación:</b> Ganadores deben verificar identidad y validez del ID de Free Fire.<br>
         • <b>Comunicación:</b> Contacto inicial a través de notificaciones in-app y métodos alternativos.<br>
         • <b>Documentación:</b> Proceso de entrega documentado para transparencia.<br><br>
 
-        <b>4.4 Limitaciones de Premios:</b><br>
+        <b>4.5 Limitaciones de Premios:</b><br>
         • Premios son personales, intransferibles y no canjeables por dinero.<br>
         • No somos responsables por problemas en la cuenta de Free Fire del ganador.<br>
         • Premios sujetos a disponibilidad y términos del proveedor (Garena).<br>
@@ -286,12 +474,14 @@
         • <b>Advertencia Formal:</b> Primera violación menor, registro permanente.<br>
         • <b>Suspensión Temporal:</b> 7-30 días sin acceso a funciones principales.<br>
         • <b>Pérdida de Premios:</b> Confiscación de tickets, pases y premios pendientes.<br>
+        • <b>Exclusión del Programa de Referidos:</b> Pérdida de elegibilidad para referir usuarios.<br>
         • <b>Ban Permanente:</b> Eliminación permanente sin posibilidad de restablecimiento.<br><br>
 
         <b>5.3 Violaciones Graves (Ban Inmediato):</b><br>
         • Uso de software automatizado o hacks.<br>
         • Fraude documentado en sorteos o sistema de puntos.<br>
         • Múltiples cuentas con evidencia de abuso.<br>
+        • Manipulación del programa de referidos.<br>
         • Amenazas o acoso hacia personal o usuarios.<br>
         • Actividades ilegales documentadas.<br><br>
 
@@ -319,7 +509,7 @@
         • EL SERVICIO SE PROPORCIONA "TAL COMO ESTÁ" SIN GARANTÍAS DE NINGÚN TIPO.<br>
         • NO GARANTIZAMOS PRECISIÓN, COMPLETITUD O CONFIABILIDAD DEL CONTENIDO.<br>
         • NO GARANTIZAMOS QUE EL SERVICIO SERÁ ININTERRUMPIDO O LIBRE DE ERRORES.<br>
-        • NO GARANTIZAMOS RESULTADOS ESPECÍFICOS DEL USO DE LA APLICACIÓN.<br><br>
+        • NO GARANTIZAMOS RESULTADOS ESPECÍFICOS DEL USO DE LA APLICACIÓN O DEL PROGRAMA DE REFERIDOS.<br><br>
 
         <b>7.2 Limitación de Daños:</b><br>
         • EN NINGÚN CASO SEREMOS RESPONSABLES POR DAÑOS INDIRECTOS, INCIDENTALES, ESPECIALES O CONSECUENTES.<br>
@@ -340,7 +530,8 @@
         • Violación de estos términos.<br>
         • Violación de derechos de terceros.<br>
         • Cualquier contenido que envíe o comparta.<br>
-        • Sus actividades relacionadas con la aplicación.<br><br>
+        • Sus actividades relacionadas con la aplicación.<br>
+        • Participación en el programa de referidos.<br><br>
 
         <b>9. PRIVACIDAD Y PROTECCIÓN DE DATOS</b><br><br>
 
@@ -445,15 +636,4 @@
         ]]>
     </string>
 
-    <string name="sorteo_title">SORTEO SEMANAL</string>
-    <string name="ends_in">Ends in:</string>
-    <string name="premio_semana">Premios de esta semana</string>
-    <string name="primer_lugar">1º LUGAR</string>
-    <string name="segundo_lugar">2º LUGAR</string>
-    <string name="tercer_lugar">3º LUGAR</string>
-    <string name="badge_activo">ACTIVO</string>
-    <string name="sorteo_en_curso">Sorteo en curso</string>
-    <string name="default_countdown">5d 20h 20m</string>
-
-    <string name="facebook_app_id">4267800920118134</string>
 </resources>

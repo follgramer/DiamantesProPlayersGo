@@ -1,31 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- Incluir todo el contenido de SharedPreferences primero -->
-    <include domain="sharedpref" path="."/>
-    <include domain="database" path="."/>
-    <include domain="file" path="."/>
-    <include domain="root" path="."/>
 
-    <!-- Ahora excluir lo que no queremos respaldar -->
-    <exclude domain="sharedpref" path="device.xml"/>
-    <exclude domain="sharedpref" path="InstallationId"/>
+    <!-- INCLUIR: Datos importantes del usuario que SÍ queremos respaldar -->
+    <include domain="sharedpref" path="app_prefs.xml"/>
+    <include domain="sharedpref" path="user_preferences.xml"/>
+    <include domain="sharedpref" path="player_data.xml"/>
+    <include domain="sharedpref" path="game_settings.xml"/>
+    <include domain="file" path="user_data/"/>
+    <include domain="database" path="user.db"/>
+    <include domain="database" path="settings.db"/>
+
+    <!-- EXCLUIR: Datos sensibles y temporales que NO deben respaldarse -->
+
+    <!-- Firebase y Google Services (se regeneran automáticamente) -->
     <exclude domain="sharedpref" path="FirebaseInstallations.xml"/>
-    <exclude domain="sharedpref" path="com.google.android.gms.ads.identifier.service.START"/>
-    <exclude domain="sharedpref" path="gms_ads_flags"/>
-    <exclude domain="sharedpref" path="measurement.prefs"/>
-    <exclude domain="sharedpref" path="com.google.android.gms.measurement.prefs"/>
-    <exclude domain="sharedpref" path="com.google.firebase.auth"/>
     <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
     <exclude domain="sharedpref" path="FirebaseRemoteConfig"/>
+    <exclude domain="sharedpref" path="com.google.firebase.auth"/>
+    <exclude domain="sharedpref" path="com.google.android.gms.measurement.prefs"/>
+    <exclude domain="sharedpref" path="measurement.prefs"/>
+    <exclude domain="sharedpref" path="com.google.android.gms.ads.identifier.service.START"/>
+    <exclude domain="sharedpref" path="gms_ads_flags"/>
+
+    <!-- Identificadores únicos de dispositivo (deben regenerarse) -->
+    <exclude domain="sharedpref" path="device.xml"/>
+    <exclude domain="sharedpref" path="InstallationId"/>
+    <exclude domain="sharedpref" path="device_id.xml"/>
+    <exclude domain="sharedpref" path="analytics_id.xml"/>
+
+    <!-- Datos de sesión y tokens (sensibles de seguridad) -->
+    <exclude domain="sharedpref" path="session_tokens.xml"/>
+    <exclude domain="sharedpref" path="fcm_tokens.xml"/>
+    <exclude domain="sharedpref" path="auth_tokens.xml"/>
+    <exclude domain="sharedpref" path="security.xml"/>
+
+    <!-- WebView y datos de navegador -->
     <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
     <exclude domain="sharedpref" path="webview"/>
+    <exclude domain="file" path="app_webview/"/>
+
+    <!-- Work Manager (se reconfigura automáticamente) -->
     <exclude domain="sharedpref" path="androidx.work.workdb"/>
     <exclude domain="sharedpref" path="androidx.work"/>
+    <exclude domain="database" path="androidx.work.workdb"/>
 
-    <!-- Excluir archivos cache -->
-    <exclude domain="file" path="cache"/>
-    <exclude domain="file" path="code_cache"/>
-    <exclude domain="file" path="no_backup"/>
-    <exclude domain="root" path="cache"/>
-    <exclude domain="root" path="code_cache"/>
+    <!-- Cachés y archivos temporales -->
+    <exclude domain="file" path="cache/"/>
+    <exclude domain="file" path="code_cache/"/>
+    <exclude domain="file" path="no_backup/"/>
+    <exclude domain="file" path="tmp/"/>
+    <exclude domain="file" path="temp/"/>
+    <exclude domain="root" path="cache/"/>
+    <exclude domain="root" path="code_cache/"/>
+
+    <!-- Logs y archivos de depuración -->
+    <exclude domain="file" path="logs/"/>
+    <exclude domain="file" path="debug/"/>
+    <exclude domain="file" path="crash_logs/"/>
+
+    <!-- Datos específicos de AdMob -->
+    <exclude domain="sharedpref" path="admob.xml"/>
+    <exclude domain="sharedpref" path="ads_prefs.xml"/>
+
+    <!-- Datos de referidos sensibles (se regeneran con nuevo dispositivo) -->
+    <exclude domain="sharedpref" path="referral_device_id.xml"/>
+    <exclude domain="sharedpref" path="device_fingerprint.xml"/>
+
+    <!-- Configuraciones de red que pueden cambiar -->
+    <exclude domain="sharedpref" path="network_security_config.xml"/>
+    <exclude domain="sharedpref" path="okhttp.xml"/>
+
 </full-backup-content>

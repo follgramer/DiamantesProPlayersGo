@@ -3,20 +3,18 @@ package com.follgramer.diamantesproplayersgo
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.follgramer.diamantesproplayersgo.ads.AdsInit
-import com.google.android.ump.ConsentInformation
-import com.google.android.ump.ConsentRequestParameters
-import com.google.android.ump.UserMessagingPlatform
+import com.follgramer.diamantesproplayersgo.util.AnalyticsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,7 +32,7 @@ class SplashActivity : AppCompatActivity() {
 
         // Pantalla completa sin barras
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.statusBarColor = Color.TRANSPARENT
 
         setContentView(R.layout.activity_splash)
 
@@ -104,7 +102,14 @@ class SplashActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val consentGranted = handleConsent()
+                // ✅ Inicializar Analytics primero
+                withContext(Dispatchers.Main) {
+                    AnalyticsManager.initialize(this@SplashActivity)
+                    AnalyticsManager.logAppOpened()
+                }
+
+                // ✅ Manejar consentimiento
+                val consentGranted = ConsentManager.initialize(this@SplashActivity)
                 Log.d(TAG, "Consentimiento: $consentGranted")
 
                 if (consentGranted) {
@@ -113,6 +118,7 @@ class SplashActivity : AppCompatActivity() {
                     Log.w(TAG, "Sin consentimiento, omitiendo AdMob")
                 }
 
+                // ✅ Esperar tiempo mínimo
                 val elapsedTime = System.currentTimeMillis() - startTime
                 val remainingTime = (MIN_SPLASH_TIME - elapsedTime).coerceAtLeast(0)
 
@@ -124,58 +130,22 @@ class SplashActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error en inicialización: ${e.message}", e)
+                // ✅ Registrar error crítico en Analytics
+                AnalyticsManager.logCriticalError("splash_init_error", e.stackTraceToString())
                 goToMainActivity()
             }
-        }
-    }
-
-    private suspend fun handleConsent(): Boolean {
-        return try {
-            val params = ConsentRequestParameters.Builder()
-                .setTagForUnderAgeOfConsent(false)
-                .build()
-
-            val consentInfo = UserMessagingPlatform.getConsentInformation(this)
-
-            kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-                consentInfo.requestConsentInfoUpdate(
-                    this,
-                    params,
-                    {
-                        if (consentInfo.isConsentFormAvailable &&
-                            consentInfo.consentStatus == ConsentInformation.ConsentStatus.REQUIRED) {
-
-                            UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) { formError ->
-                                if (formError != null) {
-                                    Log.e(TAG, "Error con formulario: ${formError.message}")
-                                }
-                                continuation.resume(consentInfo.canRequestAds()) {}
-                            }
-                        } else {
-                            continuation.resume(consentInfo.canRequestAds()) {}
-                        }
-                    },
-                    { error ->
-                        Log.e(TAG, "Error obteniendo consentimiento: ${error.message}")
-                        continuation.resume(false) {}
-                    }
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error en handleConsent: ${e.message}")
-            false
         }
     }
 
     private suspend fun initializeAdMob() {
         Log.d(TAG, "Iniciando AdMob...")
 
-        // Initialize AdMob synchronously
+        // ✅ Inicializar AdMob de forma síncrona
         withContext(Dispatchers.Main) {
             AdsInit.init(this@SplashActivity)
         }
 
-        // Wait for AdMob to be ready
+        // ✅ Esperar a que AdMob esté listo
         var attempts = 0
         while (!AdsInit.isAdMobReady() && attempts < 20) {
             delay(100)
@@ -183,9 +153,10 @@ class SplashActivity : AppCompatActivity() {
         }
 
         if (AdsInit.isAdMobReady()) {
-            Log.d(TAG, "AdMob inicializado correctamente")
+            Log.d(TAG, "✅ AdMob inicializado correctamente")
         } else {
-            Log.w(TAG, "AdMob no se inicializó completamente")
+            Log.w(TAG, "⚠️ AdMob no se inicializó completamente")
+            AnalyticsManager.logError("admob_init_timeout", "AdMob initialization timeout")
         }
 
         delay(500)
@@ -196,12 +167,17 @@ class SplashActivity : AppCompatActivity() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             putExtra("admob_initialized", AdsInit.isAdMobReady())
-            putExtra("consent_completed", true)
+            putExtra("consent_completed", ConsentManager.isInitialized())
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
         startActivity(intent)
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "SplashActivity destroyed")
     }
 }

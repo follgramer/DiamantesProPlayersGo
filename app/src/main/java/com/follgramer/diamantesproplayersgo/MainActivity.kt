@@ -2,7 +2,6 @@ package com.follgramer.diamantesproplayersgo
 
 import android.Manifest
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -33,7 +32,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -41,6 +40,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -55,28 +55,33 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
-import com.follgramer.diamantesproplayersgo.ads.AdFallbackStrategy
 import com.follgramer.diamantesproplayersgo.ads.AdManager
 import com.follgramer.diamantesproplayersgo.ads.AdsInit
 import com.follgramer.diamantesproplayersgo.ads.BannerHelper
+import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
+import com.follgramer.diamantesproplayersgo.util.AnalyticsManager
+import com.follgramer.diamantesproplayersgo.util.DeepLinkHandler
 import com.follgramer.diamantesproplayersgo.databinding.ActivityMainBinding
 import com.follgramer.diamantesproplayersgo.notifications.*
 import com.follgramer.diamantesproplayersgo.ui.NotificationCenterActivity
 import com.follgramer.diamantesproplayersgo.ui.Onboarding
+import com.follgramer.diamantesproplayersgo.util.ReferralManager
+import com.follgramer.diamantesproplayersgo.util.ShareManager
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException
-import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.ads.rewarded.RewardItem
-import com.google.android.gms.ads.nativead.NativeAdView
 import com.google.android.ump.UserMessagingPlatform
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import me.leolin.shortcutbadger.ShortcutBadger
-import java.io.IOException
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -106,7 +111,7 @@ class MainActivity : AppCompatActivity() {
     private var currentPlayerId: String? = null
     private var currentSpins: Int = 0
     private var isSpinning = false
-    private var bannersLoaded = false // Mantenemos para control
+    private var bannersLoaded = false
 
     // FIREBASE LISTENERS
     private val firebaseListeners = mutableListOf<ValueEventListener>()
@@ -114,21 +119,20 @@ class MainActivity : AppCompatActivity() {
     private var weeklyPrizeRef: DatabaseReference? = null
     private var weeklyPrizeListener: ValueEventListener? = null
 
+    // ✅ AGREGAR ESTAS NUEVAS PROPIEDADES
+    private var playerDataListener: ValueEventListener? = null
+    private var playerDataRef: DatabaseReference? = null
+
     // TIMERS
     private var countdownTimer: CountDownTimer? = null
     private var revealCountdownTimer: CountDownTimer? = null
-
-    // Agregar después de las otras propiedades de la clase
-    private var currentSorteoState = "normal" // normal, processing, reveal, revealed
+    private var currentSorteoState = "normal"
 
     // GRID DATA
     private val gridItemsData = listOf(5, 1, 10, 25, 20, 0, 50, 5, 15, 1, 100, 20)
 
-    private var leaderboardAdapter: LeaderboardAdapter? = null
-    private var winnersAdapter: WinnersAdapter? = null
-
-    // Agregar estas propiedades al inicio de tu MainActivity
-    private var onlineStatusJob: Job? = null
+    // ✅ AGREGAR
+    private var referralStats: ReferralManager.ReferralStats? = null
 
     // CONSTANTS
     private companion object {
@@ -139,60 +143,59 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // ✅ DESHABILITAR ANIMACIONES INNECESARIAS
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        )
         try {
-            // ... initial setup and logging ...
+            // Verificar estado del consentimiento
+            val consentCompleted = intent.getBooleanExtra("consent_completed", false)
+            val adMobInitialized = intent.getBooleanExtra("admob_initialized", false)
+
+            Log.d(TAG_MAIN, "=== INICIANDO MAINACTIVITY ===")
+            Log.d(TAG_MAIN, "Build Type: ${if (BuildConfig.DEBUG) "DEBUG" else "RELEASE"}")
+            Log.d(TAG_MAIN, "Consent Completed: $consentCompleted")
+            Log.d(TAG_MAIN, "AdMob Initialized: $adMobInitialized")
+
+            if (isFinishing || isDestroyed) {
+                Log.w(TAG_MAIN, "Activity en estado inválido, abortando onCreate")
+                return
+            }
+
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
-            window.apply { statusBarColor = Color.parseColor("#0A0F14") }
+
+            window.apply {
+                statusBarColor = Color.parseColor("#0A0F14")
+            }
 
             setupWindowInsets()
-            initializeCriticalSystems() // Initializes Firebase auth and database
+            initializeCriticalSystems()
 
-            // VERIFICAR BANEO ANTES DE CONTINUAR
-            checkBanStatus {
-                // Solo continuar si NO está baneado
-                binding.root.post {
-                    try {
-                        setupBasicUI()
-                        scheduleBackgroundInitialization()
-                        Log.d(TAG_MAIN, "onCreate completado exitosamente")
-                    } catch (e: Exception) {
-                        Log.e(TAG_MAIN, "Error en post-onCreate: ${e.message}")
-                        handleCriticalError(e)
-                    }
+            binding.root.post {
+                try {
+                    setupBasicUI()
+                    scheduleBackgroundInitialization()
+                    Log.d(TAG_MAIN, "onCreate completado exitosamente")
+                } catch (e: Exception) {
+                    Log.e(TAG_MAIN, "Error en post-onCreate: ${e.message}")
+                    handleCriticalError(e)
                 }
-
-                startBadgeUpdater()
-
-                startOnlineStatusUpdates()
-                setupNotificationListener()
-                showLastNotificationOnOpen()
-                loadWeeklyPrizes()
-                loadSorteoButtonConfig()
             }
+
+            startBadgeUpdater()
 
             if (BuildConfig.DEBUG) {
-                // ... debug stuff ...
+                // IDs de AdMob no necesitan ser consultados desde AdIds.kt en Main, solo la lógica.
             }
+
+            // ✅ AGREGAR AL FINAL
+            DeepLinkHandler.handle(this, intent)
 
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error crítico en onCreate: ${e.message}")
             handleCriticalError(e)
-        }
-    }
-
-    private fun startOnlineStatusUpdates() {
-        val userId = auth.currentUser?.uid ?: return
-        onlineStatusJob = lifecycleScope.launch {
-            while (isActive) {
-                // Actualizar estado online cada 30 segundos
-                database
-                    .child("onlineUsers")
-                    .child(userId)
-                    .child("lastActivity")
-                    .setValue(com.google.firebase.database.ServerValue.TIMESTAMP)
-                delay(30000) // 30 segundos
-            }
         }
     }
 
@@ -213,23 +216,23 @@ class MainActivity : AppCompatActivity() {
         try {
             Log.d(TAG_MAIN, "Inicializando sistemas críticos...")
             setupAudioManager()
-
             if (!AdsInit.isAdMobReady()) {
-                Log.w(TAG_MAIN, "⚠ AdMob NO fue inicializado en SplashActivity")
+                Log.w(TAG_MAIN, "⚠️ AdMob NO fue inicializado en SplashActivity")
             } else {
                 Log.d(TAG_MAIN, "✅ AdMob correctamente inicializado desde SplashActivity")
             }
-
             setupFirebase()
+            initializeAnalytics()
+            ReferralManager.initialize()
+            ShareManager.initialize()
             commManager = CommunicationManager.getInstance(this)
             initializeNotificationSystem()
-            setupEmergencyStopListener() // Listener de parada de emergencia
+            setupRealtimeConfigListeners()
+            setupEmergencyStopListener()
             SessionManager.init(this)
-
             if (BuildConfig.DEBUG) {
                 showDeviceIdForTesting()
             }
-
             Log.d(TAG_MAIN, "Sistemas críticos inicializados correctamente")
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error en inicialización crítica: ${e.message}")
@@ -237,37 +240,57 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ✅ AGREGAR ESTA FUNCIÓN NUEVA
+    private fun initializeAnalytics() {
+        try {
+            AnalyticsManager.initialize(this)
+            AnalyticsManager.logAppOpened()
+
+            val playerId = SessionManager.getPlayerId(this)
+            if (playerId.isNotEmpty()) {
+                AnalyticsManager.setUserId(playerId)
+            }
+
+            Log.d(TAG_MAIN, "✅ Analytics inicializado")
+        } catch (e: Exception) {
+            Log.e(TAG_MAIN, "Error inicializando Analytics: ${e.message}")
+        }
+    }
+
+    // REEMPLAZANDO con la versión CORREGIDA y simplificada del usuario
     private fun loadBannersWhenReady() {
         if (bannersLoaded) {
-            Log.d(TAG_MAIN, "Banners ya cargados, saltando...")
+            Log.d(TAG_MAIN, "Banners ya cargados, saltando…")
             return
         }
         lifecycleScope.launch(Dispatchers.Main) {
             try {
                 Log.d(TAG_MAIN, "🎯 Preparando carga de banners...")
-                // Esperar a que AdMob esté listo (máximo 15 segundos)
+                // Esperar a que AdMob esté listo (máximo 10 segundos)
                 var waitTime = 0
-                while (!AdsInit.isAdMobReady() && waitTime < 15000) {
+                while (!AdsInit.isAdMobReady() && waitTime < 10000) {
                     Log.d(TAG_MAIN, "⏳ Esperando AdMob... (${waitTime}ms)")
                     delay(500)
                     waitTime += 500
                 }
-                if (!AdsInit.isAdMobReady()) {
-                    Log.e(TAG_MAIN, "❌ AdMob no está listo después de 15 segundos")
-                    delay(5000)
-                    loadBannersWhenReady()
-                    return@launch
-                }
-                // Esperar consentimiento (máximo 15 segundos)
+                // Esperar a que el consentimiento esté completo (máximo 10 segundos)
                 waitTime = 0
-                while (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()
-                    && waitTime < 15000) {
+                while (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds() && waitTime < 10000) {
                     Log.d(TAG_MAIN, "⏳ Esperando consentimiento... (${waitTime}ms)")
                     delay(500)
                     waitTime += 500
                 }
+                // Verificar condiciones finales
+                if (!AdsInit.isAdMobReady()) {
+                    Log.w(TAG_MAIN, "⚠️ AdMob no está listo después de esperar")
+                    // Reintentar en 5 segundos
+                    delay(5000)
+                    loadBannersWhenReady()
+                    return@launch
+                }
                 if (!UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()) {
-                    Log.e(TAG_MAIN, "❌ No se puede solicitar anuncios sin consentimiento")
+                    Log.w(TAG_MAIN, "⚠️ No se puede solicitar anuncios sin consentimiento")
+                    // Reintentar en 5 segundos
                     delay(5000)
                     loadBannersWhenReady()
                     return@launch
@@ -277,32 +300,55 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
                 Log.d(TAG_MAIN, "✅ Condiciones cumplidas, iniciando carga de banners...")
-                // ✅ FORZAR VISIBILIDAD ANTES DE CARGAR
-                binding.sectionHome.adInProfileContainer.visibility = View.VISIBLE
-                binding.bannerBottomContainer.visibility = View.VISIBLE
                 // Cargar banner superior
-                val topContainer = binding.sectionHome.adInProfileContainer
+                val topContainer = binding.sectionHome.homeBannerContainer
                 topContainer.post {
-                    Log.d(TAG_MAIN, "📤 Cargando banner superior...")
                     BannerHelper.attachAdaptiveBanner(this@MainActivity, topContainer)
                 }
-                // Cargar banner inferior con delay
-                delay(1000)
-                val bottomContainer = binding.bannerBottomContainer
+                // Cargar banner inferior con un pequeño delay
+                delay(500)
+                val bottomContainer = findViewById<FrameLayout>(R.id.bottom_banner_container)
                 bottomContainer.post {
-                    Log.d(TAG_MAIN, "📤 Cargando banner inferior...")
                     BannerHelper.attachAdaptiveBanner(this@MainActivity, bottomContainer)
                 }
                 bannersLoaded = true
-                Log.d(TAG_MAIN, "✅ Proceso de carga de banners completado")
+                updateBannerSpacing()
+                Log.d(TAG_MAIN, "✅ Banners iniciados correctamente")
             } catch (e: Exception) {
-                Log.e(TAG_MAIN, "❌ Error crítico en loadBannersWhenReady: ${e.message}", e)
+                Log.e(TAG_MAIN, "❌ Error en loadBannersWhenReady: ${e.message}", e)
+                // Reintentar en 10 segundos
                 delay(10000)
                 loadBannersWhenReady()
             }
         }
     }
 
+    private fun debugBannerStatus() {
+        lifecycleScope.launch {
+            delay(5000) // Esperar 5 segundos después del inicio
+
+            val topContainer = binding.sectionHome.homeBannerContainer
+            val bottomContainer = findViewById<FrameLayout>(R.id.bottom_banner_container)
+
+            Log.d(TAG_MAIN, "=== DEBUG BANNER STATUS ===")
+            Log.d(TAG_MAIN, "AdMob Ready: ${AdsInit.isAdMobReady()}")
+            Log.d(TAG_MAIN, "Can Request Ads: ${UserMessagingPlatform.getConsentInformation(this@MainActivity).canRequestAds()}")
+            Log.d(TAG_MAIN, "Top Container - Visible: ${topContainer.visibility == View.VISIBLE}, Height: ${topContainer.height}")
+            Log.d(TAG_MAIN, "Bottom Container - Visible: ${bottomContainer.visibility == View.VISIBLE}, Height: ${bottomContainer.height}")
+            // Nota: Aquí se asume que AdIds.kt existe y tiene las funciones bannerTop() y bannerBottom()
+            // Como AdIds.kt no está disponible, se deja un placeholder en el log.
+            // Log.d(TAG_MAIN, "Banner IDs - Top: ${AdIds.bannerTop()}, Bottom: ${AdIds.bannerBottom()}")
+            Log.d(TAG_MAIN, "Banner IDs - Top: [REDACTED], Bottom: [REDACTED]")
+            Log.d(TAG_MAIN, "==========================")
+
+            // Si después de 5 segundos no hay banners, forzar recarga
+            if (topContainer.visibility != View.VISIBLE && bottomContainer.visibility != View.VISIBLE) {
+                Log.w(TAG_MAIN, "⚠️ Ningún banner visible después de 5 segundos, forzando recarga...")
+                bannersLoaded = false
+                loadBannersWhenReady()
+            }
+        }
+    }
 
     private fun showDeviceIdForTesting() {
         if (BuildConfig.DEBUG) {
@@ -387,23 +433,16 @@ class MainActivity : AppCompatActivity() {
             setupBackPressedHandler()
             hideAllSections()
             showSectionSafely(binding.sectionHome.root)
-            // ✅ CONFIGURACIÓN CORRECTA DE CONTENEDORES DE BANNERS
-            val homeContainer = binding.sectionHome.adInProfileContainer
-            val bottomContainer = binding.bannerBottomContainer
+            // ✅ CORRECCIÓN: Configurar contenedores sin cambiar layoutParams
+            val homeContainer = binding.sectionHome.homeBannerContainer
+            val bottomContainer = findViewById<FrameLayout>(R.id.bottom_banner_container)
             // Limpiar contenedores
             homeContainer.removeAllViews()
             bottomContainer.removeAllViews()
-            // ✅ CONFIGURAR VISIBILIDAD Y ALTURA CORRECTAMENTE
-            homeContainer.visibility = View.VISIBLE
-            bottomContainer.visibility = View.VISIBLE
-            // ✅ ESTABLECER ALTURA MÍNIMA
-            homeContainer.layoutParams = homeContainer.layoutParams.apply {
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-            }
-            bottomContainer.layoutParams = bottomContainer.layoutParams.apply {
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-            }
-            // Sin background interfiriendo
+            // ✅ NO CAMBIAR layoutParams - el XML ya lo define correctamente
+            homeContainer.visibility = View.GONE
+            bottomContainer.visibility = View.GONE
+            // Sin background
             homeContainer.background = null
             bottomContainer.background = null
             currentSpins = SessionManager.getCurrentSpins(this)
@@ -416,40 +455,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun scheduleBackgroundInitialization() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // Paso 1: Esperar que AdMob realmente esté listo
-                delay(2000L) // Aumentado de 500ms a 2s
+                delay(500L)
                 initializeAdvertisingId()
-                // Paso 2: Verificar que AdMob está 100% listo
-                withContext(Dispatchers.Main) {
-                    var attempts = 0
-                    while (!AdsInit.isAdMobReady() && attempts < 15) {
-                        Log.d(TAG_MAIN, "Esperando AdMob... intento $attempts")
-                        delay(1000)
-                        attempts++
-                    }
-                    if (!AdsInit.isAdMobReady()) {
-                        Log.e(TAG_MAIN, "AdMob NO inicializado después de 15 segundos")
-                        return@withContext
-                    }
-                    Log.d(TAG_MAIN, "AdMob confirmado listo")
-                }
+
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
                 if (playerId.isNotEmpty()) {
                     initializeUserSession(playerId)
                 }
+
                 withContext(Dispatchers.Main) {
-                    // Paso 3: Inicializar AdManager
+                    // Inicializar AdManager aquí (AdsInit.init ya fue llamado en Splash)
                     AdManager.initialize(this@MainActivity)
-                    delay(2000) // Esperar que AdManager precargue
-                    // Paso 4: Finalizar UI
                     finalizeUIInitialization(playerId)
-                    // Paso 5: AHORA SÍ cargar banners (después de TODO lo demás)
-                    delay(3000L) // Total: ~10 segundos desde onCreate
+
+                    // Cargar banners después de 1 segundo
+                    delay(1000L)
                     loadBannersWhenReady()
+
+                    // Debug banner status
+                    if (BuildConfig.DEBUG) {
+                        debugBannerStatus()
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG_MAIN, "Error en background initialization: ${e.message}")
@@ -459,22 +488,29 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun initializeAdvertisingId() {
         try {
+            // ✅ VERIFICAR SI YA FUE OBTENIDO
+            val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+            val cachedAdId = prefs.getString("advertising_id", null)
+
+            if (cachedAdId != null) {
+                Log.d("ADVERTISING_ID", "✅ Usando ID cacheado")
+                return
+            }
+
             withContext(Dispatchers.IO) {
                 val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
                 val advertisingId = adInfo.id
                 val isLimitAdTrackingEnabled = adInfo.isLimitAdTrackingEnabled
+                // ✅ GUARDAR EN CACHE
+                advertisingId?.let {
+                    prefs.edit().putString("advertising_id", it).apply()
+                }
 
-                Log.d("ADVERTISING_ID", "Advertising ID inicializado: ${advertisingId?.take(8)}...")
+                Log.d("ADVERTISING_ID", "✅ Advertising ID obtenido y cacheado")
                 Log.d("ADVERTISING_ID", "Limit Ad Tracking: $isLimitAdTrackingEnabled")
             }
-        } catch (e: IOException) {
-            Log.w("ADVERTISING_ID", "Error de red obteniendo Advertising ID: ${e.message}")
-        } catch (e: GooglePlayServicesNotAvailableException) {
-            Log.w("ADVERTISING_ID", "Google Play Services no disponible: ${e.message}")
-        } catch (e: GooglePlayServicesRepairableException) {
-            Log.w("ADVERTISING_ID", "Google Play Services reparable: ${e.message}")
         } catch (e: Exception) {
-            Log.e("ADVERTISING_ID", "Error general obteniendo Advertising ID: ${e.message}")
+            Log.e("ADVERTISING_ID", "❌ Error: ${e.message}")
         }
     }
 
@@ -504,16 +540,30 @@ class MainActivity : AppCompatActivity() {
                 Log.e(TAG_MAIN, "Binding no disponible en finalizeUIInitialization")
                 return
             }
+
+            // ✅ VALIDACIÓN CRÍTICA: Si no hay ID, mostrar prompt inmediatamente
+            if (playerId.isEmpty()) {
+                Log.w(TAG_MAIN, "⚠️ Usuario sin ID configurado, mostrando prompt")
+                binding.root.postDelayed({
+                    showWelcomeAndPromptId()
+                }, 1000)
+            } else {
+                // ✅ AGREGAR: Verificar referido pendiente
+                DeepLinkHandler.checkPendingReferralCode(this)
+            }
+
             arreglarColoresDeTextos()
             initializeGrid()
             obtenerTop5Firebase()
             startWeeklyPrizeListener()
+            startSorteoButtonAnimation()
             Handler(Looper.getMainLooper()).postDelayed({
                 setupSorteoControlListener()
             }, 2000)
             fetchAllData()
             startWeeklyCountdown()
             checkNotificationPermissions()
+            com.follgramer.diamantesproplayersgo.util.RatingPrompter.onAppStart(this)
             Onboarding.showIfNeeded(this)
             handleNotificationIntent(intent)
             if (playerId.isEmpty() && auth.currentUser == null) {
@@ -525,10 +575,78 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupMisionesNativeAd() {
+        lifecycleScope.launch {
+            try {
+                Log.d("TASKS_AD", "🎯 Iniciando carga de anuncio nativo en tareas...")
+
+                // Esperar 2 segundos antes de cargar
+                delay(2000)
+
+                // Verificar que la vista esté inflada
+                if (!::binding.isInitialized) {
+                    Log.e("TASKS_AD", "❌ Binding no inicializado")
+                    return@launch
+                }
+
+                // Buscar los contenedores en section_tasks
+                val adContainer = binding.sectionTasks.root.findViewById<FrameLayout>(R.id.native_ad_container_tasks)
+                val nativeAdView = binding.sectionTasks.root.findViewById<com.google.android.gms.ads.nativead.NativeAdView>(R.id.native_ad_view_tasks)
+
+                if (adContainer == null) {
+                    Log.e("TASKS_AD", "❌ native_ad_container_tasks es NULL")
+                    return@launch
+                }
+
+                if (nativeAdView == null) {
+                    Log.e("TASKS_AD", "❌ native_ad_view_tasks es NULL")
+                    return@launch
+                }
+
+                Log.d("TASKS_AD", "✅ Contenedores encontrados correctamente")
+                Log.d("TASKS_AD", "📦 adContainer: $adContainer")
+                Log.d("TASKS_AD", "📦 nativeAdView: $nativeAdView")
+
+                withContext(Dispatchers.Main) {
+                    NativeAdHelper.loadNativeAd(
+                        activity = this@MainActivity,
+                        container = adContainer,
+                        nativeAdView = nativeAdView,
+                        holderId = 888 // ID único para esta sección
+                    )
+                }
+
+                Log.d("TASKS_AD", "✅ Carga de anuncio nativo iniciada")
+
+            } catch (e: Exception) {
+                Log.e("TASKS_AD", "❌ Error: ${e.message}", e)
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // ✅ NUEVA FUNCIÓN: Mostrar bienvenida y prompt de ID
+    private fun showWelcomeAndPromptId() {
+        MaterialDialog(this).show {
+            title(text = "👋 ¡Bienvenido!")
+            message(text = "Para empezar a jugar y participar en el sorteo semanal, necesitas configurar tu ID de jugador único.\n\n¿Deseas configurarlo ahora?")
+            positiveButton(text = "Configurar ID") {
+                promptForPlayerId()
+            }
+            negativeButton(text = "Más tarde") {
+                // El usuario puede configurarlo después tocando en "Toca para configurar"
+            }
+            cancelable(false)
+        }
+    }
+
     override fun onStart() {
         super.onStart()
 
         lifecycleScope.launch(Dispatchers.Main) {
+            com.follgramer.diamantesproplayersgo.util.RatingPrompter.maybeAsk(this@MainActivity)
+            com.follgramer.diamantesproplayersgo.util.AdminModalManager.fetchAndShow(this@MainActivity)
+            com.follgramer.diamantesproplayersgo.util.InAppUpdateHelper.check(this@MainActivity)
         }
     }
 
@@ -537,27 +655,30 @@ class MainActivity : AppCompatActivity() {
         try {
             ensureSystemBarsVisible()
             Log.d(TAG_MAIN, "onResume - Verificando estado")
+
             currentSpins = SessionManager.getCurrentSpins(this)
             updateSpinCountUI()
             updateNotificationBadge()
+
             if (currentSorteoState == "normal") {
                 showNormalState()
-            }
-
-            if (::binding.isInitialized) {
-                Log.d(TAG_MAIN, "Resumiendo banners...")
-                BannerHelper.resume(binding.root)
             }
 
             lifecycleScope.launch {
                 val unreadCount = AppNotificationManager.getInstance(this@MainActivity).getUnreadCount()
                 Log.d(TAG_MAIN, "📬 Unread notifications: $unreadCount")
             }
+
+            // Resumir banners
+            if (::binding.isInitialized) {
+                Log.d(TAG_MAIN, "Resumiendo banners...")
+                BannerHelper.resume(binding.root)
+            }
+
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error en onResume: ${e.message}")
         }
     }
-
 
     override fun onPause() {
         super.onPause()
@@ -579,62 +700,97 @@ class MainActivity : AppCompatActivity() {
         setIntent(intent)
         Log.d(TAG_MAIN, "📲 onNewIntent called")
         handleNotificationIntent(intent)
+        // ✅ AGREGAR
+        DeepLinkHandler.handle(this, intent)
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        onlineStatusJob?.cancel()
         commManager.cleanup()
         try {
+            Log.d(TAG_MAIN, "🛑 Deteniendo listeners de notificación")
+            AppNotificationManager.getInstance(this).stopListening()
+            NotificationEventBus.unsubscribe { }
+
             if (::binding.isInitialized) {
                 Log.d(TAG_MAIN, "Destruyendo banners...")
                 BannerHelper.destroy(binding.root)
             }
 
-            Log.d(TAG_MAIN, "🛑 Deteniendo listeners de notificación")
-            AppNotificationManager.getInstance(this).stopListening()
-            NotificationEventBus.unsubscribe { }
-
         } catch (e: Exception) {
-            Log.e(TAG_MAIN, "Error en onDestroy: ${e.message}")
+            Log.e(TAG_MAIN, "Error en limpieza de banners: ${e.message}")
         }
-        cleanupResources()
-    }
 
+        cleanupResources()
+        super.onDestroy()
+    }
 
     private fun cleanupResources() {
         try {
-            Log.d(TAG_MAIN, "Cleaning up resources...")
+            Log.d(TAG_MAIN, "🧹 Limpiando recursos...")
+
             releaseAudioFocus()
             countdownTimer?.cancel()
             revealCountdownTimer?.cancel()
             countdownTimer = null
             revealCountdownTimer = null
+
+            // ✅ LIMPIAR LISTENER DE WEEKLY PRIZE
             weeklyPrizeListener?.let { listener ->
                 weeklyPrizeRef?.removeEventListener(listener)
             }
             weeklyPrizeListener = null
             weeklyPrizeRef = null
-            firebaseListeners.forEach { listener ->
-                firebaseReferences.forEach { ref ->
-                    try {
-                        ref.removeEventListener(listener)
-                    } catch (e: Exception) {
-                        Log.w(TAG_MAIN, "Error removing listener: ${e.message}")
-                    }
+
+            // ✅ LIMPIAR LISTENER DE PLAYER DATA
+            playerDataListener?.let { listener ->
+                playerDataRef?.removeEventListener(listener)
+            }
+            playerDataListener = null
+            playerDataRef = null
+
+            // ✅ LIMPIAR TODOS LOS LISTENERS DE FIREBASE
+            firebaseReferences.forEachIndexed { index, ref ->
+                try {
+                    val listener = firebaseListeners.getOrNull(index)
+                    listener?.let { ref.removeEventListener(it) }
+                } catch (e: Exception) {
+                    Log.w(TAG_MAIN, "Error removing listener: ${e.message}")
                 }
             }
             firebaseListeners.clear()
             firebaseReferences.clear()
+
             audioManager = null
             audioFocusRequest = null
             hasAudioFocus = false
+
             AdManager.cleanup()
-            // NativeAdHelper.cleanup() // ❌ COMENTADO
             marcarSesionInactiva()
-            Log.d(TAG_MAIN, "Resources cleaned successfully")
+
+            Log.d(TAG_MAIN, "✅ Recursos limpiados exitosamente")
         } catch (e: Exception) {
-            Log.e(TAG_MAIN, "Error cleaning up resources: ${e.message}")
+            Log.e(TAG_MAIN, "❌ Error limpiando recursos: ${e.message}")
+        }
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        when (level) {
+            TRIM_MEMORY_RUNNING_LOW,
+            TRIM_MEMORY_RUNNING_CRITICAL -> {
+                Log.w(TAG_MAIN, "⚠️ Memoria baja detectada, limpiando cache...")
+                // Pausar animaciones
+                try {
+                    binding.sectionHome.sorteoButtonContainer.clearAnimation()
+                } catch (e: Exception) {
+                    Log.e(TAG_MAIN, "Error pausando animaciones: ${e.message}")
+                }
+                // Limpiar cache de imágenes si tienes
+                System.gc()
+            }
+            TRIM_MEMORY_UI_HIDDEN -> {
+                Log.d(TAG_MAIN, "UI oculto, pausando operaciones pesadas")
+            }
         }
     }
 
@@ -735,19 +891,22 @@ class MainActivity : AppCompatActivity() {
                     }
                     is GiftEvent -> {
                         Log.d(TAG_MAIN, "🎁 Gift event received: ${event.amount} ${event.unit}")
+                        // ✅ CONSTRUIR MENSAJE EN ESPAÑOL CORRECTO
+                        val cantidad = event.amount.toIntOrNull() ?: 0
                         val giftMessage = when (event.unit) {
-                            "passes" -> "You have received ${event.amount} passes"
-                            "tickets" -> "You have received ${event.amount} tickets"
-                            "spins" -> "You have received ${event.amount} spins"
+                            "passes" -> if (cantidad == 1) "Has recibido $cantidad pase" else "Has recibido $cantidad pases"
+                            "tickets" -> if (cantidad == 1) "Has recibido $cantidad ticket" else "Has recibido $cantidad tickets"
+                            "spins" -> if (cantidad == 1) "Has recibido $cantidad giro" else "Has recibido $cantidad giros"
                             else -> event.message
                         }
+
                         notificationManager.showSystemNotification(
                             "gift",
-                            "🎁 Gift Received",
+                            "🎁 Regalo Recibido",  // ✅ Traducido
                             giftMessage,
                             NotificationCompat.PRIORITY_DEFAULT
                         )
-                        showGeneralModal("🎁 Gift Received", giftMessage)
+                        showGeneralModal("🎁 Regalo Recibido", giftMessage)  // ✅ Traducido
                         currentPlayerId?.let { fetchPlayerData(it) }
                     }
                     is BanEvent -> {
@@ -780,6 +939,179 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG_MAIN, "🚀 Starting notification listener for: $playerId")
             notificationManager.startListening(playerId)
         }
+
+        // ✅ CRÍTICO: Cargar y mostrar la ÚLTIMA notificación al abrir la app
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                delay(2000) // Esperar 2 segundos después de abrir
+
+                val playerId = SessionManager.getPlayerId(this@MainActivity)
+                if (playerId.isEmpty()) {
+                    Log.d(TAG_MAIN, "⚠️ No hay player ID, saltando carga de última notificación")
+                    return@launch
+                }
+
+                val lastNotif = database.child("appConfig").child("lastNotification")
+                    .get().await()
+
+                if (lastNotif.exists()) {
+                    val data = lastNotif.value as? Map<String, Any>
+                    if (data != null) {
+                        // ✅ GENERAR ID ÚNICO PARA LA NOTIFICACIÓN
+                        val notificationId = data["id"] as? String
+                            ?: data["timestamp"]?.toString()
+                            ?: System.currentTimeMillis().toString()
+
+                        // ✅ VERIFICAR SI YA FUE VISTA
+                        val wasViewed = database.child("appConfig")
+                            .child("viewedNotifications")
+                            .child(playerId)
+                            .child(notificationId)
+                            .get()
+                            .await()
+                            .getValue(Boolean::class.java) ?: false
+
+                        if (wasViewed) {
+                            Log.d(TAG_MAIN, "✅ Notificación ya vista, no mostrar")
+                            return@launch
+                        }
+
+                        val notificationData = AppNotificationManager.NotificationData(
+                            id = notificationId,
+                            type = data["type"] as? String ?: "general",
+                            title = data["title"] as? String ?: "Notificación",
+                            body = data["body"] as? String,
+                            message = data["message"] as? String ?: "",
+                            timestamp = data["timestamp"] as? Long ?: System.currentTimeMillis(),
+                            amount = data["amount"] as? String,
+                            unit = data["unit"] as? String,
+                            sound = true,
+                            vibrate = true,
+                            isRead = false
+                        )
+
+                        withContext(Dispatchers.Main) {
+                            // Mostrar modal con la última notificación
+                            showGeneralModal(notificationData.title, notificationData.message)
+
+                            // ✅ MARCAR COMO VISTA
+                            markNotificationAsViewed(playerId, notificationId)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error cargando última notificación: ${e.message}")
+            }
+        }
+    }
+
+    private fun markNotificationAsViewed(playerId: String, notificationId: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                database.child("appConfig")
+                    .child("viewedNotifications")
+                    .child(playerId)
+                    .child(notificationId)
+                    .setValue(true)
+                    .await()
+
+                Log.d(TAG_MAIN, "✅ Notificación marcada como vista: $notificationId")
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error marcando notificación como vista: ${e.message}")
+            }
+        }
+    }
+
+    private fun setupRealtimeConfigListeners() {
+        Log.d(TAG_MAIN, "🔄 Configurando listeners optimizados...")
+        // ✅ USAR UN SOLO LISTENER PARA TODA LA CONFIGURACIÓN
+        database.child("appConfig").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                try {
+                    // Premios Semanales
+                    val weeklyPrizesSnap = snapshot.child("weeklyPrizes")
+                    if (weeklyPrizesSnap.exists()) {
+                        val first = weeklyPrizesSnap.child("first").getValue(String::class.java) ?: "1,000 💎"
+                        val second = weeklyPrizesSnap.child("second").getValue(String::class.java) ?: "500 💎"
+                        val third = weeklyPrizesSnap.child("third").getValue(String::class.java) ?: "200 💎"
+                        runOnUiThread {
+                            binding.sectionHome.prize1Text.text = first
+                            binding.sectionHome.prize2Text.text = second
+                            binding.sectionHome.prize3Text.text = third
+                        }
+                    }
+                    // Botón de Sorteo
+                    val sorteoButtonSnap = snapshot.child("sorteoButton")
+                    if (sorteoButtonSnap.exists()) {
+                        val buttonText = sorteoButtonSnap.child("text").getValue(String::class.java) ?: "ACTIVO"
+                        val buttonSubtext = sorteoButtonSnap.child("subtext").getValue(String::class.java) ?: "Sorteo en curso"
+                        runOnUiThread {
+                            binding.sectionHome.sorteoButtonText.text = buttonText
+                            binding.sectionHome.sorteoButtonSubtext.text = buttonSubtext
+                            binding.sectionHome.sorteoButtonContainer.visibility = View.VISIBLE
+                        }
+                    }
+                    Log.d(TAG_MAIN, "✅ Configuración actualizada")
+
+                } catch (e: Exception) {
+                    Log.e(TAG_MAIN, "❌ Error actualizando config: ${e.message}")
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG_MAIN, "❌ Error listener config: ${error.message}")
+            }
+        })
+    }
+
+    private fun startSorteoButtonAnimation() {
+        lifecycleScope.launch {
+            // ✅ Pequeño delay inicial para evitar lag en el inicio
+            delay(1000)
+
+            while (isActive) {
+                try {
+                    withContext(Dispatchers.Main) {
+                        binding.sectionHome.sorteoButtonContainer.apply {
+                            visibility = View.VISIBLE
+                            alpha = 0f
+
+                            // ✅ Fade In suave
+                            animate()
+                                .alpha(1f)
+                                .setDuration(600)
+                                .withStartAction {
+                                    // ✅ Aplicar animación SOLO cuando está visible
+                                    val pulseAnimation = android.view.animation.AnimationUtils
+                                        .loadAnimation(this@MainActivity, R.anim.pulse_live_animation)
+                                    startAnimation(pulseAnimation)
+                                }
+                                .start()
+                        }
+                    }
+                    delay(5000) // Visible con pulse por 5 segundos
+                    withContext(Dispatchers.Main) {
+                        binding.sectionHome.sorteoButtonContainer.apply {
+                            // ✅ Detener animación antes de ocultar
+                            clearAnimation()
+
+                            // ✅ Fade Out suave
+                            animate()
+                                .alpha(0f)
+                                .setDuration(600)
+                                .withEndAction {
+                                    visibility = View.INVISIBLE
+                                    alpha = 1f // Reset para próximo ciclo
+                                }
+                                .start()
+                        }
+                    }
+                    delay(3000) // Oculto por 3 segundos
+                } catch (e: Exception) {
+                    Log.e(TAG_MAIN, "Error en animación: ${e.message}")
+                }
+            }
+        }
     }
 
     private fun setupNotificationButton() {
@@ -793,7 +1125,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             while (isActive) {
                 updateNotificationBadge()
-                delay(5000) // Update every 5 seconds
+                delay(30000) // ✅ CAMBIAR DE 5 segundos a 30 segundos
             }
         }
     }
@@ -1049,9 +1381,9 @@ class MainActivity : AppCompatActivity() {
                         tickets = player.tickets
                     )
                 }
-                // Actualizar datos del adapter existente
-                leaderboardAdapter?.updateData(leaderboardItems, currentPlayerId)
-                // Mini leaderboard
+                binding.sectionLeaderboard.leaderboardRecyclerView.adapter =
+                    LeaderboardAdapter(this@MainActivity, this@MainActivity, leaderboardItems.toMutableList(), currentPlayerId)
+
                 if (jugadoresOrdenados.isNotEmpty()) {
                     val top5 = jugadoresOrdenados.take(5)
                     binding.sectionHome.miniLeaderboardList.adapter =
@@ -1066,7 +1398,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun startWeeklyPrizeListener() {
         try {
             if (!::database.isInitialized) {
@@ -1077,8 +1408,28 @@ class MainActivity : AppCompatActivity() {
             weeklyPrizeListener?.let { listener ->
                 weeklyPrizeRef?.removeEventListener(listener)
             }
-            // YA NO ACTUALIZAMOS tvWeeklyPrize dinámicamente
-            // El texto estático "Premios de esta semana" está en el XML
+            val ref = database.child("appConfig").child("weeklyPrize").child("text")
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val prize = snapshot.getValue(String::class.java)?.trim().orEmpty()
+                    runOnUiThread {
+                        if (prize.isNotEmpty()) {
+                            binding.sectionHome.tvWeeklyPrize.text = getString(R.string.weekly_prize_template, prize)
+                        } else {
+                            binding.sectionHome.tvWeeklyPrize.text = "Prize: 1,000 Diamonds ✨"
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    runOnUiThread {
+                        binding.sectionHome.tvWeeklyPrize.text = "Prize: 1,000 Diamonds ✨"
+                    }
+                }
+            }
+            ref.addValueEventListener(listener)
+            weeklyPrizeRef = ref
+            weeklyPrizeListener = listener // Assign the listener to the variable
         } catch (e: Exception) {
             Log.e("WEEKLY_PRIZE", "Error: ${e.message}")
         }
@@ -1127,23 +1478,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun showNormalState() {
         binding.sectionHome.apply {
+            // Hide all states
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
+            // Show normal state
             normalStateContainer.visibility = View.VISIBLE
-            sorteoStatusBadge.apply {
-                text = "ACTIVO"
-                setTextColor(Color.WHITE)
-                setBackgroundResource(R.drawable.background_badge_active_pulse)
-                // ✅ ANIMACIÓN SUAVE DE APARECER/DESAPARECER (COMO LIVE)
-                val fadeAnimation = android.view.animation.AlphaAnimation(1.0f, 0.3f).apply {
-                    duration = 1000
-                    repeatMode = android.view.animation.Animation.REVERSE
-                    repeatCount = android.view.animation.Animation.INFINITE
-                }
-                startAnimation(fadeAnimation)
-            }
+
+            // ✅ USAR sorteoButtonContainer en lugar de sorteoStatusBadge
+            sorteoButtonContainer.visibility = View.VISIBLE
+            // Reset texts
+            countdownLabel.text = "Ends in:"
+            countdownLabel.setTextColor(Color.parseColor("#8B949E"))
         }
+        // Restart countdown if not running
         if (countdownTimer == null) {
             startWeeklyCountdown()
         }
@@ -1151,86 +1499,121 @@ class MainActivity : AppCompatActivity() {
 
     private fun showProcessingState() {
         binding.sectionHome.apply {
-            // Ocultar contenedores viejos
+            // Hide other states
             normalStateContainer.visibility = View.GONE
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-            // ✅ Solo actualizar el badge visible
-            sorteoStatusBadge.apply {
-                visibility = View.VISIBLE
-                text = "PROCESANDO"
-                setTextColor(Color.parseColor("#f59e0b"))
-                setBackgroundColor(Color.parseColor("#1A2A35"))
-            }
+            // Show processing state
+            processingStateContainer.visibility = View.VISIBLE
+            // ✅ ACTUALIZAR el botón amarillo
+            sorteoButtonContainer.visibility = View.VISIBLE
+            sorteoButtonText.text = "PROCESANDO"
+            sorteoButtonText.setTextColor(Color.parseColor("#f59e0b"))
+            sorteoButtonSubtext.text = "Espera un momento..."
+            // Update message
+            processingMessage.text = "Processing draw..."
+            // Update title based on message
+            processingTitle.text = "Processing Draw"
         }
     }
 
     private fun showPausedState(message: String) {
         currentSorteoState = "paused"
         binding.sectionHome.apply {
+            // Show normal state but with modifications
             normalStateContainer.visibility = View.VISIBLE
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-            sorteoStatusBadge.visibility = View.VISIBLE
-            sorteoStatusBadge.text = "PAUSADO"
-            sorteoStatusBadge.setTextColor(Color.parseColor("#f59e0b"))
-            countdown.text = "PAUSADO"
+            // ✅ ACTUALIZAR el botón amarillo
+            sorteoButtonContainer.visibility = View.VISIBLE
+            sorteoButtonText.text = "PAUSADO"
+            sorteoButtonText.setTextColor(Color.parseColor("#f59e0b"))
+            sorteoButtonSubtext.text = message.ifEmpty { "Draw temporarily paused" }
+            // Change countdown
+            countdown.text = "PAUSED"
             countdown.setTextColor(Color.parseColor("#f59e0b"))
-            countdownLabel.text = message.ifEmpty { "Sorteo temporalmente pausado" }
+            countdownLabel.text = message.ifEmpty { "Draw temporarily paused" }
         }
     }
 
     private fun showRevealState(remaining: Long, winnerId: String, prize: String) {
         binding.sectionHome.apply {
-            // Ocultar contenedores viejos
+            // Hide other states
             normalStateContainer.visibility = View.GONE
             processingStateContainer.visibility = View.GONE
             winnerRevealedContainer.visibility = View.GONE
-            // ✅ Solo actualizar el badge y countdown visible
-            sorteoStatusBadge.apply {
-                visibility = View.VISIBLE
-                text = "LIVE!"
-                setTextColor(Color.parseColor("#e74c3c"))
-                setBackgroundColor(Color.parseColor("#1A2A35"))
-            }
-            // Actualizar el countdown que SÍ está visible en el nuevo diseño
+            // Show reveal state
+            revealStateContainer.visibility = View.VISIBLE
+            // ✅ ACTUALIZAR el botón amarillo
+            sorteoButtonContainer.visibility = View.VISIBLE
+            sorteoButtonText.text = "EN VIVO!"
+            sorteoButtonText.setTextColor(Color.parseColor("#e74c3c"))
+            sorteoButtonSubtext.text = "Revelando ganador..."
+            // Update countdown
             val seconds = (remaining / 1000).toInt()
-            countdown.text = String.format("%02d:%02d", seconds / 60, seconds % 60)
+            revealCountdown.text = String.format("%02d:%02d", seconds / 60, seconds % 60)
+            revealCountdown.textSize = 28f
+            // Change color based on remaining time
             val countdownColor = when {
                 seconds > 60 -> Color.parseColor("#f59e0b")
                 seconds > 30 -> Color.parseColor("#FFD700")
                 seconds > 10 -> Color.parseColor("#ff9800")
                 else -> Color.parseColor("#e74c3c")
             }
-            countdown.setTextColor(countdownColor)
+            revealCountdown.setTextColor(countdownColor)
+            // Pulsing animation in the last 10 seconds
+            if (seconds <= 10 && seconds > 0) {
+                revealCountdown.animate()
+                    .scaleX(1.1f).scaleY(1.1f)
+                    .setDuration(300)
+                    .withEndAction {
+                        revealCountdown.animate()
+                            .scaleX(1f).scaleY(1f)
+                            .setDuration(300)
+                    }
+            }
+            if (remaining <= 3000) {
+                // Show "WINNER CHOSEN" animation at the end
+                revealCountdown.text = "WINNER CHOSEN!"
+                revealCountdown.textSize = 20f
+                revealCountdown.setTextColor(Color.parseColor("#FFD700"))
+                vibratePattern(longArrayOf(0, 200, 100, 200, 100, 200))
+            }
         }
     }
 
     private fun showWinnerRevealedState(winnerId: String, prize: String) {
         binding.sectionHome.apply {
+            // Hide other states
             normalStateContainer.visibility = View.GONE
             processingStateContainer.visibility = View.GONE
             revealStateContainer.visibility = View.GONE
-            sorteoStatusBadge.apply {
-                visibility = View.VISIBLE
-                text = "COMPLETADO"
-                setTextColor(Color.parseColor("#2ecc71"))
-                setBackgroundColor(Color.parseColor("#1A2A35"))
-            }
-            countdown.text = "Ganador: $winnerId"
-            countdown.setTextColor(Color.parseColor("#FFD700"))
+            // Show winner revealed state
+            winnerRevealedContainer.visibility = View.VISIBLE
+            // ✅ ACTUALIZAR el botón amarillo
+            sorteoButtonContainer.visibility = View.VISIBLE
+            sorteoButtonText.text = "COMPLETADO"
+            sorteoButtonText.setTextColor(Color.parseColor("#2ecc71"))
+            sorteoButtonSubtext.text = "Sorteo finalizado"
+            // Update texts
+            winnerIdText.text = "Winner: $winnerId"
+            prizeWonText.text = "Prize: $prize"
+            // If we are the winner
             if (currentPlayerId == winnerId) {
                 vibratePattern(longArrayOf(0, 500, 100, 500, 100, 1000))
+                // Change spin button color
                 spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFD700"))
-                spinButton.text = "🏆 ¡ERES EL GANADOR! 🏆"
+                spinButton.text = "🏆 YOU ARE THE WINNER! 🏆"
+                // Restore button after 30 seconds
                 Handler(Looper.getMainLooper()).postDelayed({
                     spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
-                    spinButton.text = "GIRAR RULETA"
+                    spinButton.text = "SPIN THE WHEEL!"
                 }, 30000)
             }
         }
+        // Return to normal state after 2 minutes
         Handler(Looper.getMainLooper()).postDelayed({
             showNormalState()
         }, 120000)
@@ -1296,41 +1679,57 @@ class MainActivity : AppCompatActivity() {
 
     private fun startWeeklyCountdown() {
         countdownTimer?.cancel()
+
+        // Get draw configuration from Firebase
         database.child("appConfig").child("weeklyPrize").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val drawDay = snapshot.child("day").getValue(Int::class.java) ?: 0
+                val drawDay = snapshot.child("day").getValue(Int::class.java) ?: 0 // Sunday by default (0)
                 val drawTime = snapshot.child("time").getValue(String::class.java) ?: "18:00"
                 val timeParts = drawTime.split(":")
                 val hour = timeParts.getOrNull(0)?.toIntOrNull() ?: 18
                 val minute = timeParts.getOrNull(1)?.toIntOrNull() ?: 0
+
                 val calendar = Calendar.getInstance()
                 val now = calendar.timeInMillis
-                calendar.set(Calendar.DAY_OF_WEEK, drawDay + 1)
+
+                // Configure next draw
+                calendar.set(Calendar.DAY_OF_WEEK, drawDay + 1) // Calendar uses 1=Sunday, our panel 0=Sunday
                 calendar.set(Calendar.HOUR_OF_DAY, hour)
                 calendar.set(Calendar.MINUTE, minute)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
+
+
+                // If it has already passed, schedule for next week
                 if (calendar.timeInMillis < now) {
                     calendar.add(Calendar.WEEK_OF_YEAR, 1)
                 }
+
                 val diff = calendar.timeInMillis - now
-                countdownTimer = object : CountDownTimer(diff, 1000) { // ✅ CAMBIADO A 1000ms
+
+                countdownTimer = object : CountDownTimer(diff, 60000) {
                     override fun onTick(millisUntilFinished: Long) {
                         val days = TimeUnit.MILLISECONDS.toDays(millisUntilFinished)
                         val hours = TimeUnit.MILLISECONDS.toHours(millisUntilFinished) % 24
                         val minutes = TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished) % 60
+
                         binding.sectionHome.countdown.text = String.format("%dd %dh %dm", days, hours, minutes)
                     }
+
                     override fun onFinish() {
-                        binding.sectionHome.countdown.text = "¡En curso!"
+                        binding.sectionHome.countdown.text = "Draw in Progress!"
                         binding.sectionHome.countdown.setTextColor(Color.parseColor("#FFD700"))
+
+                        // Restart for next week
                         Handler(Looper.getMainLooper()).postDelayed({
                             startWeeklyCountdown()
-                        }, 60000)
+                        }, 60000) // Wait 1 minute before restarting
                     }
                 }.start()
             }
+
             override fun onCancelled(error: DatabaseError) {
+                // Use default configuration if it fails
                 startDefaultWeeklyCountdown()
             }
         })
@@ -1409,8 +1808,8 @@ class MainActivity : AppCompatActivity() {
                                         winner.timestamp ?: System.currentTimeMillis()
                                     )
                                 }
-                                // Actualizar datos del adapter existente
-                                winnersAdapter?.updateData(winnerItems)
+                                binding.sectionWinners.winnersRecyclerView.adapter =
+                                    WinnersAdapter(this@MainActivity, winnerItems.toMutableList())
                             }
                         }
                     } catch (e: Exception) {
@@ -1433,32 +1832,33 @@ class MainActivity : AppCompatActivity() {
     private fun fetchPlayerData(playerId: String) {
         try {
             if (!::database.isInitialized) return
+
+            // ✅ REMOVER LISTENER ANTERIOR SI EXISTE
+            playerDataListener?.let { listener ->
+                playerDataRef?.removeEventListener(listener)
+            }
+
             val playerRef = database.child("players").child(playerId)
+
             val listener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
                         val tickets = snapshot.child("tickets").getValue(Long::class.java) ?: 0L
                         val passes = snapshot.child("passes").getValue(Long::class.java) ?: 0L
                         val firebaseSpins = snapshot.child("spins").getValue(Long::class.java)?.toInt() ?: 10
-
                         val localSpins = SessionManager.getCurrentSpins(this@MainActivity)
                         if (firebaseSpins != localSpins) {
-                            Log.d("FETCH_PLAYER", "🚀 Syncing spins: Local=$localSpins, Firebase=$firebaseSpins")
-
                             val finalSpins = maxOf(firebaseSpins, localSpins)
                             SessionManager.setCurrentSpins(this@MainActivity, finalSpins)
                             currentSpins = finalSpins
-
                             if (localSpins > firebaseSpins) {
                                 updateSpinsInFirebase(finalSpins)
                             }
                         } else {
                             currentSpins = firebaseSpins
                         }
-
                         updateUI(tickets, passes)
                         updateSpinCountUI()
-                        Log.d("FETCH_PLAYER", "✅ Data synced: T:$tickets, P:$passes, S:$currentSpins")
                     } else {
                         val initialSpins = SessionManager.getCurrentSpins(this@MainActivity)
                         val newPlayerData = mapOf(
@@ -1474,7 +1874,6 @@ class MainActivity : AppCompatActivity() {
                         currentSpins = initialSpins
                         updateUI(0, 0)
                         updateSpinCountUI()
-                        Log.d("FETCH_PLAYER", "✅ New player created with $initialSpins spins")
                     }
                 }
 
@@ -1482,9 +1881,12 @@ class MainActivity : AppCompatActivity() {
                     Log.e("FETCH_PLAYER", "❌ Error: ${error.message}")
                 }
             }
+
             playerRef.addValueEventListener(listener)
-            firebaseListeners.add(listener)
-            firebaseReferences.add(playerRef)
+
+            // ✅ GUARDAR REFERENCIA PARA LIMPIEZA
+            playerDataListener = listener
+            playerDataRef = playerRef
         } catch (e: Exception) {
             Log.e("FETCH_PLAYER", "❌ Error getting player data: ${e.message}")
         }
@@ -1582,52 +1984,43 @@ class MainActivity : AppCompatActivity() {
                     intArrayOf(-android.R.attr.state_checked)
                 ),
                 intArrayOf(
-                    Color.BLACK,
-                    Color.parseColor("#E5E7EB")
+                    Color.WHITE,  // ✅ TEXTO BLANCO CUANDO ESTÁ SELECCIONADO
+                    Color.parseColor("#E5E7EB")  // Texto gris cuando no está seleccionado
                 )
             )
-
             val iconColors = ColorStateList(
                 arrayOf(
                     intArrayOf(android.R.attr.state_checked),
                     intArrayOf(-android.R.attr.state_checked)
                 ),
                 intArrayOf(
-                    Color.parseColor("#00A8FF"),
-                    Color.parseColor("#9CA3AF")
+                    Color.parseColor("#00A8FF"),  // ✅ ICONO AZUL CUANDO ESTÁ SELECCIONADO
+                    Color.parseColor("#9CA3AF")   // Icono gris cuando no está seleccionado
                 )
             )
-
             binding.navView.itemTextColor = menuItemColors
             binding.navView.itemIconTintList = iconColors
             binding.navView.itemBackground = createSelectableBackground()
-
-            Log.d("NAV_COLORS", "✅ NavigationView colors configured")
-
         } catch (e: Exception) {
-            Log.e("NAV_COLORS", "❌ Error configuring colors: ${e.message}")
+            Log.e("NAV_COLORS", "Error configurando colores: ${e.message}")
         }
     }
 
     private fun createSelectableBackground(): Drawable {
         return try {
-            val selectedColor = Color.parseColor("#E3F2FD")
+            val selectedColor = Color.parseColor("#1A00A8FF")  // ✅ FONDO AZUL TRANSPARENTE
             val normalColor = Color.TRANSPARENT
-
             val selectedDrawable = GradientDrawable().apply {
                 setColor(selectedColor)
                 cornerRadius = 12f
             }
-
             val normalDrawable = GradientDrawable().apply {
                 setColor(normalColor)
                 cornerRadius = 12f
             }
-
             val stateListDrawable = StateListDrawable()
             stateListDrawable.addState(intArrayOf(android.R.attr.state_checked), selectedDrawable)
             stateListDrawable.addState(intArrayOf(), normalDrawable)
-
             stateListDrawable
         } catch (e: Exception) {
             Log.e("SELECTABLE_BG", "Error creating background: ${e.message}")
@@ -1637,41 +2030,52 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupLegalOptionsClickListeners() {
         try {
-            val drawerLayout = binding.drawerLayout
-            val navPrivacy = drawerLayout.findViewById<TextView>(R.id.nav_privacy)
-            val navTerms = drawerLayout.findViewById<TextView>(R.id.nav_terms)
-
-            navPrivacy?.setOnClickListener {
-                binding.drawerLayout.closeDrawer(GravityCompat.START)
-                binding.root.postDelayed({
-                    showLegalModal("Privacy Policy", getString(R.string.privacy_policy_content))
-                }, 250)
+            // ✅ BUSCAR LOS TextViews en el LinearLayout inferior del drawer
+            val navPrivacy = binding.drawerLayout.findViewById<TextView>(R.id.nav_privacy)
+            val navTerms = binding.drawerLayout.findViewById<TextView>(R.id.nav_terms)
+            // ✅ VERIFICAR QUE EXISTAN
+            if (navPrivacy == null) {
+                Log.e("LEGAL_SETUP", "❌ nav_privacy NO encontrado en el layout")
+                return
             }
 
-            navTerms?.setOnClickListener {
+            if (navTerms == null) {
+                Log.e("LEGAL_SETUP", "❌ nav_terms NO encontrado en el layout")
+                return
+            }
+            Log.d("LEGAL_SETUP", "✅ Configurando listeners de opciones legales")
+            // ✅ CONFIGURAR CLICK LISTENERS
+            navPrivacy.setOnClickListener {
+                Log.d("LEGAL_SETUP", "📄 Click en Políticas de Privacidad")
                 binding.drawerLayout.closeDrawer(GravityCompat.START)
                 binding.root.postDelayed({
-                    showLegalModal("Terms and Conditions", getString(R.string.terms_content))
-                }, 250)
+                    showLegalModal("Política de Privacidad", getString(R.string.privacy_policy_content))
+                }, 300)
             }
+            navTerms.setOnClickListener {
+                Log.d("LEGAL_SETUP", "📄 Click en Términos y Condiciones")
+                binding.drawerLayout.closeDrawer(GravityCompat.START)
+                binding.root.postDelayed({
+                    showLegalModal("Términos y Condiciones", getString(R.string.terms_content))
+                }, 300)
+            }
+            Log.d("LEGAL_SETUP", "✅ Listeners configurados correctamente")
         } catch (e: Exception) {
-            Log.e("LEGAL_SETUP", "Error configuring legal options: ${e.message}")
+            Log.e("LEGAL_SETUP", "❌ Error: ${e.message}")
+            e.printStackTrace()
         }
     }
 
     private fun setupRecyclerViews() {
-        // Leaderboard
         binding.sectionLeaderboard.leaderboardRecyclerView.layoutManager = LinearLayoutManager(this)
-        leaderboardAdapter = LeaderboardAdapter(this, this, mutableListOf(), null)
-        binding.sectionLeaderboard.leaderboardRecyclerView.adapter = leaderboardAdapter
-        // Winners
+        binding.sectionLeaderboard.leaderboardRecyclerView.adapter =
+            LeaderboardAdapter(this, this, mutableListOf(), null)
         binding.sectionWinners.winnersRecyclerView.layoutManager = LinearLayoutManager(this)
-        winnersAdapter = WinnersAdapter(this, mutableListOf())
-        binding.sectionWinners.winnersRecyclerView.adapter = winnersAdapter
-        // Mini leaderboard
+        binding.sectionWinners.winnersRecyclerView.adapter = WinnersAdapter(this, mutableListOf())
+        // DO NOT initialize the mini leaderboard adapter
         binding.sectionHome.miniLeaderboardList.layoutManager = LinearLayoutManager(this)
+        // DO NOT assign adapter here
     }
-
 
     private fun setupClickListeners() {
         try {
@@ -1739,30 +2143,46 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleNavigation(menuItem: MenuItem): Boolean {
         return try {
-            // Cerrar drawer primero
             binding.drawerLayout.closeDrawer(GravityCompat.START)
-            // Esperar a que el drawer se cierre antes de navegar
-            binding.drawerLayout.postDelayed({
-                clearAllMenuSelections()
+            clearAllMenuSelections()
+
+            // ✅ Solo marcar como checked si es del grupo principal
+            if (menuItem.groupId == R.id.group_main) {
                 menuItem.isChecked = true
-                when (menuItem.itemId) {
-                    R.id.nav_home -> {
-                        showSectionSafely(binding.sectionHome.root)
-                    }
-                    R.id.nav_tasks -> {
-                        showSectionWithAd(binding.sectionTasks.root)
-                    }
-                    R.id.nav_leaderboard -> {
-                        showSectionWithAd(binding.sectionLeaderboard.root)
-                    }
-                    R.id.nav_winners -> {
-                        showSectionWithAd(binding.sectionWinners.root)
-                    }
-                    else -> {
-                        showSectionSafely(binding.sectionHome.root)
-                    }
+            }
+
+            when (menuItem.itemId) {
+                R.id.nav_home -> {
+                    showSectionSafely(binding.sectionHome.root)
+                    AnalyticsManager.logScreenView("Home")
                 }
-            }, 250) // Delay para cerrar drawer
+                R.id.nav_tasks -> {
+                    showSectionWithAd(binding.sectionTasks.root)
+                    setupMisionesNativeAd()
+                    AnalyticsManager.logScreenView("Tasks")
+                }
+                R.id.nav_leaderboard -> {
+                    showSectionWithAd(binding.sectionLeaderboard.root)
+                    AnalyticsManager.logScreenView("Leaderboard")
+                }
+                R.id.nav_winners -> {
+                    showSectionWithAd(binding.sectionWinners.root)
+                    AnalyticsManager.logScreenView("Winners")
+                }
+                R.id.nav_referrals -> {
+                    showSectionWithAd(binding.sectionReferrals.root)
+                    setupReferralsSection()
+                    AnalyticsManager.logScreenView("Referrals")
+                }
+                R.id.nav_share -> {
+                    shareAppDirectly()
+                    return false  // ✅ No mantener selección
+                }
+                else -> {
+                    showSectionSafely(binding.sectionHome.root)
+                    return false
+                }
+            }
             true
         } catch (e: Exception) {
             Log.e("NAVIGATION", "Critical error: ${e.message}")
@@ -1771,7 +2191,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+    // AGREGAR ESTAS DOS FUNCIONES NUEVAS
     private fun showSectionSafely(section: View) {
         runOnUiThread {
             hideAllSections()
@@ -1781,20 +2201,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun showSectionWithAd(section: View) {
         if (AdManager.isInterstitialReady()) {
-            // Mostrar la sección ANTES del intersticial para evitar el parpadeo
-            showSectionSafely(section)
-            // Luego mostrar el intersticial
-            binding.root.postDelayed({
-                AdManager.showInterstitial(this) {
-                    // No hacer nada en onDismiss, ya mostramos la sección antes
-                    Log.d(TAG_MAIN, "Intersticial cerrado")
-                }
-            }, 100)
+            AdManager.showInterstitial(this) {
+                showSectionSafely(section)
+            }
         } else {
             showSectionSafely(section)
         }
     }
-
 
     private fun clearAllMenuSelections() {
         try {
@@ -1816,6 +2229,7 @@ class MainActivity : AppCompatActivity() {
         binding.sectionLeaderboard.root.visibility = View.GONE
         binding.sectionWinners.root.visibility = View.GONE
         binding.sectionLegal.root.visibility = View.GONE
+        binding.sectionReferrals.root.visibility = View.GONE // ← AGREGAR ESTA LÍNEA
     }
 
     private fun showLegalModal(title: String, content: String) {
@@ -1850,43 +2264,38 @@ class MainActivity : AppCompatActivity() {
             promptForPlayerId()
             return
         }
+
         if (!isNetworkAvailable()) {
-            AdFallbackStrategy.showNoInternetModal(this)
+            MaterialDialog(this).show {
+                title(text = "No connection")
+                message(text = "Connect to the internet to continue.")
+                positiveButton(text = "Understood")
+            }
             return
         }
+
         val audioFocusGranted = requestAudioFocus()
         if (!audioFocusGranted) {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
-        // ✅ Intentar mostrar rewarded con fallback
-        if (AdManager.isRewardedReady()) {
-            AdManager.showRewarded(this,
-                onReward = { rewardItem ->
-                    releaseAudioFocus()
-                    Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
-                    val spinsToAdd = 10
-                    SessionManager.addSpins(this, spinsToAdd)
-                    currentSpins = SessionManager.getCurrentSpins(this)
-                    updateSpinCountUI()
-                },
-                onDismiss = {
-                    releaseAudioFocus()
-                }
-            )
-        } else {
-            // ✅ No hay rewarded disponible, activar fallback
-            releaseAudioFocus()
-            AdFallbackStrategy.handleRewardedAdUnavailable(
-                activity = this,
-                rewardType = "spins",
-                rewardAmount = 10,
-                onSuccess = {
-                    // ✅ Dar solo 3 giros (recompensa reducida)
-                    SessionManager.addSpins(this, 3)
-                    currentSpins = SessionManager.getCurrentSpins(this)
-                    updateSpinCountUI()
-                })
-        }
+
+        AdManager.showRewarded(this,
+            onReward = { rewardItem ->
+                releaseAudioFocus()
+                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                val spinsToAdd = 10
+                SessionManager.addSpins(this, spinsToAdd)
+                currentSpins = SessionManager.getCurrentSpins(this)
+                updateSpinCountUI()
+
+                // ✅ AGREGAR
+                AnalyticsManager.logSpinsEarned(spinsToAdd, "rewarded_ad")
+                AnalyticsManager.logRewardedAdCompleted(spinsToAdd, "spins")
+            },
+            onDismiss = {
+                releaseAudioFocus()
+            }
+        )
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -1906,39 +2315,24 @@ class MainActivity : AppCompatActivity() {
             promptForPlayerId()
             return
         }
-        if (!isNetworkAvailable()) {
-            AdFallbackStrategy.showNoInternetModal(this)
-            return
-        }
+
         val audioFocusGranted = requestAudioFocus()
         if (!audioFocusGranted) {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
-        // ✅ Intentar mostrar rewarded con fallback
-        if (AdManager.isRewardedReady()) {
-            AdManager.showRewarded(this,
-                onReward = { rewardItem ->
-                    releaseAudioFocus()
-                    Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
-                    val ticketsToAdd = if (rewardItem.amount > 0) rewardItem.amount else 20
-                    addTicketsToPlayer(ticketsToAdd)
-                },
-                onDismiss = {
-                    releaseAudioFocus()
-                }
-            )
-        } else {
-            // ✅ No hay rewarded disponible, activar fallback
-            releaseAudioFocus()
-            AdFallbackStrategy.handleRewardedAdUnavailable(
-                activity = this,
-                rewardType = "tickets",
-                rewardAmount = 20,
-                onSuccess = {
-                    // ✅ Dar solo 10 tickets (recompensa reducida)
-                    addTicketsToPlayer(10)
-                })
-        }
+
+        AdManager.showRewarded(this,
+            onReward = { rewardItem ->
+                releaseAudioFocus()
+
+                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                val ticketsToAdd = if (rewardItem.amount > 0) rewardItem.amount else 20
+                addTicketsToPlayer(ticketsToAdd)
+            },
+            onDismiss = {
+                releaseAudioFocus()
+            }
+        )
     }
 
     private fun initializeGrid() {
@@ -1958,14 +2352,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun spinGrid() {
-        if (isSpinning) return
-        if (currentPlayerId == null) {
-            promptForPlayerId()
+        // ✅ VALIDACIÓN CRÍTICA: Verificar ID antes de permitir girar
+        if (currentPlayerId == null || currentPlayerId.isNullOrEmpty()) {
+            Log.w(TAG_MAIN, "⚠️ Intento de girar sin ID configurado")
+            MaterialDialog(this).show {
+                title(text = "⚠️ ID de Jugador Requerido")
+                message(text = "Debes configurar tu ID de jugador antes de poder girar la ruleta.\n\n¿Deseas configurarlo ahora?")
+                positiveButton(text = "Configurar ID") {
+                    promptForPlayerId()
+                }
+                negativeButton(text = "Cancelar")
+                cancelable(false)
+            }
             return
         }
+
+        if (isSpinning) return
         if (currentSpins <= 0) {
             MaterialDialog(this).show {
-                title(text = "¡Sin Giros!")
+                title(text = "Sin Giros!")
                 message(text = "Necesitas más giros para jugar. ¿Quieres ver un video para obtener más giros?")
                 positiveButton(text = "Ver Video") { requestSpinsByWatchingAd() }
                 negativeButton(text = "Ahora no")
@@ -1985,7 +2390,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.sectionHome.spinButton.isEnabled = false
-        binding.sectionHome.spinButton.text = "GIRANDO..."
+        binding.sectionHome.spinButton.text = "SPINNING..."
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#424242"))
 
         object : CountDownTimer(3000, 80) {
@@ -2015,7 +2420,14 @@ class MainActivity : AppCompatActivity() {
                 winnerView.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.pass_color))
                 winnerView.findViewById<TextView>(R.id.grid_item_value).setTextColor(Color.WHITE)
                 winnerView.findViewById<TextView>(R.id.grid_item_label).setTextColor(Color.WHITE)
-                if (prizeValue > 0) addTicketsToPlayer(prizeValue)
+
+                if (prizeValue > 0) {
+                    addTicketsToPlayer(prizeValue)
+                    // ✅ AGREGAR
+                    AnalyticsManager.logSpinCompleted(prizeValue)
+                    AnalyticsManager.logTicketsEarned(prizeValue, "spin")
+                }
+
                 resetSpinButton()
             }
         }.start()
@@ -2034,7 +2446,7 @@ class MainActivity : AppCompatActivity() {
     private fun resetSpinButton() {
         isSpinning = false
         binding.sectionHome.spinButton.isEnabled = true
-        binding.sectionHome.spinButton.text = "GIRAR RULETA"
+        binding.sectionHome.spinButton.text = "GIRAR RULETA" // No special characters
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
     }
 
@@ -2085,6 +2497,9 @@ class MainActivity : AppCompatActivity() {
             binding.sectionHome.passProgress.progress = ((tickets % 1000).toDouble() / 1000.0 * 100).toInt()
             binding.sectionHome.myTickets.setTextColor(Color.parseColor("#FFD700"))
             binding.sectionHome.myPasses.setTextColor(Color.parseColor("#F97316"))
+
+            // ✅ AGREGAR: Verificar recompensas de referidos
+            checkReferralRewards(passes)
         } catch (e: Exception) {
             Log.e("UPDATE_UI", "Error updating UI: ${e.message}")
         }
@@ -2092,9 +2507,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun promptForPlayerId() {
         MaterialDialog(this).show {
-            title(text = if (currentPlayerId != null) "Editar ID de Jugador" else "Configura tu ID")
+            title(text = if (currentPlayerId != null) "Edit Player ID" else "Configure your ID")
             input(
-                hint = "Ingresa tu ID numérico",
+                hint = "Enter your numeric ID",
                 prefill = currentPlayerId ?: "",
                 inputType = InputType.TYPE_CLASS_NUMBER
             ) { _, text ->
@@ -2102,16 +2517,16 @@ class MainActivity : AppCompatActivity() {
                 if (newPlayerId.length >= 5 && newPlayerId.matches(Regex("\\d+"))) {
                     if (currentPlayerId != null && currentPlayerId!!.isNotEmpty()) {
                         AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Confirmar cambio de ID")
-                            .setMessage("¿Estás seguro de cambiar el ID de jugador de $currentPlayerId a $newPlayerId?")
-                            .setPositiveButton("Sí") { _, _ ->
+                            .setTitle("Confirm ID change")
+                            .setMessage("Are you sure you want to change the player ID from $currentPlayerId to $newPlayerId?")
+                            .setPositiveButton("Yes") { _, _ ->
                                 SessionManager.clearAllData(this@MainActivity)
                                 SessionManager.setPlayerId(this@MainActivity, newPlayerId)
                                 currentPlayerId = newPlayerId
                                 updatePlayerIdUI(newPlayerId)
                                 loadUserData(newPlayerId)
                             }
-                            .setNegativeButton("Cancelar", null)
+                            .setNegativeButton("Cancel", null)
                             .show()
                     } else {
                         SessionManager.setPlayerId(this@MainActivity, newPlayerId)
@@ -2121,15 +2536,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            positiveButton(text = "Guardar")
-            negativeButton(text = "Cancelar")
+            positiveButton(text = "Save")
+            negativeButton(text = "Cancel")
         }
     }
 
     private fun loadUserData(playerId: String) {
         try {
-            Log.d(TAG_MAIN, "📊 Loading data for user: $playerId")
-
+            Log.d(TAG_MAIN, "Loading data for user: $playerId")
             checkUserBanStatus(playerId)
             createFirebaseSession(playerId)
             fetchPlayerData(playerId)
@@ -2137,10 +2551,8 @@ class MainActivity : AppCompatActivity() {
             updateUI(0, 0)
             checkForPrivateMessages(playerId)
             setupFCMToken(playerId)
-
-            // 🛑 IMPORTANT: Start notification listener
+            // Start notification listener
             AppNotificationManager.getInstance(this).startListening(playerId)
-
             // Start CommunicationManager
             commManager.startNotificationListener(playerId)
             commManager.setupDataSyncListener(playerId) { tickets, passes, spins ->
@@ -2151,7 +2563,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            Log.d(TAG_MAIN, "✅ User data loaded completely")
+            // Analytics y referidos
+            AnalyticsManager.logPlayerIdConfigured(playerId)
+            AnalyticsManager.setUserId(playerId)
+
+            // ✅ VERIFICAR CÓDIGO DE REFERIDO PENDIENTE
+            DeepLinkHandler.checkPendingReferralCode(this)
+            Log.d(TAG_MAIN, "User data loaded completely")
         } catch (e: Exception) {
             Log.e(TAG_MAIN, "Error loading user data: ${e.message}")
         }
@@ -2360,7 +2778,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showCelebrationEffects() {
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFD700"))
-        binding.sectionHome.spinButton.text = "¡ERES EL GANADOR!"
+        binding.sectionHome.spinButton.text = "YOU ARE THE WINNER!"
         binding.sectionHome.spinButton.postDelayed({
             binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
             binding.sectionHome.spinButton.text = "GIRAR RULETA"
@@ -2515,219 +2933,181 @@ class MainActivity : AppCompatActivity() {
             MaterialDialog(this).show {
                 title(text = title)
                 message(text = message)
-                positiveButton(text = "OK")
+                positiveButton(text = "ENTENDIDO") {
+                    Log.d(TAG_MAIN, "Modal cerrado por el usuario")
+                }
                 cancelable(true)
+                cancelOnTouchOutside(false) // ✅ Forzar que el usuario toque "ENTENDIDO"
             }
         } catch (e: Exception) {
             Log.e("GENERAL_MODAL", "Error: ${e.message}")
         }
     }
 
-    private fun setupNotificationListener() {
-        val userId = auth.currentUser?.uid ?: return
-        database
-            .child("notificationQueue")
-            .child(userId)
-            .addChildEventListener(object : ChildEventListener {
-                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                    handleIncomingNotification(snapshot)
-                }
-
-                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
-                override fun onChildRemoved(snapshot: DataSnapshot) {}
-                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-                override fun onCancelled(error: DatabaseError) {}
-            })
-    }
-
-    private fun handleIncomingNotification(snapshot: DataSnapshot) {
-        val title = snapshot.child("title").getValue(String::class.java) ?: return
-        val message = snapshot.child("message").getValue(String::class.java) ?: ""
-        val type = snapshot.child("type").getValue(String::class.java) ?: "general"
-        val processed = snapshot.child("processed").getValue(Boolean::class.java) ?: false
-        if (processed) return // Ya fue procesada
-        // Marcar como procesada
-        snapshot.ref.child("processed").setValue(true)
-        // Mostrar notificación según el tipo
-        when (type) {
-            "gift" -> {
-                val giftType = snapshot.child("data").child("giftType").getValue(String::class.java)
-                val amount = snapshot.child("data").child("amount").getValue(Int::class.java) ?: 0
-                showGiftNotification(title, message, giftType, amount)
+    private fun updateBannerSpacing() {
+        try {
+            val bannerContainer = findViewById<FrameLayout>(R.id.bottom_banner_container)
+            val spacer = findViewById<View>(R.id.bottom_banner_spacer)
+            if (bannerContainer?.visibility == View.VISIBLE && bannerContainer.childCount > 0) {
+                // Hay banner, mostrar espaciador
+                spacer?.visibility = View.VISIBLE
+                spacer?.layoutParams?.height = dpToPx(50)
+            } else {
+                // No hay banner, ocultar espaciador
+                spacer?.visibility = View.GONE
+                spacer?.layoutParams?.height = 0
             }
-            "warning" -> showWarningDialog(title, message)
-            "ban" -> showBanDialog(message)
-            else -> showGeneralNotification(title, message)
+        } catch (e: Exception) {
+            Log.e("BANNER_SPACING", "Error: ${e.message}")
         }
     }
 
-    private fun showGiftNotification(title: String, message: String, giftType: String?, amount: Int) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("🎁 $title")
-            .setMessage(message)
-            .setPositiveButton("¡Genial!") { dialog, _ ->
-                dialog.dismiss()
-                // Recargar datos del usuario para ver el regalo
-                currentPlayerId?.let { loadUserData(it) }
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
+    }
+
+    // ==================== FUNCIONES DE COMPARTIR ====================
+    private fun shareAppDirectly() {
+        lifecycleScope.launch {
+            try {
+                com.follgramer.diamantesproplayersgo.util.ShareManager.shareApp(this@MainActivity, null)
+                val playerId = SessionManager.getPlayerId(this@MainActivity)
+                com.follgramer.diamantesproplayersgo.util.ShareManager.logShare(playerId, "app")
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error compartiendo app: ${e.message}")
             }
-            .show()
+        }
     }
 
-    private fun showWarningDialog(title: String, message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("⚠️ $title")
-            .setMessage(message)
-            .setCancelable(false)
-            .setPositiveButton("Entendido") { dialog, _ ->
-                dialog.dismiss()
+    // ==================== FUNCIONES DE REFERIDOS ====================
+    private fun setupReferralsSection() {
+        lifecycleScope.launch {
+            try {
+                val playerId = SessionManager.getPlayerId(this@MainActivity)
+                if (playerId.isEmpty()) {
+                    showReferralError("Necesitas configurar tu ID de jugador primero")
+                    return@launch
+                }
+
+                val referralCode = com.follgramer.diamantesproplayersgo.util.ReferralManager.getReferralCode(playerId)
+                binding.sectionReferrals.tvMyReferralCode.text = referralCode
+
+                val referralStats = com.follgramer.diamantesproplayersgo.util.ReferralManager.getReferralStats(playerId)
+                updateReferralStats(referralStats)
+
+                setupReferralButtons(referralCode)
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error configurando referidos: ${e.message}")
+                showReferralError("Error cargando información de referidos")
             }
-            .show()
+        }
     }
 
-    private fun showBanDialog(message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("🚫 Cuenta Suspendida")
-            .setMessage(message)
-            .setCancelable(false)
-            .setPositiveButton("Cerrar Sesión") { _, _ ->
-                auth.signOut()
-                finish()
+    private fun updateReferralStats(stats: ReferralManager.ReferralStats?) {
+        stats?.let {
+            binding.sectionReferrals.tvTotalReferrals.text = it.totalReferrals.toString()
+            binding.sectionReferrals.tvTotalRewards.text = it.totalRewards.toString()
+        }
+    }
+
+    private fun setupReferralButtons(referralCode: String) {
+        binding.sectionReferrals.btnCopyCode.setOnClickListener {
+            copyToClipboard(referralCode, "Código copiado al portapapeles")
+        }
+        binding.sectionReferrals.btnShareReferral.setOnClickListener {
+            shareWithReferral(referralCode)
+        }
+        binding.sectionReferrals.btnShareApp.setOnClickListener {
+            shareAppDirectly()
+        }
+        binding.sectionReferrals.btnUseReferralCode.setOnClickListener {
+            useReferralCode()
+        }
+    }
+
+    private fun copyToClipboard(text: String, message: String) {
+        try {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Referral Code", text)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            AnalyticsManager.logFeatureUsed("referral_code_copied")
+        } catch (e: Exception) {
+            Log.e(TAG_MAIN, "Error copiando al portapapeles: ${e.message}")
+        }
+    }
+
+    private fun shareWithReferral(referralCode: String) {
+        lifecycleScope.launch {
+            try {
+                ShareManager.shareApp(this@MainActivity, referralCode)
+                val playerId = SessionManager.getPlayerId(this@MainActivity)
+                ShareManager.logShare(playerId, "referral")
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error compartiendo con referido: ${e.message}")
             }
-            .show()
+        }
     }
 
-    private fun showGeneralNotification(title: String, message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ ->
-                dialog.dismiss()
+    private fun useReferralCode() {
+        val inputCode = binding.sectionReferrals.etReferralCode.text.toString().trim().uppercase()
+        if (inputCode.isEmpty()) {
+            showReferralStatus("Ingresa un código de referido", android.R.color.holo_red_light)
+            return
+        }
+        lifecycleScope.launch {
+            try {
+                binding.sectionReferrals.btnUseReferralCode.isEnabled = false
+                binding.sectionReferrals.btnUseReferralCode.text = "Procesando..."
+
+                val success = ReferralManager.processReferralCodeAsync(this@MainActivity, inputCode)
+
+                if (success) {
+                    showReferralStatus("✅ Código aplicado exitosamente", android.R.color.holo_green_light)
+                    binding.sectionReferrals.etReferralCode.setText("")
+                    AnalyticsManager.logFeatureUsed("referral_code_used")
+                } else {
+                    showReferralStatus("❌ Código no válido o ya usado", android.R.color.holo_red_light)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error usando código: ${e.message}")
+                showReferralStatus("Error procesando código", android.R.color.holo_red_light)
+            } finally {
+                binding.sectionReferrals.btnUseReferralCode.isEnabled = true
+                binding.sectionReferrals.btnUseReferralCode.text = "Usar"
             }
-            .show()
+        }
     }
 
-    private fun showLastNotificationOnOpen() {
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        database
-            .child("appConfig")
-            .child("lastNotification")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (!snapshot.exists()) return
-                    val title = snapshot.child("title").getValue(String::class.java) ?: return
-                    val message = snapshot.child("message").getValue(String::class.java) ?: ""
-                    val timestamp = snapshot.child("timestamp").getValue(Long::class.java) ?: 0L
-                    // Solo mostrar si es nueva
-                    val lastShown = prefs.getLong("last_notification_shown", 0L)
-                    if (timestamp > lastShown) {
-                        showLastNotificationDialog(title, message)
-                        prefs.edit().putLong("last_notification_shown", timestamp).apply()
-                    }
+    private fun showReferralStatus(message: String, colorRes: Int) {
+        binding.sectionReferrals.tvReferralStatus.apply {
+            text = message
+            setTextColor(ContextCompat.getColor(this@MainActivity, colorRes))
+            visibility = View.VISIBLE
+        }
+        Handler(Looper.getMainLooper()).postDelayed({
+            binding.sectionReferrals.tvReferralStatus.visibility = View.GONE
+        }, 5000)
+    }
+
+    private fun showReferralError(message: String) {
+        MaterialDialog(this).show {
+            title(text = "Error de Referidos")
+            message(text = message)
+            positiveButton(text = "Entendido")
+        }
+    }
+
+    private fun checkReferralRewards(currentPasses: Long) {
+        lifecycleScope.launch {
+            try {
+                val playerId = SessionManager.getPlayerId(this@MainActivity)
+                if (playerId.isNotEmpty()) {
+                    ReferralManager.checkAndGrantReward(this@MainActivity, playerId, currentPasses)
                 }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
-    }
-
-    private fun showLastNotificationDialog(title: String, message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("📢 $title")
-            .setMessage(message)
-            .setPositiveButton("Entendido") { dialog, _ ->
-                dialog.dismiss()
+            } catch (e: Exception) {
+                Log.e(TAG_MAIN, "Error verificando recompensas: ${e.message}")
             }
-            .show()
-    }
-
-    private fun loadWeeklyPrizes() {
-        database
-            .child("appConfig")
-            .child("prizes")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val firstPrize = snapshot.child("first").getValue(String::class.java) ?: "1,000 💎"
-                    val secondPrize = snapshot.child("second").getValue(String::class.java) ?: "500 💎"
-                    val thirdPrize = snapshot.child("third").getValue(String::class.java) ?: "200 💎"
-                    Log.d("WEEKLY_PRIZES", "✅ Prizes loaded from admin: 1st=$firstPrize, 2nd=$secondPrize, 3rd=$thirdPrize")
-                    // Los premios están disponibles en Firebase, tu app puede usarlos cuando sea necesario
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("WEEKLY_PRIZES", "Error loading prizes: ${error.message}")
-                }
-            })
-    }
-    private fun loadSorteoButtonConfig() {
-        database
-            .child("appConfig")
-            .child("button")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val buttonText = snapshot.child("text").getValue(String::class.java) ?: "SORTEO EN CURSO"
-                    val subtext = snapshot.child("subtext").getValue(String::class.java) ?: "Gira y gana"
-                    val enabled = snapshot.child("enabled").getValue(Boolean::class.java) ?: true
-                    runOnUiThread {
-                        try {
-                            // Solo actualizar si el botón no está en medio de una acción
-                            val currentText = binding.sectionHome.spinButton.text.toString()
-                            if (!currentText.contains("GIRANDO") && !currentText.contains("GANADOR")) {
-                                binding.sectionHome.spinButton.text = buttonText
-                            }
-                            // Habilitar/deshabilitar según configuración del admin Y si tiene giros
-                            binding.sectionHome.spinButton.isEnabled = enabled && currentSpins > 0 && !isSpinning
-                            Log.d("SORTEO_CONFIG", "✅ Button configured: text=$buttonText, enabled=$enabled")
-                        } catch (e: Exception) {
-                            Log.e("SORTEO_CONFIG", "Error updating button: ${e.message}")
-                        }
-                    }
-                }
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("SORTEO_CONFIG", "Error loading config: ${error.message}")
-                }
-            })
-    }
-
-    private fun checkBanStatus(onNotBanned: () -> Unit) {
-        val userId = auth.currentUser?.uid ?: return
-        database
-            .child("bannedUsers")
-            .child(userId)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (snapshot.exists()) {
-                        val type = snapshot.child("type").getValue(String::class.java)
-                        val reason = snapshot.child("reason").getValue(String::class.java) ?: "Violación de términos"
-                        val expiresAt = snapshot.child("expiresAt").getValue(Long::class.java)
-                        // Si es temporal y ya expiró, eliminar el baneo
-                        if (type == "temporary" && expiresAt != null && System.currentTimeMillis() > expiresAt) {
-                            snapshot.ref.removeValue()
-                            onNotBanned()
-                            return
-                        }
-                        // Mostrar diálogo de baneo
-                        val message = if (type == "permanent") {
-                            "Tu cuenta ha sido baneada permanentemente.\n\nRazón: $reason"
-                        } else {
-                            val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
-                                .format(java.util.Date(expiresAt ?: 0L))
-                            "Tu cuenta está suspendida.\n\nRazón: $reason\n\nExpira: $date"
-                        }
-                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
-                            .setTitle("🚫 Cuenta Suspendida")
-                            .setMessage(message)
-                            .setCancelable(false)
-                            .setPositiveButton("Cerrar Sesión") { _, _ ->
-                                auth.signOut()
-                                finish()
-                            }
-                            .show()
-                    } else {
-                        onNotBanned()
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    onNotBanned()
-                }
-            })
+        }
     }
 }
