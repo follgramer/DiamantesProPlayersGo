@@ -1,0 +1,10 @@
+google.com, pub-3940256099942544, DIRECT, f08c47fec0942fa0
+```
+(Recuerda cambiar el pub-ID por el tuyo real)
+5. Click en **"Commit new file"**
+
+## **VERIFICAR QUE FUNCIONA:**
+
+Después de 5 minutos, visita:
+```
+https://follgramer.github.io/DiamantesProPlayersGo/app-ads.txt
