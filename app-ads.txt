@@ -1,0 +1,8 @@
+google.com, pub-2024712392092488, DIRECT, f08c47fec0942fa0
+```
+
+## **VERIFICACIÓN FINAL:**
+
+1. **Tu archivo app-ads.txt está en:**
+```
+   https://follgramer.github.io/DiamantesProPlayersGo/app-ads.txt
