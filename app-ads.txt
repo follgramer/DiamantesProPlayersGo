@@ -1,4 +1,6 @@
 google.com, pub-2024712392092488, DIRECT, f08c47fec0942fa0
+
+facebook.com, 331579884623099, DIRECT, c3e20eee3f780d68
 ```
 
 ## **VERIFICACIÓN FINAL:**
