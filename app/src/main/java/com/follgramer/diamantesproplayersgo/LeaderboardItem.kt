@@ -42,4 +42,4 @@ data class LeaderboardItem(
     fun getTotalScore(): Long {
         return (passes * 1000) + tickets
     }
-}
+}// Updated: 2025-10-15 14:29:27

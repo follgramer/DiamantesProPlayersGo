@@ -1,0 +1,11 @@
+DIAGNÓSTICO ADMOB - Wed Oct 15 00:09:54     2025
+==========================
+
+Package: 
+Build Type: 0
+AdMob SDK: 
+
+ÚLTIMOS ERRORES:
+10-15 04:08:53.377  1645 11632 I Ads     : SDK version: afma-sdk-a-v253405999.252530000.1
+10-15 04:08:53.377  1645 11632 I Ads     : HTTP timeout: 60000 milliseconds.
+10-15 04:08:53.751 11147 11648 I Ads     : Ad failed to load : 3

@@ -1,96 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- COLORES PRINCIPALES DEL TEMA -->
+    <!-- Primary Colors -->
     <color name="primary_bg">#0A0F14</color>
     <color name="secondary_bg">#161B22</color>
-    <color name="container_bg">#1F2937</color>
-    <color name="accent_color">#00A8FF</color>
+    <color name="card_bg">#21262D</color>
+    <color name="surface_bg">#2D333B</color>
 
-    <!-- TEXTOS MEJORADOS PARA MEJOR CONTRASTE -->
+    <!-- Text Colors -->
+    <color name="text_primary">#F0F6FC</color>
+    <color name="text_secondary">#C9D1D9</color>
+    <color name="text_muted">#8B949E</color>
+    <color name="text_disabled">#484F58</color>
     <color name="text_color">#FFFFFF</color>
-    <color name="text_muted">#CCCCCC</color>
 
-    <!-- TEXTOS JERARQUICOS PARA DIFERENTES NIVELES -->
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#E6EDF3</color>
-    <color name="text_tertiary">#B0BEC5</color>
-    <color name="text_quaternary">#9CA3AF</color>
+    <!-- Accent Colors (CAMBIADOS A AZUL) -->
+    <color name="accent_color">#00A8FF</color>
+    <color name="secondary_accent">#00A8FF</color>
+    <color name="success_color">#2ECC71</color>
+    <color name="warning_color">#F39C12</color>
+    <color name="error_color">#E74C3C</color>
 
-    <!-- COLORES DE ACENTO Y ESTADO -->
-    <color name="gold_accent">#FFD700</color>
-    <color name="green_accent">#2ecc71</color>
-    <color name="purple_accent">#8B5CF6</color>
-    <color name="pass_color">#F97316</color>
-    <color name="danger_color">#e74c3c</color>
-    <color name="success_color">#22c55e</color>
-    <color name="warning_color">#f59e0b</color>
-
-    <!-- COLORES ESPECIFICOS PARA TICKETS Y PASES -->
-    <color name="ticket_color">#FFD700</color>
-    <color name="ticket_background">#2A1810</color>
-    <color name="pass_background">#1F1611</color>
-
-    <!-- NAVEGACION MEJORADA -->
-    <color name="nav_item_text_color">#FFFFFF</color>
-    <color name="nav_item_text_inactive">#B0BEC5</color>
-    <color name="nav_item_selected_color">#FFD700</color>
-    <color name="nav_item_background">#212121</color>
-    <color name="nav_item_selected_background">#2A2A2A</color>
-    <color name="nav_divider">#374151</color>
-
-    <!-- BOTONES Y ELEMENTOS INTERACTIVOS -->
+    <!-- Button Colors -->
     <color name="button_primary">#00A8FF</color>
-    <color name="button_primary_pressed">#0080CC</color>
-    <color name="button_secondary">#374151</color>
-    <color name="button_success">#22c55e</color>
-    <color name="button_danger">#e74c3c</color>
-    <color name="button_warning">#f59e0b</color>
+    <color name="button_secondary">#6C757D</color>
+    <color name="button_success">#28A745</color>
+    <color name="button_danger">#DC3545</color>
+    <color name="button_warning">#FFC107</color>
 
-    <!-- ELEMENTOS DE LA RULETA Y JUEGO -->
-    <color name="grid_item_bg">#2D3748</color>
-    <color name="grid_item_selected">#8B5CF6</color>
-    <color name="grid_item_border">#4A5568</color>
-    <color name="spinner_active">#00a8ff</color>
-    <color name="spinner_disabled">#424242</color>
+    <!-- Game Elements (CAMBIADOS A AZUL) -->
+    <color name="ticket_color">#00A8FF</color>
+    <color name="pass_color">#F97316</color>
+    <color name="spin_color">#00A8FF</color>
+    <color name="prize_color">#E67E22</color>
 
-    <!-- LEADERBOARD Y RANKINGS -->
-    <color name="rank_first">#FFD700</color>
+    <!-- Border Colors -->
+    <color name="border_color">#30363D</color>
+    <color name="border_light">#484F58</color>
+    <color name="border_accent">#00A8FF</color>
+
+    <!-- Status Colors -->
+    <color name="online_color">#28A745</color>
+    <color name="offline_color">#6C757D</color>
+    <color name="busy_color">#FFC107</color>
+    <color name="away_color">#DC3545</color>
+
+    <!-- Referral System Colors (CAMBIADOS A AZUL) -->
+    <color name="code_text">#00A8FF</color>
+    <color name="code_background">#1A1A1A</color>
+    <color name="code_border">#333333</color>
+    <color name="referral_accent">#00A8FF</color>
+    <color name="referral_success">#2ECC71</color>
+    <color name="referral_error">#E74C3C</color>
+
+    <!-- Leaderboard Colors (CAMBIADOS A AZUL) -->
+    <color name="rank_gold">#00A8FF</color>
+    <color name="rank_silver">#C0C0C0</color>
+    <color name="rank_bronze">#CD7F32</color>
+    <color name="rank_default">#8B949E</color>
+    <color name="rank_first">#00A8FF</color>
     <color name="rank_second">#C0C0C0</color>
     <color name="rank_third">#CD7F32</color>
-    <color name="rank_other">#B0BEC5</color>
+    <color name="rank_other">#8B949E</color>
 
-    <!-- FONDO PARA JUGADOR ACTUAL EN LEADERBOARD -->
-    <color name="current_player_bg">#1A00A8FF</color>
+    <!-- Notification Colors -->
+    <color name="notification_bg">#2D333B</color>
+    <color name="notification_text">#F0F6FC</color>
+    <color name="notification_accent">#00A8FF</color>
+    <color name="badge_color">#E74C3C</color>
 
-    <!-- MODALES Y NOTIFICACIONES -->
-    <color name="modal_background">#1F2937</color>
+    <!-- Progress Colors -->
+    <color name="progress_bg">#30363D</color>
+    <color name="progress_fill">#00A8FF</color>
+    <color name="progress_secondary">#00A8FF</color>
+
+    <!-- Modal Colors -->
+    <color name="modal_bg">#0A0F14</color>
     <color name="modal_overlay">#80000000</color>
-    <color name="notification_success">#22c55e</color>
-    <color name="notification_error">#e74c3c</color>
-    <color name="notification_info">#00A8FF</color>
+    <color name="modal_border">#30363D</color>
 
-    <!-- COLORES BASICOS Y BORDES -->
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Grid Colors -->
+    <color name="grid_item_bg">#21262D</color>
+    <color name="grid_item_selected">#00A8FF</color>
+    <color name="grid_item_winner">#00A8FF</color>
+    <color name="grid_item_border">#30363D</color>
+
+    <!-- Admin Colors -->
+    <color name="admin_bg">#1A1A1A</color>
+    <color name="admin_text">#FFFFFF</color>
+    <color name="admin_accent">#FF6B6B</color>
+    <color name="admin_success">#51CF66</color>
+
+    <!-- Standard Android Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
     <color name="transparent">#00000000</color>
-    <color name="border_color">#374151</color>
-    <color name="border_light">#4A5568</color>
-    <color name="border_dark">#2D3748</color>
 
-    <!-- COLORES LEGACY PARA COMPATIBILIDAD -->
-    <color name="winner_accent">#FFD700</color>
+    <!-- Material Design Colors -->
+    <color name="material_blue">#2196F3</color>
+    <color name="material_red">#F44336</color>
+    <color name="material_green">#4CAF50</color>
+    <color name="material_orange">#FF9800</color>
+    <color name="material_purple">#9C27B0</color>
 
-    <!-- COLORES PARA PROGRESS BARS Y INDICADORES -->
-    <color name="progress_background">#374151</color>
-    <color name="progress_primary">#00A8FF</color>
-    <color name="progress_secondary">#F97316</color>
-    <color name="progress_success">#22c55e</color>
+    <!-- Dark Theme Specific -->
+    <color name="dark_surface">#121212</color>
+    <color name="dark_background">#000000</color>
+    <color name="dark_on_surface">#FFFFFF</color>
+    <color name="dark_on_background">#FFFFFF</color>
 
-    <!-- COLORES PARA ESTADOS DE CONEXION -->
-    <color name="status_online">#22c55e</color>
-    <color name="status_offline">#6B7280</color>
-    <color name="status_loading">#f59e0b</color>
+    <!-- Light Theme Specific -->
+    <color name="light_surface">#FFFFFF</color>
+    <color name="light_background">#FAFAFA</color>
+    <color name="light_on_surface">#000000</color>
+    <color name="light_on_background">#000000</color>
 
-    <!-- ALIAS PARA COMPATIBILIDAD (evita errores de recursos faltantes) -->
-    <color name="card_bg">@color/container_bg</color>
+    <!-- State Colors -->
+    <color name="state_pressed">#1A00A8FF</color>
+    <color name="state_focused">#3300A8FF</color>
+    <color name="state_selected">#4D00A8FF</color>
+    <color name="state_disabled">#4D8B949E</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#00A8FF</color>
+    <color name="gradient_end">#0078D4</color>
+    <color name="gradient_accent_start">#00A8FF</color>
+    <color name="gradient_accent_end">#0078D4</color>
+
+    <!-- Navigation Colors -->
+    <color name="nav_text_selected">#FFFFFF</color>
+    <color name="nav_background_selected">#1A00A8FF</color>
+
+    <!-- COLORES ESPECÍFICOS FALTANTES (TODOS EN AZUL) -->
+    <color name="gold_accent">#00A8FF</color>
+    <color name="purple_accent">#9C27B0</color>
+    <color name="container_bg">#21262D</color>
+    <color name="progress_background">#30363D</color>
+    <color name="danger_color">#E74C3C</color>
+    <color name="button_primary_pressed">#0078D4</color>
+    <color name="spinner_disabled">#6C757D</color>
+    <color name="green_accent">#2ECC71</color>
 </resources>

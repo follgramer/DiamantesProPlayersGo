@@ -1,44 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
-        <!-- Incluir todo primero -->
-        <include domain="sharedpref" path="."/>
-        <include domain="database" path="."/>
-        <include domain="file" path="."/>
+        <!-- INCLUIR: Solo datos específicos del usuario que necesitan respaldo -->
+        <include domain="sharedpref" path="app_prefs.xml"/>
+        <include domain="sharedpref" path="user_preferences.xml"/>
+        <include domain="sharedpref" path="player_settings.xml"/>
+        <include domain="sharedpref" path="game_progress.xml"/>
+        <include domain="database" path="user_data.db"/>
+        <include domain="database" path="settings.db"/>
+        <include domain="file" path="user_files/"/>
+        <include domain="file" path="documents/"/>
 
-        <!-- Excluir datos sensibles de Google/Firebase -->
-        <exclude domain="sharedpref" path="com.google.android.gms.ads.identifier.service.START"/>
+        <!-- EXCLUIR: Datos sensibles y específicos del dispositivo -->
+
+        <!-- Firebase y servicios de Google -->
+        <exclude domain="sharedpref" path="FirebaseInstallations.xml"/>
         <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
+        <exclude domain="sharedpref" path="FirebaseRemoteConfig"/>
         <exclude domain="sharedpref" path="com.google.firebase.auth"/>
-        <exclude domain="sharedpref" path="com.google.android.gms"/>
-        <exclude domain="sharedpref" path="androidx.work.workdb"/>
-        <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+        <exclude domain="sharedpref" path="com.google.android.gms.measurement.prefs"/>
         <exclude domain="sharedpref" path="measurement.prefs"/>
+        <exclude domain="sharedpref" path="com.google.android.gms.ads.identifier.service.START"/>
         <exclude domain="sharedpref" path="gms_ads_flags"/>
+        <exclude domain="sharedpref" path="com.google.android.gms"/>
+
+        <!-- Identificadores únicos de dispositivo -->
         <exclude domain="sharedpref" path="device.xml"/>
         <exclude domain="sharedpref" path="InstallationId"/>
+        <exclude domain="sharedpref" path="device_fingerprint.xml"/>
+        <exclude domain="sharedpref" path="referral_device_id.xml"/>
+        <exclude domain="sharedpref" path="analytics_id.xml"/>
 
-        <!-- Excluir archivos cache -->
-        <exclude domain="file" path="cache"/>
-        <exclude domain="file" path="code_cache"/>
+        <!-- Tokens y datos de sesión -->
+        <exclude domain="sharedpref" path="session_data.xml"/>
+        <exclude domain="sharedpref" path="fcm_token.xml"/>
+        <exclude domain="sharedpref" path="auth_tokens.xml"/>
+        <exclude domain="sharedpref" path="security_keys.xml"/>
+
+        <!-- Work Manager -->
+        <exclude domain="sharedpref" path="androidx.work.workdb"/>
+        <exclude domain="sharedpref" path="androidx.work"/>
+        <exclude domain="database" path="androidx.work.workdb"/>
+
+        <!-- WebView -->
+        <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+        <exclude domain="sharedpref" path="webview"/>
+        <exclude domain="file" path="app_webview/"/>
+
+        <!-- Cache y archivos temporales -->
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="code_cache/"/>
+        <exclude domain="file" path="tmp/"/>
+        <exclude domain="file" path="temp/"/>
+        <exclude domain="file" path="logs/"/>
+
+        <!-- AdMob -->
+        <exclude domain="sharedpref" path="admob_prefs.xml"/>
+        <exclude domain="sharedpref" path="ads_settings.xml"/>
     </cloud-backup>
 
     <device-transfer>
-        <!-- Incluir todo primero -->
-        <include domain="sharedpref" path="."/>
-        <include domain="database" path="."/>
-        <include domain="file" path="."/>
+        <!-- INCLUIR: Datos del usuario para transferencia de dispositivo -->
+        <include domain="sharedpref" path="app_prefs.xml"/>
+        <include domain="sharedpref" path="user_preferences.xml"/>
+        <include domain="sharedpref" path="player_settings.xml"/>
+        <include domain="database" path="user_data.db"/>
+        <include domain="file" path="user_files/"/>
+        <include domain="file" path="documents/"/>
 
-        <!-- Excluir datos que no deben transferirse -->
-        <exclude domain="sharedpref" path="com.google.android.gms"/>
-        <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
-        <exclude domain="sharedpref" path="androidx.work.workdb"/>
-        <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+        <!-- EXCLUIR: Datos que NUNCA deben transferirse a nuevo dispositivo -->
+
+        <!-- CRÍTICO: IDs únicos (para prevenir fraude en referidos) -->
         <exclude domain="sharedpref" path="device.xml"/>
         <exclude domain="sharedpref" path="InstallationId"/>
+        <exclude domain="sharedpref" path="device_fingerprint.xml"/>
+        <exclude domain="sharedpref" path="referral_device_id.xml"/>
+        <exclude domain="sharedpref" path="analytics_id.xml"/>
+        <exclude domain="sharedpref" path="advertising_id.xml"/>
 
-        <!-- Excluir archivos cache -->
-        <exclude domain="file" path="cache"/>
-        <exclude domain="file" path="code_cache"/>
+        <!-- Servicios de Google (se regeneran automáticamente) -->
+        <exclude domain="sharedpref" path="com.google.android.gms"/>
+        <exclude domain="sharedpref" path="FirebaseAppHeartBeat"/>
+        <exclude domain="sharedpref" path="FirebaseInstallations.xml"/>
+        <exclude domain="sharedpref" path="com.google.firebase.auth"/>
+        <exclude domain="sharedpref" path="measurement.prefs"/>
+        <exclude domain="sharedpref" path="gms_ads_flags"/>
+
+        <!-- Tokens de sesión (sensibles) -->
+        <exclude domain="sharedpref" path="session_data.xml"/>
+        <exclude domain="sharedpref" path="fcm_token.xml"/>
+        <exclude domain="sharedpref" path="auth_tokens.xml"/>
+        <exclude domain="sharedpref" path="security_keys.xml"/>
+
+        <!-- Work Manager -->
+        <exclude domain="sharedpref" path="androidx.work.workdb"/>
+        <exclude domain="sharedpref" path="androidx.work"/>
+        <exclude domain="database" path="androidx.work.workdb"/>
+
+        <!-- WebView -->
+        <exclude domain="sharedpref" path="WebViewChromiumPrefs"/>
+        <exclude domain="sharedpref" path="webview"/>
+        <exclude domain="file" path="app_webview/"/>
+
+        <!-- Cache -->
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="code_cache/"/>
+        <exclude domain="file" path="tmp/"/>
+        <exclude domain="file" path="logs/"/>
     </device-transfer>
 </data-extraction-rules>

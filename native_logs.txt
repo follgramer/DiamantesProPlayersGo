@@ -1,0 +1,61 @@
+--------- beginning of system
+10-05 06:18:08.053   704   795 W ActivityTaskManager: callingPackage for (uid=2000, pid=8404) has no WPC
+--------- beginning of main
+10-05 06:18:08.054   704   795 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@f3e01519 does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-05 06:18:08.054   704   795 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE
+10-05 06:18:08.054   704   795 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE
+10-05 06:18:08.054   704   795 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+10-05 06:18:08.054   704   795 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+10-05 06:18:08.056   704   795 I ActivityTaskManager: START u0 {flg=0x10000000 xflg=0x5 cmp=com.follgramer.diamantesproplayersgo/.SplashActivity} with LAUNCH_SINGLE_TOP from uid 2000 (BAL_ALLOW_PERMISSION) result code=3
+10-05 06:18:08.057   957  1079 D WindowManagerShell: onActivityRestartAttempt: topActivity=ComponentInfo{com.follgramer.diamantesproplayersgo/com.follgramer.diamantesproplayersgo.MainActivity}, wasVisible=true
+10-05 06:18:08.057   554   573 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+10-05 06:18:08.059   957  1332 D KeyguardService: setOccluded(false)
+10-05 06:18:08.060   957  1332 D KeyguardViewMediator: setOccluded(false)
+10-05 06:18:08.060   957   957 D KeyguardViewMediator: handleSetOccluded(false)
+10-05 06:18:08.063   957   957 D KeyguardViewMediator: KeyguardViewMediator queue processing message: SET_OCCLUDED
+10-05 06:18:09.216  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:09.706  5673  5673 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.ads.service.START xflg=0x4 pkg=com.google.android.gms }
+10-05 06:18:09.781  1291  1291 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.common.telemetry.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-05 06:18:10.046   704   806 D ActivityManager: freezing 8319 com.google.android.partnersetup
+10-05 06:18:10.048   704   863 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-05 06:18:10.049   704   863 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-05 06:18:10.049   704   863 D InetDiagMessage: Destroyed live tcp sockets for uids={10139} in 1ms
+10-05 06:18:10.102   496  8144 W C2BqBuffer: last successful dequeue was 129963541 us ago, 11558 consecutive failures
+10-05 06:18:10.198   704   806 D ActivityManager: freezing 8337 com.android.chrome
+10-05 06:18:10.200   704   863 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-05 06:18:10.200   704   863 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-05 06:18:10.200   704   863 D InetDiagMessage: Destroyed live tcp sockets for uids={10150} in 1ms
+10-05 06:18:11.578  1092  1296 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-05 06:18:13.061   704   731 E BLASTSyncEngine: WM sent Transaction (#27, Transition-OPEN, tx=3023656977259) to organizer, but never received commit callback. Application ANR likely to follow.
+10-05 06:18:14.218  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:15.106   496  8144 W C2BqBuffer: last successful dequeue was 134968102 us ago, 12004 consecutive failures
+10-05 06:18:15.320  5673  5673 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.measurement.START xflg=0x4 pkg=com.google.android.gms }
+10-05 06:18:19.221  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:19.257  5673  5673 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.ads.identifier.service.EVENT_ATTESTATION dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+10-05 06:18:19.782  1291  1291 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.presencemanager.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-05 06:18:19.784  1291  1291 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.presencemanager.service.INTERNAL_IDENTITY dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+10-05 06:18:20.109   496  8144 W C2BqBuffer: last successful dequeue was 139970594 us ago, 12451 consecutive failures
+10-05 06:18:21.577  1092  1296 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-05 06:18:24.223  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:25.113   496  8144 W C2BqBuffer: last successful dequeue was 144975108 us ago, 12899 consecutive failures
+10-05 06:18:28.716   704   797 I system_server: AssetManager2(0x71a0bf6f90b8) locale list changing from [] to [en-US]
+10-05 06:18:28.717   704   912 D BackgroundInstallControlService: Package event received: 0
+10-05 06:18:29.225  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:29.772  1578  1943 I bbax    : (REDACTED) getHotwordActive::active query: %s, watch: %s, devices connected: %s
+10-05 06:18:30.120   496  8144 W C2BqBuffer: last successful dequeue was 149982069 us ago, 13349 consecutive failures
+10-05 06:18:30.528  2766  2879 I Finsky:background: [41] Stats for Executor: bgExecutor trk@b9a5133[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 636]
+10-05 06:18:30.528  2766  2879 I Finsky:background: [41] Stats for Executor: LightweightExecutor trk@5e44cf0[Running, pool size = 3, active threads = 0, queued tasks = 0, completed tasks = 722]
+10-05 06:18:30.528  2766  2879 I Finsky:background: [41] Stats for Executor: BlockingExecutor trk@3461269[Running, pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 134]
+10-05 06:18:30.593  2233  2456 I Finsky  : [41] Stats for Executor: BlockingExecutor trk@55d7e2e[Running, pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 473]
+10-05 06:18:30.594  2233  2456 I Finsky  : [41] Stats for Executor: LightweightExecutor trk@ad4edcf[Running, pool size = 3, active threads = 0, queued tasks = 0, completed tasks = 1438]
+10-05 06:18:30.594  2233  2456 I Finsky  : [41] Stats for Executor: bgExecutor trk@a38835c[Running, pool size = 4, active threads = 0, queued tasks = 0, completed tasks = 6322]
+10-05 06:18:31.577  1092  1296 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-05 06:18:34.227  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:35.125   496  8144 W C2BqBuffer: last successful dequeue was 154987124 us ago, 13798 consecutive failures
+10-05 06:18:39.214  5673  5673 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.ads.service.CACHE xflg=0x4 pkg=com.google.android.gms }
+10-05 06:18:39.229  7841  7841 D MainActivity: Badge updated: 0
+10-05 06:18:40.132   496  8144 W C2BqBuffer: last successful dequeue was 159994037 us ago, 14245 consecutive failures
+10-05 06:18:41.578  1092  1296 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-05 06:18:41.588  1291  8200 I AlarmManager: setExactAndAllowWhileIdle [name: GCM_HB_ALARM type: 2 triggerAtMillis: 4115841]
+10-05 06:18:41.590  1291  8200 I AlarmManager: setExactAndAllowWhileIdle [name: GCM_HB_ALARM type: 2 triggerAtMillis: 4115843]
+10-05 06:18:44.231  7841  7841 D MainActivity: Badge updated: 0

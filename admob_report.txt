@@ -1,0 +1,14 @@
+ADMOB DIAGNOSTIC REPORT - Sun Oct  5 01:28:54     2025
+======================================
+
+Package: com.follgramer.diamantesproplayersgo
+AdMob App ID: 
+
+Build Config:
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
+
+Test Mode: 2
+

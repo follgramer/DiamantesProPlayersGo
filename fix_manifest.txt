@@ -1,0 +1,8 @@
+PROBLEMA: El App ID no se está resolviendo en AndroidManifest.xml
+
+SOLUCIÓN en app/build.gradle.kts, dentro de android { defaultConfig { :
+
+manifestPlaceholders["admobAppId"] = "ca-app-pub-2024712392092488~7992650364"
+
+O directamente en AndroidManifest.xml:
+android:value="ca-app-pub-2024712392092488~7992650364"

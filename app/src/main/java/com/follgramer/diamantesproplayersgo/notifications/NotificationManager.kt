@@ -259,29 +259,50 @@ class AppNotificationManager private constructor(private val context: Context) {
         NotificationEventBus.post(LoserEvent(finalMessage))
     }
 
+    // ✅ FUNCIÓN CORREGIDA
     private fun handleGiftNotification(data: NotificationData) {
-        val giftMessage = when {
-            data.unit == "passes" && !data.amount.isNullOrEmpty() ->
-                "¡Has recibido ${data.amount} ${if (data.amount == "1") "pase" else "pases"}!"
-            data.unit == "tickets" && !data.amount.isNullOrEmpty() ->
-                "¡Has recibido ${data.amount} tickets!"
-            data.unit == "spins" && !data.amount.isNullOrEmpty() ->
-                "¡Has recibido ${data.amount} giros!"
+        // Construir mensaje en español correcto
+        val cantidad = data.amount?.toIntOrNull() ?: 0
+        val giftMessage = when (data.unit) {
+            "passes" -> {
+                if (cantidad == 1) {
+                    "Has recibido $cantidad pase"
+                } else {
+                    "Has recibido $cantidad pases"
+                }
+            }
+            "tickets" -> {
+                if (cantidad == 1) {
+                    "Has recibido $cantidad ticket"
+                } else {
+                    "Has recibido $cantidad tickets"
+                }
+            }
+            "spins" -> {
+                if (cantidad == 1) {
+                    "Has recibido $cantidad giro"
+                } else {
+                    "Has recibido $cantidad giros"
+                }
+            }
             else -> "¡Tienes un regalo del administrador!"
         }
+
         showSystemNotification(
             channelId = CHANNEL_GIFT,
-            title = "🎁 Regalo Recibido",
+            title = "🎁 Regalo Recibido",  // ✅ Traducido
             message = giftMessage,
             priority = NotificationCompat.PRIORITY_DEFAULT,
             notificationType = "gift"
         )
+
         NotificationEventBus.post(GiftEvent(
             amount = data.amount ?: "0",
             unit = data.unit ?: "unknown",
-            message = data.message
+            message = giftMessage  // ✅ Usar mensaje en español
         ))
     }
+
 
     private fun handleBanNotification(data: NotificationData) {
         showSystemNotification(
@@ -516,4 +537,4 @@ class AppNotificationManager private constructor(private val context: Context) {
         val vibrate: Boolean = true,
         var isRead: Boolean = false
     )
-}
+}// Updated: 2025-10-15 14:29:27

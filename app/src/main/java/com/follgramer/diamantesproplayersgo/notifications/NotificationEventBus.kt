@@ -42,4 +42,4 @@ object NotificationEventBus {
             Log.d(TAG, "Todos los listeners eliminados")
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27

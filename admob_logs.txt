@@ -1,0 +1,115 @@
+10-05 06:11:17.180  7229  7229 D DiamantesApp: AdMob marcado como inicializado
+10-05 06:11:17.180  7229  7229 D DiamantesApp: AdMob inicializado desde Application
+10-05 06:11:17.210  7229  7229 D AdsInit : Iniciando AdMob...
+10-05 06:11:17.630  7229  7229 D StrictMode: 	at com.google.android.gms.ads.MobileAds.initialize(com.google.android.gms:play-services-ads-api@@24.5.0:3)
+10-05 06:11:18.662  7229  7229 D AdsInit : ✅ AdMob inicializado correctamente
+10-05 06:11:18.662  7229  7229 D AdsInit : Adaptador: com.google.android.gms.ads.MobileAds - Estado: READY
+10-05 06:11:19.004  7229  7229 D AdsInit : AdMob ya inicializado
+10-05 06:11:19.004  7229  7229 D SplashActivity: AdMob inicializado
+10-05 06:11:19.985  7229  7229 D MainActivity: AdMob Initialized: true
+10-05 06:11:20.308  7229  7229 D MainActivity: ✅ AdMob correctamente inicializado desde SplashActivity
+10-05 06:11:20.746  7229  7229 E DEVICE_ID: ID de Dispositivo de Prueba (AdMob): F9C1540151B5789BE4ADD3DF55FA783D
+10-05 06:11:20.761  7229  7229 D BannerHelper: ▶️ 0 banners resumidos
+10-05 06:11:22.966  7229  7229 D MainActivity: AdMob confirmado listo
+10-05 06:11:22.969  7229  7229 D AdManager: AdManager inicializado
+10-05 06:11:23.973  7229  7229 D AdIds   : Interstitial: ca-app-pub-3940256099942544/1033173712 (TEST)
+10-05 06:11:23.973  7229  7229 D AdManager: Cargando interstitial: ca-app-pub-3940256099942544/1033173712
+10-05 06:11:23.974  7229  7229 D AdIds   : Rewarded: ca-app-pub-3940256099942544/5224354917 (TEST)
+10-05 06:11:23.974  7229  7229 D AdManager: Cargando rewarded: ca-app-pub-3940256099942544/5224354917
+10-05 06:11:25.035  7229  7229 D MainActivity: 📲 Intent received: Bundle[{consent_completed=true, admob_initialized=true}]
+10-05 06:11:25.590  7229  7229 D AdManager: ✅ Interstitial pre-cargado exitosamente
+10-05 06:11:27.314  7229  7229 D AdManager: ✅ Rewarded pre-cargado exitosamente
+10-05 06:11:28.038  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:28.038  7229  7229 D BannerHelper: 🎯 attachAdaptiveBanner INICIADO
+10-05 06:11:28.038  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:28.038  7229  7229 D BannerHelper: Container ID: 167921019
+10-05 06:11:28.039  7229  7229 D BannerHelper: Container Width: 1016px
+10-05 06:11:28.039  7229  7229 D BannerHelper: Container Height: 131px
+10-05 06:11:28.039  7229  7229 D BannerHelper: Container Visible: true
+10-05 06:11:28.039  7229  7229 D BannerHelper: Activity: MainActivity
+10-05 06:11:28.039  7229  7229 D BannerHelper: 🔧 Configurando visibilidad y altura del contenedor...
+10-05 06:11:28.039  7229  7229 D BannerHelper: ✅ Contenedor configurado - Height: -2
+10-05 06:11:28.039  7229  7229 D BannerHelper: 🔐 Consentimiento verificado: true
+10-05 06:11:28.039  7229  7229 D BannerHelper: ✅ AdMob listo y consentimiento obtenido
+10-05 06:11:28.041  7229  7229 D BannerHelper: 🚀 Iniciando proceso de carga de banner...
+10-05 06:11:28.041  7229  7229 D BannerHelper: 📌 Container: BANNER TOP
+10-05 06:11:28.048  7229  7229 D AdIds   : Banner Top solicitado:
+10-05 06:11:28.048  7229  7229 D AdIds   : ID: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:28.048  7229  7229 D AdIds   : Modo: TEST
+10-05 06:11:28.048  7229  7229 D AdIds   : BuildConfig.DEBUG: true
+10-05 06:11:28.048  7229  7229 D AdIds   : BuildConfig.USE_TEST_ADS: true
+10-05 06:11:28.048  7229  7229 D BannerHelper: 📌 Ad Unit ID seleccionado: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:28.048  7229  7229 D BannerHelper: 📏 Tamaño de banner calculado:
+10-05 06:11:28.048  7229  7229 D BannerHelper:    Screen: 1080px
+10-05 06:11:28.048  7229  7229 D BannerHelper:    Container: 1016px
+10-05 06:11:28.049  7229  7229 D BannerHelper:    Density: 2.625
+10-05 06:11:28.049  7229  7229 D BannerHelper:    Ad Width: 387dp
+10-05 06:11:28.050  7229  7229 D BannerHelper: 📝 Configuración del banner:
+10-05 06:11:28.050  7229  7229 D BannerHelper:    Ad Unit ID: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:28.050  7229  7229 D BannerHelper:    Ad Size: 387x60 dp
+10-05 06:11:28.054  7229  7229 D BannerHelper: ✅ AdView agregado al contenedor
+10-05 06:11:28.055  7229  7229 D BannerHelper: 📤 Enviando solicitud de banner...
+10-05 06:11:28.055  7229  7229 D BannerHelper:    Timestamp: 1759644688055
+10-05 06:11:28.840  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:28.840  7229  7229 D BannerHelper: ✅ ¡BANNER CARGADO EXITOSAMENTE!
+10-05 06:11:28.840  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:28.840  7229  7229 D BannerHelper: Container ID: 167921019
+10-05 06:11:28.840  7229  7229 D BannerHelper: Ad Unit ID: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:28.840  7229  7229 D BannerHelper: AdView Size: 1016x0px
+10-05 06:11:28.840  7229  7229 D BannerHelper: Container Size: 1016x131px
+10-05 06:11:28.840  7229  7229 D BannerHelper: ✅ Banner completamente visible y renderizado
+10-05 06:11:28.852  7229  7229 D BannerHelper: 👁️ Impresión registrada
+10-05 06:11:29.040  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:29.040  7229  7229 D BannerHelper: 🎯 attachAdaptiveBanner INICIADO
+10-05 06:11:29.040  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:29.040  7229  7229 D BannerHelper: Container ID: 77115782
+10-05 06:11:29.040  7229  7229 D BannerHelper: Container Width: 1080px
+10-05 06:11:29.040  7229  7229 D BannerHelper: Container Height: 131px
+10-05 06:11:29.040  7229  7229 D BannerHelper: Container Visible: true
+10-05 06:11:29.040  7229  7229 D BannerHelper: Activity: MainActivity
+10-05 06:11:29.040  7229  7229 D BannerHelper: 🔧 Configurando visibilidad y altura del contenedor...
+10-05 06:11:29.040  7229  7229 D BannerHelper: ✅ Contenedor configurado - Height: -2
+10-05 06:11:29.041  7229  7229 D BannerHelper: 🔐 Consentimiento verificado: true
+10-05 06:11:29.041  7229  7229 D BannerHelper: ✅ AdMob listo y consentimiento obtenido
+10-05 06:11:29.041  7229  7229 D BannerHelper: 🚀 Iniciando proceso de carga de banner...
+10-05 06:11:29.041  7229  7229 D BannerHelper: 📌 Container: BANNER BOTTOM
+10-05 06:11:29.041  7229  7229 D AdIds   : Banner Bottom: ca-app-pub-3940256099942544/6300978111 (TEST)
+10-05 06:11:29.041  7229  7229 D BannerHelper: 📌 Ad Unit ID seleccionado: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:29.041  7229  7229 D BannerHelper: 📏 Tamaño de banner calculado:
+10-05 06:11:29.041  7229  7229 D BannerHelper:    Screen: 1080px
+10-05 06:11:29.041  7229  7229 D BannerHelper:    Container: 1080px
+10-05 06:11:29.041  7229  7229 D BannerHelper:    Density: 2.625
+10-05 06:11:29.041  7229  7229 D BannerHelper:    Ad Width: 411dp
+10-05 06:11:29.041  7229  7229 D BannerHelper: 📝 Configuración del banner:
+10-05 06:11:29.041  7229  7229 D BannerHelper:    Ad Unit ID: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:29.041  7229  7229 D BannerHelper:    Ad Size: 411x64 dp
+10-05 06:11:29.042  7229  7229 D BannerHelper: ✅ AdView agregado al contenedor
+10-05 06:11:29.042  7229  7229 D BannerHelper: 📤 Enviando solicitud de banner...
+10-05 06:11:29.042  7229  7229 D BannerHelper:    Timestamp: 1759644689042
+10-05 06:11:30.043  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:30.043  7229  7229 D BannerHelper: ✅ ¡BANNER CARGADO EXITOSAMENTE!
+10-05 06:11:30.043  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:11:30.043  7229  7229 D BannerHelper: Container ID: 77115782
+10-05 06:11:30.043  7229  7229 D BannerHelper: Ad Unit ID: ca-app-pub-3940256099942544/6300978111
+10-05 06:11:30.043  7229  7229 D BannerHelper: AdView Size: 1080x0px
+10-05 06:11:30.043  7229  7229 D BannerHelper: Container Size: 1080x131px
+10-05 06:11:30.043  7229  7229 D BannerHelper: ✅ Banner completamente visible y renderizado
+10-05 06:11:30.053  7229  7229 D BannerHelper: 👁️ Impresión registrada
+10-05 06:11:52.000  7229  7229 D AdManager: Interstitial ready: true
+10-05 06:11:52.137  7229  7229 D BannerHelper: ⏸️ 2 banners pausados
+10-05 06:11:52.176  7229  7229 D AdManager: Interstitial mostrado
+10-05 06:11:52.177  7229  7229 D AdManager: Impresión de interstitial registrada
+10-05 06:12:00.108  7229  7229 D AdManager: Interstitial cerrado
+10-05 06:12:00.153  7229  7229 D BannerHelper: ▶️ 2 banners resumidos
+10-05 06:12:02.129  7229  7229 D AdIds   : Interstitial: ca-app-pub-3940256099942544/1033173712 (TEST)
+10-05 06:12:02.129  7229  7229 D AdManager: Cargando interstitial: ca-app-pub-3940256099942544/1033173712
+10-05 06:12:02.854  7229  7229 D AdManager: ✅ Interstitial pre-cargado exitosamente
+10-05 06:12:31.150  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:12:31.150  7229  7229 D BannerHelper: ✅ ¡BANNER CARGADO EXITOSAMENTE!
+10-05 06:12:31.150  7229  7229 D BannerHelper: ═══════════════════════════════════════
+10-05 06:12:31.150  7229  7229 D BannerHelper: Container ID: 77115782
+10-05 06:12:31.150  7229  7229 D BannerHelper: Ad Unit ID: ca-app-pub-3940256099942544/6300978111
+10-05 06:12:31.150  7229  7229 D BannerHelper: AdView Size: 1080x168px
+10-05 06:12:31.150  7229  7229 D BannerHelper: Container Size: 1080x168px
+10-05 06:12:31.150  7229  7229 D BannerHelper: ✅ Banner completamente visible y renderizado
+10-05 06:12:31.160  7229  7229 D BannerHelper: 👁️ Impresión registrada

@@ -13,3 +13,15 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore files - SEGURIDAD IMPORTANTE
+*.jks
+*.keystore
+keystore.properties
+
+# APK files
+*.apk
+*.aab
+
+# Log files
+*.log

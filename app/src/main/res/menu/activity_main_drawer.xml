@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <!-- ✅ GRUPO PRINCIPAL - Secciones navegables -->
+    <group android:id="@+id/group_main" android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="Inicio"
+            android:checked="true" />
+        <item
+            android:id="@+id/nav_tasks"
+            android:icon="@drawable/ic_tasks"
+            android:title="Misiones Diarias" />
+        <item
+            android:id="@+id/nav_leaderboard"
+            android:icon="@drawable/ic_leaderboard"
+            android:title="Tabla de Líderes" />
+        <item
+            android:id="@+id/nav_winners"
+            android:icon="@drawable/ic_winners"
+            android:title="Ganadores" />
+        <item
+            android:id="@+id/nav_referrals"
+            android:icon="@drawable/ic_people"
+            android:title="Referidos" />
+    </group>
+
+    <!-- ✅ GRUPO DE ACCIONES - Sin checkable -->
+    <group android:id="@+id/group_actions">
+        <item
+            android:id="@+id/nav_share"
+            android:icon="@drawable/ic_share"
+            android:title="Compartir App" />
+    </group>
+
+</menu>

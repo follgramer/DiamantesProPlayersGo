@@ -1,88 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="16dp"
-    android:layout_marginHorizontal="8dp"
+    android:layout_marginHorizontal="0dp"
     android:layout_marginVertical="4dp"
-    android:background="@drawable/rounded_background"
+    android:background="@drawable/background_container"
+    android:orientation="horizontal"
+    android:padding="14dp"
     android:gravity="center_vertical">
 
-    <!-- Ranking -->
     <TextView
         android:id="@+id/rank"
-        android:layout_width="48dp"
+        android:layout_width="40dp"
         android:layout_height="wrap_content"
-        android:text="#1"
+        android:fontFamily="@font/montserrat_bold"
+        android:gravity="center"
+        android:textColor="#FFD700"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:textColor="@color/rank_first" />
+        tools:text="#1" />
 
-    <!-- Player ID -->
     <TextView
         android:id="@+id/player_id"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="123***56"
-        android:textSize="14sp"
-        android:textColor="@color/text_color"
         android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/montserrat_semibold"
         android:maxLines="1"
-        android:ellipsize="end" />
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        tools:text="123***90" />
 
-    <!-- Tickets -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:orientation="vertical"
-        android:gravity="center"
-        android:layout_marginStart="8dp">
+        android:gravity="end">
 
-        <TextView
-            android:id="@+id/tickets"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0"
-            android:textSize="14sp"
-            android:textColor="@color/ticket_color"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <TextView
+            <TextView
+                android:id="@+id/tickets"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/montserrat_bold"
+                android:textColor="#FFD700"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="4dp"
+                tools:text="404" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tickets"
+                android:fontFamily="@font/montserrat_regular"
+                android:textColor="#99FFFFFF"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tickets"
-            android:textSize="10sp"
-            android:textColor="@color/text_muted" />
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
+            <TextView
+                android:id="@+id/passes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/montserrat_bold"
+                android:textColor="#F97316"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="4dp"
+                tools:text="7" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Passes"
+                android:fontFamily="@font/montserrat_regular"
+                android:textColor="#99FFFFFF"
+                android:textSize="10sp" />
+        </LinearLayout>
     </LinearLayout>
-
-    <!-- Pases -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:layout_marginStart="16dp">
-
-        <TextView
-            android:id="@+id/passes"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0 Pases"
-            android:textSize="14sp"
-            android:textColor="@color/pass_color"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Pases"
-            android:textSize="10sp"
-            android:textColor="@color/text_muted" />
-
-    </LinearLayout>
-
 </LinearLayout>
