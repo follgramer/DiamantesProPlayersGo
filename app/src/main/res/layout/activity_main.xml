@@ -10,11 +10,17 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
+    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL DE LA APP -->
+    <!-- ============================================ -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
 
+        <!-- ============================================ -->
+        <!-- TOOLBAR SUPERIOR -->
+        <!-- ============================================ -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -28,6 +34,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginEnd="16dp">
 
+                <!-- Botón de Notificaciones con Badge -->
                 <FrameLayout
                     android:id="@+id/notificationButton"
                     android:layout_width="48dp"
@@ -62,45 +69,78 @@
             </RelativeLayout>
         </androidx.appcompat.widget.Toolbar>
 
+        <!-- ============================================ -->
+        <!-- CONTENEDOR DE FRAGMENTOS/SECCIONES -->
+        <!-- ============================================ -->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@id/bannerBottomContainer"
-            android:layout_below="@id/toolbar">
+            android:layout_below="@id/toolbar"
+            android:layout_above="@id/bottom_banner_spacer">
 
+            <!-- Sección Home -->
             <include
                 android:id="@+id/section_home"
                 layout="@layout/section_home" />
+
+            <!-- Sección Tasks -->
             <include
                 android:id="@+id/section_tasks"
                 layout="@layout/section_tasks"
                 android:visibility="gone" />
+
+            <!-- Sección Leaderboard -->
             <include
                 android:id="@+id/section_leaderboard"
                 layout="@layout/section_leaderboard"
                 android:visibility="gone" />
+
+            <!-- Sección Winners -->
             <include
                 android:id="@+id/section_winners"
                 layout="@layout/section_winners"
                 android:visibility="gone" />
+
+            <!-- Sección Legal (NO SE USA DESDE EL MENÚ) -->
             <include
                 android:id="@+id/section_legal"
                 layout="@layout/section_legal"
                 android:visibility="gone" />
+
+            <!-- Sección Referrals -->
+            <include
+                android:id="@+id/section_referrals"
+                layout="@layout/section_referrals"
+                android:visibility="gone" />
+
         </FrameLayout>
 
-        <!-- Banner inferior - CONFIGURACIÓN CORRECTA PARA ADMOB -->
-        <FrameLayout
-            android:id="@+id/bannerBottomContainer"
+        <!-- ============================================ -->
+        <!-- SPACER PARA BANNER INFERIOR -->
+        <!-- ============================================ -->
+        <View
+            android:id="@+id/bottom_banner_spacer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_above="@id/bottom_banner_container"
+            android:visibility="gone" />
+
+        <!-- ============================================ -->
+        <!-- BANNER INFERIOR -->
+        <!-- ============================================ -->
+        <FrameLayout
+            android:id="@+id/bottom_banner_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:visibility="gone"
-            android:clipChildren="false"
-            android:clipToPadding="false" />
+            android:visibility="gone" />
+
     </RelativeLayout>
 
+    <!-- ============================================ -->
+    <!-- NAVIGATION DRAWER (MENÚ LATERAL) -->
+    <!-- ============================================ -->
     <LinearLayout
         android:layout_width="280dp"
         android:layout_height="match_parent"
@@ -109,33 +149,56 @@
         android:fitsSystemWindows="true"
         android:orientation="vertical">
 
+        <!-- Header del Drawer -->
         <include layout="@layout/nav_header" />
 
+        <!-- NavigationView con el menú -->
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/nav_view"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:background="@color/secondary_bg"
-            app:menu="@menu/navigation_menu"
+            app:menu="@menu/activity_main_drawer"
             app:itemIconTint="@color/accent_color"
             app:itemTextColor="@color/text_color" />
 
+        <!-- ============================================ -->
+        <!-- SECCIÓN LEGAL AL FINAL (FUERA DEL MENÚ) -->
+        <!-- ============================================ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/secondary_bg"
             android:orientation="vertical"
-            android:paddingVertical="8dp">
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp">
 
+            <!-- Línea separadora -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginHorizontal="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
                 android:layout_marginBottom="8dp"
                 android:alpha="0.3"
                 android:background="@color/border_color" />
 
+            <!-- Texto "Legal" (opcional, como header) -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="4dp"
+                android:text="Legal"
+                android:textColor="#808080"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1" />
+
+            <!-- Políticas de Privacidad -->
             <TextView
                 android:id="@+id/nav_privacy"
                 android:layout_width="match_parent"
@@ -145,12 +208,15 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="48dp"
-                android:paddingHorizontal="32dp"
-                android:paddingVertical="12dp"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:text="@string/privacy_policy"
                 android:textColor="#C0C0C0"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
+            <!-- Términos y Condiciones -->
             <TextView
                 android:id="@+id/nav_terms"
                 android:layout_width="match_parent"
@@ -160,11 +226,16 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="48dp"
-                android:paddingHorizontal="32dp"
-                android:paddingVertical="12dp"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:text="@string/terms_conditions"
                 android:textColor="#C0C0C0"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
+
         </LinearLayout>
+
     </LinearLayout>
+
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -2,23 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ==================== PERMISOS ESENCIALES (SOLO LOS NECESARIOS) ==================== -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
-    <uses-feature
-        android:name="android.hardware.audio.output"
-        android:required="false" />
+    <!-- PERMISOS PARA ANUNCIOS Y REFERIDOS -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
 
     <application
         android:name=".DiamantesApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -26,19 +22,28 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Diamantesproplayersgo"
-        android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true"
-        android:largeHeap="true"
-        android:requestLegacyExternalStorage="false"
-        android:preserveLegacyExternalStorage="false"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="34">
 
+        <!-- ==================== META-DATA GOOGLE ADS ==================== -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="${admobAppId}" />
+            android:value="@string/admob_app_id" />
 
+        <!-- ==================== META-DATA FACEBOOK ==================== -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="false" />
+        <meta-data
+            android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="true" />
+
+        <!-- ==================== OPTIMIZACIONES ADMOB ==================== -->
         <meta-data
             android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
             android:value="true"/>
@@ -55,52 +60,24 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <!-- ==================== AD SERVICES CONFIG ==================== -->
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
             android:resource="@xml/gma_ad_services_config"
             tools:replace="android:resource" />
 
+        <!-- ==================== FIREBASE CONFIG ==================== -->
         <meta-data
             android:name="firebase_analytics_collection_enabled"
             android:value="true" />
 
         <meta-data
-            android:name="firebase_messaging_auto_init_enabled"
+            android:name="firebase_crashlytics_collection_enabled"
             android:value="true" />
 
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notification" />
+        <!-- ==================== ACTIVITIES ==================== -->
 
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/accent_color" />
-
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="general_notifications" />
-
-        <service
-            android:name=".NotificationService"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
-        <receiver
-            android:name=".NotificationReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter android:priority="1000">
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.PACKAGE_REPLACED" />
-                <data android:scheme="package" />
-            </intent-filter>
-        </receiver>
-
+        <!-- SPLASH ACTIVITY -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -110,23 +87,53 @@
             android:theme="@style/SplashTheme"
             android:noHistory="true"
             android:clearTaskOnLaunch="true">
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- MAIN ACTIVITY CON DEEP LINKS PARA REFERIDOS -->
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|density|navigation|locale|layoutDirection|fontScale"
-            android:exported="false"
+            android:exported="true"
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.WithInterstitialAds"
             android:windowSoftInputMode="adjustResize|stateHidden"
-            android:clearTaskOnLaunch="false" />
+            android:clearTaskOnLaunch="false">
 
+            <!-- DEEP LINKS PARA REFERIDOS -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="diamantespro" android:host="refer" />
+            </intent-filter>
+
+            <!-- DEEP LINKS LEGACY PARA COMPATIBILIDAD -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="diamantespro" android:host="invite" />
+            </intent-filter>
+
+            <!-- WEB LINKS DESDE PLAY STORE CON REFERRER -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android:intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                    android:host="play.google.com"
+                    android:pathPrefix="/store/apps/details" />
+            </intent-filter>
+
+        </activity>
+
+        <!-- BAN ACTIVITY -->
         <activity
             android:name=".BanActivity"
             android:exported="false"
@@ -137,18 +144,21 @@
             android:theme="@style/Theme.Diamantesproplayersgo"
             android:noHistory="false" />
 
+        <!-- NOTIFICATION CENTER ACTIVITY -->
         <activity
             android:name=".ui.NotificationCenterActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Diamantesproplayersgo" />
 
+        <!-- GOOGLE ADS ACTIVITY -->
         <activity
             android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="false"
             android:theme="@android:style/Theme.Translucent" />
 
+        <!-- ==================== FILE PROVIDER ==================== -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -159,89 +169,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <service
-            android:name="androidx.work.impl.background.systemjob.SystemJobService"
-            android:directBootAware="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            tools:replace="android:enabled,android:exported"
-            tools:targetApi="n" />
-
-        <service
-            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
-            android:directBootAware="false"
-            android:enabled="true"
-            android:exported="false"
-            tools:replace="android:enabled" />
-
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:directBootAware="false"
-            android:enabled="true"
-            android:exported="false"
-            tools:replace="android:enabled" />
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.BATTERY_LOW" />
-                <action android:name="android.intent.action.BATTERY_OKAY" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
-                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-            </intent-filter>
-        </receiver>
-
+        <!-- ==================== WORKMANAGER (SIMPLIFICADO) ==================== -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -253,9 +181,25 @@
                 tools:node="remove" />
         </provider>
 
-        <profileable
-            android:shell="true"
-            tools:targetApi="29" />
-
     </application>
+
+    <!-- ==================== QUERIES PARA ANDROID 11+ ==================== -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <!-- Para compartir en redes sociales -->
+        <package android:name="com.whatsapp" />
+        <package android:name="com.facebook.katana" />
+        <package android:name="com.instagram.android" />
+        <package android:name="org.telegram.messenger" />
+        <package android:name="com.twitter.android" />
+    </queries>
+
 </manifest>

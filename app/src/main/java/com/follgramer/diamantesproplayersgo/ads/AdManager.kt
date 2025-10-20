@@ -30,7 +30,7 @@ object AdManager {
         }
 
         isInitialized = true
-        Log.d(TAG, "AdManager inicializado")
+        Log.d(TAG, "✅ AdManager inicializado")
 
         // Pre-cargar anuncios
         scope.launch {
@@ -49,7 +49,7 @@ object AdManager {
         val adRequest = AdRequest.Builder().build()
         val adUnitId = AdIds.interstitial()
 
-        Log.d(TAG, "Cargando interstitial: $adUnitId")
+        Log.d(TAG, "🔄 Cargando interstitial: $adUnitId")
 
         InterstitialAd.load(
             context,
@@ -85,7 +85,7 @@ object AdManager {
         val adRequest = AdRequest.Builder().build()
         val adUnitId = AdIds.rewarded()
 
-        Log.d(TAG, "Cargando rewarded: $adUnitId")
+        Log.d(TAG, "🔄 Cargando rewarded: $adUnitId")
 
         RewardedAd.load(
             context,
@@ -112,6 +112,9 @@ object AdManager {
         )
     }
 
+    /**
+     * Muestra un anuncio intersticial
+     */
     fun showInterstitial(
         activity: Activity,
         onDismiss: () -> Unit = {}
@@ -119,7 +122,7 @@ object AdManager {
         // Verificar control de frecuencia
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastInterstitialTime < MIN_INTERSTITIAL_INTERVAL) {
-            Log.d(TAG, "Interstitial bloqueado por control de frecuencia")
+            Log.d(TAG, "⏱️ Interstitial bloqueado por control de frecuencia")
             onDismiss()
             return
         }
@@ -130,7 +133,7 @@ object AdManager {
 
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
-                    Log.d(TAG, "Interstitial cerrado")
+                    Log.d(TAG, "✅ Interstitial cerrado")
                     interstitialAd = null
                     // Pre-cargar siguiente anuncio
                     scope.launch {
@@ -141,41 +144,44 @@ object AdManager {
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                    Log.e(TAG, "Error mostrando interstitial: ${error.message}")
+                    Log.e(TAG, "❌ Error mostrando interstitial: ${error.message}")
                     interstitialAd = null
                     preloadInterstitial(activity)
                     onDismiss()
                 }
 
                 override fun onAdShowedFullScreenContent() {
-                    Log.d(TAG, "Interstitial mostrado")
+                    Log.d(TAG, "📺 Interstitial mostrado")
                     interstitialAd = null // Limpiar referencia
                 }
 
                 override fun onAdImpression() {
-                    Log.d(TAG, "Impresión de interstitial registrada")
+                    Log.d(TAG, "👁️ Impresión de interstitial registrada")
                 }
 
                 override fun onAdClicked() {
-                    Log.d(TAG, "Interstitial clickeado")
+                    Log.d(TAG, "👆 Interstitial clickeado")
                 }
             }
 
             try {
                 ad.show(activity)
             } catch (e: Exception) {
-                Log.e(TAG, "Excepción mostrando interstitial: ${e.message}")
+                Log.e(TAG, "❌ Excepción mostrando interstitial: ${e.message}")
                 interstitialAd = null
                 preloadInterstitial(activity)
                 onDismiss()
             }
         } else {
-            Log.w(TAG, "Interstitial no está listo")
+            Log.w(TAG, "⚠️ Interstitial no está listo")
             preloadInterstitial(activity)
             onDismiss()
         }
     }
 
+    /**
+     * Muestra un anuncio rewarded
+     */
     fun showRewarded(
         activity: Activity,
         onReward: (RewardItem) -> Unit = {},
@@ -187,7 +193,7 @@ object AdManager {
 
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
-                    Log.d(TAG, "Rewarded cerrado (recompensa dada: $wasRewarded)")
+                    Log.d(TAG, "✅ Rewarded cerrado (recompensa dada: $wasRewarded)")
                     rewardedAd = null
 
                     // Pre-cargar siguiente anuncio
@@ -203,40 +209,40 @@ object AdManager {
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                    Log.e(TAG, "Error mostrando rewarded: ${error.message}")
+                    Log.e(TAG, "❌ Error mostrando rewarded: ${error.message}")
                     rewardedAd = null
                     preloadRewarded(activity)
                     onDismiss()
                 }
 
                 override fun onAdShowedFullScreenContent() {
-                    Log.d(TAG, "Rewarded mostrado")
+                    Log.d(TAG, "📺 Rewarded mostrado")
                     rewardedAd = null // Limpiar referencia
                 }
 
                 override fun onAdImpression() {
-                    Log.d(TAG, "Impresión de rewarded registrada")
+                    Log.d(TAG, "👁️ Impresión de rewarded registrada")
                 }
 
                 override fun onAdClicked() {
-                    Log.d(TAG, "Rewarded clickeado")
+                    Log.d(TAG, "👆 Rewarded clickeado")
                 }
             }
 
             try {
                 ad.show(activity) { rewardItem ->
                     wasRewarded = true
-                    Log.d(TAG, "✅ Recompensa obtenida: ${rewardItem.amount} ${rewardItem.type}")
+                    Log.d(TAG, "🎁 Recompensa obtenida: ${rewardItem.amount} ${rewardItem.type}")
                     onReward(rewardItem)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Excepción mostrando rewarded: ${e.message}")
+                Log.e(TAG, "❌ Excepción mostrando rewarded: ${e.message}")
                 rewardedAd = null
                 preloadRewarded(activity)
                 onDismiss()
             }
         } else {
-            Log.w(TAG, "Rewarded no está listo, intentando cargar...")
+            Log.w(TAG, "⚠️ Rewarded no está listo, intentando cargar...")
             preloadRewarded(activity)
 
             // Mostrar mensaje al usuario
@@ -244,7 +250,7 @@ object AdManager {
                 kotlinx.coroutines.delay(1000)
                 // Si después de 1 segundo sigue sin estar listo, avisar
                 if (rewardedAd == null) {
-                    Log.w(TAG, "Rewarded aún no disponible después de 1 segundo")
+                    Log.w(TAG, "⚠️ Rewarded aún no disponible después de 1 segundo")
                 }
             }
 
@@ -252,12 +258,19 @@ object AdManager {
         }
     }
 
+    /**
+     * ✅ Verifica si hay un interstitial listo para mostrar
+     */
     fun isInterstitialReady(): Boolean {
         val ready = interstitialAd != null
-        Log.d(TAG, "Interstitial ready: $ready")
-        return ready
+        val canShow = System.currentTimeMillis() - lastInterstitialTime >= MIN_INTERSTITIAL_INTERVAL
+        Log.d(TAG, "Interstitial ready: $ready, Can show (frequency): $canShow")
+        return ready && canShow
     }
 
+    /**
+     * ✅ Verifica si hay un rewarded ad listo para mostrar
+     */
     fun isRewardedReady(): Boolean {
         val ready = rewardedAd != null
         Log.d(TAG, "Rewarded ready: $ready")
@@ -268,7 +281,7 @@ object AdManager {
      * Pre-carga ambos tipos de anuncios
      */
     fun preloadAds(context: Context) {
-        Log.d(TAG, "Pre-cargando todos los anuncios...")
+        Log.d(TAG, "🔄 Pre-cargando todos los anuncios...")
         preloadInterstitial(context)
         preloadRewarded(context)
     }
@@ -277,24 +290,27 @@ object AdManager {
      * Fuerza la recarga de anuncios
      */
     fun forceReload(context: Context) {
-        Log.d(TAG, "Forzando recarga de anuncios...")
+        Log.d(TAG, "🔄 Forzando recarga de anuncios...")
         interstitialAd = null
         rewardedAd = null
         preloadInterstitial(context)
         preloadRewarded(context)
     }
 
+    /**
+     * Limpia todos los recursos
+     */
     fun cleanup() {
-        Log.d(TAG, "Limpiando AdManager...")
+        Log.d(TAG, "🧹 Limpiando AdManager...")
         try {
             scope.cancel()
             interstitialAd = null
             rewardedAd = null
             isInitialized = false
             lastInterstitialTime = 0L
-            Log.d(TAG, "AdManager limpiado completamente")
+            Log.d(TAG, "✅ AdManager limpiado completamente")
         } catch (e: Exception) {
-            Log.e(TAG, "Error en cleanup: ${e.message}")
+            Log.e(TAG, "❌ Error en cleanup: ${e.message}")
         }
     }
 
@@ -303,7 +319,7 @@ object AdManager {
      */
     fun getDebugInfo(): String {
         return """
-            AdManager Debug Info:
+            📊 AdManager Debug Info:
             - Inicializado: $isInitialized
             - Interstitial listo: ${interstitialAd != null}
             - Rewarded listo: ${rewardedAd != null}
@@ -311,4 +327,4 @@ object AdManager {
             - Puede mostrar interstitial: ${System.currentTimeMillis() - lastInterstitialTime >= MIN_INTERSTITIAL_INTERVAL}
         """.trimIndent()
     }
-}
+}// Updated: 2025-10-15 14:29:27

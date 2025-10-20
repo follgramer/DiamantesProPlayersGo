@@ -1,30 +1,27 @@
 package com.follgramer.diamantesproplayersgo
 
 import android.app.Activity
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.follgramer.diamantesproplayersgo.ads.RecyclerViewBannerHelper
-
-data class WinnerItem(
-    val id: String,
-    val name: String,
-    val prize: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
+import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
+import com.google.android.gms.ads.nativead.NativeAdView
+import java.text.SimpleDateFormat
+import java.util.*
 
 class WinnersAdapter(
     private val activity: Activity,
-    private val items: MutableList<WinnerItem> = mutableListOf()
+    private val items: MutableList<WinnerItem>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val TYPE_WINNER = 0
         private const val TYPE_AD = 1
-        private const val AD_INTERVAL = 2
+        private const val AD_INTERVAL = 3
+        private const val TAG = "WinnersAdapter"
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -33,7 +30,7 @@ class WinnersAdapter(
 
     override fun getItemCount(): Int {
         val winnerCount = items.size
-        val adCount = winnerCount / AD_INTERVAL
+        val adCount = if (winnerCount > 0) winnerCount / AD_INTERVAL else 0
         return winnerCount + adCount
     }
 
@@ -43,119 +40,102 @@ class WinnersAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return when (viewType) {
-            TYPE_AD -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_winner_ad, parent, false)
-                BannerViewHolder(view)
-            }
-            else -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_winner, parent, false)
-                WinnerVH(view)
-            }
+        return if (viewType == TYPE_AD) {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_winner_native_ad, parent, false)
+            AdViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_winner, parent, false)
+            WinnerViewHolder(view)
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder) {
-            is BannerViewHolder -> {
-                holder.bind()
+        if (holder is WinnerViewHolder) {
+            val winnerPosition = getWinnerPosition(position)
+            if (winnerPosition < items.size) {
+                holder.bind(items[winnerPosition])
             }
-            is WinnerVH -> {
-                val winnerIndex = getWinnerPosition(position)
-                if (winnerIndex < items.size) {
-                    val item = items[winnerIndex]
-                    holder.bind(item)
-                }
-            }
+        } else if (holder is AdViewHolder) {
+            holder.bind(position)
         }
     }
 
-    class WinnerVH(view: View) : RecyclerView.ViewHolder(view) {
-        val date: TextView = view.findViewById(R.id.date)
-        val prize: TextView = view.findViewById(R.id.prize)
-        val winnerId: TextView = view.findViewById(R.id.winner_id)
+    fun updateData(newItems: List<WinnerItem>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+        Log.d(TAG, "Datos actualizados: ${items.size} items, total con anuncios: $itemCount")
+    }
+
+    inner class WinnerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val winnerIdText: TextView = itemView.findViewById(R.id.winner_id)
+        private val prizeText: TextView = itemView.findViewById(R.id.prize)
+        private val dateText: TextView = itemView.findViewById(R.id.date)
 
         fun bind(item: WinnerItem) {
-            date.text = getRelativeTimeString(item.timestamp)
-            prize.text = item.prize
-            winnerId.text = "Ganador ID: ${maskPlayerId(item.name)}"
+            winnerIdText.text = item.winnerName
+            prizeText.text = item.prize
+
+            val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+            dateText.text = dateFormat.format(Date(item.timestamp))
         }
+    }
 
-        private fun maskPlayerId(id: String): String {
-            return if (id.length > 5) {
-                "${id.substring(0, 3)}***${id.substring(id.length - 2)}"
-            } else {
-                id
-            }
-        }
+    inner class AdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val adContainer: ViewGroup = itemView.findViewById(R.id.winner_native_ad_container)
 
-        private fun getRelativeTimeString(timestamp: Long): String {
-            if (timestamp <= 0) return "Fecha desconocida"
+        fun bind(position: Int) {
+            val holderId = System.identityHashCode(this)
 
-            val now = System.currentTimeMillis()
-            val diff = now - timestamp
-
-            return when {
-                diff < 0 -> "Fecha futura"
-                diff < 60 * 1000 -> "Hace menos de 1 minuto"
-                diff < 2 * 60 * 1000 -> "Hace 1 minuto"
-                diff < 60 * 60 * 1000 -> "Hace ${diff / (60 * 1000)} minutos"
-                diff < 2 * 60 * 60 * 1000 -> "Hace 1 hora"
-                diff < 24 * 60 * 60 * 1000 -> "Hace ${diff / (60 * 60 * 1000)} horas"
-                diff < 2 * 24 * 60 * 60 * 1000 -> "Ayer"
-                diff < 7 * 24 * 60 * 60 * 1000 -> "Hace ${diff / (24 * 60 * 60 * 1000)} días"
-                else -> {
-                    // Mostrar fecha completa con hora para más de una semana
-                    val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
-                    sdf.format(java.util.Date(timestamp))
+            try {
+                adContainer.visibility = View.VISIBLE
+                adContainer.layoutParams = adContainer.layoutParams.apply {
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
                 }
+
+                if (activity.isFinishing || activity.isDestroyed) {
+                    Log.w(TAG, "Activity está finalizando, no se puede cargar anuncio")
+                    adContainer.visibility = View.GONE
+                    return
+                }
+
+                // Buscar el NativeAdView dentro del container
+                val nativeAdView = adContainer.findViewById<NativeAdView>(R.id.winner_native_ad_view)
+                if (nativeAdView != null) {
+                    adContainer.post {
+                        NativeAdHelper.loadNativeAd(activity, adContainer, nativeAdView, holderId)
+                        Log.d(TAG, "Cargando anuncio nativo en posición $position (holder $holderId)")
+                    }
+                } else {
+                    Log.e(TAG, "NativeAdView no encontrado en el layout")
+                    adContainer.visibility = View.GONE
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading native ad: ${e.message}", e)
+                adContainer.visibility = View.GONE
+                adContainer.layoutParams.height = 0
             }
+        }
+
+        fun destroy() {
+            val holderId = System.identityHashCode(this)
+            NativeAdHelper.destroyNativeAd(holderId)
         }
     }
 
-    class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // CAMBIO IMPORTANTE: Ahora es FrameLayout en lugar de LinearLayout
-        private val adContainer: FrameLayout = itemView.findViewById(R.id.adContainer)
-
-        fun bind() {
-            adContainer.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-            adContainer.visibility = View.VISIBLE
-
-            (itemView.context as? Activity)?.let { activity ->
-                RecyclerViewBannerHelper.loadAdaptiveBanner(
-                    activity,
-                    adContainer,
-                    viewHolderId = bindingAdapterPosition + 1000
-                )
-            }
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        super.onViewRecycled(holder)
+        if (holder is AdViewHolder) {
+            holder.destroy()
         }
-    }
-
-    fun submitList(newItems: List<WinnerItem>) {
-        items.clear()
-        val sortedItems = newItems.sortedByDescending { it.timestamp }
-        items.addAll(sortedItems)
-        notifyDataSetChanged()
-    }
-
-    fun addWinner(winnerItem: WinnerItem) {
-        items.add(0, winnerItem)
-        notifyItemInserted(0)
-
-        if (items.size > 50) {
-            val removedCount = items.size - 50
-            repeat(removedCount) {
-                items.removeAt(items.size - 1)
-            }
-            notifyItemRangeRemoved(50, removedCount)
-        }
-    }
-
-    fun clearAll() {
-        val count = items.size
-        items.clear()
-        notifyItemRangeRemoved(0, count)
     }
 }
+
+data class WinnerItem(
+    val winnerId: String,
+    val winnerName: String,
+    val prize: String,
+    val timestamp: Long
+)// Updated: 2025-10-15 14:29:27

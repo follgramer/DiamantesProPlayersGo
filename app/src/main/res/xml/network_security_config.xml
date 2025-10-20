@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Configuración para producción (más segura) -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+
     <domain-config cleartextTrafficPermitted="false">
-        <!-- Dominios de Google/AdMob -->
         <domain includeSubdomains="true">doubleclick.net</domain>
         <domain includeSubdomains="true">googleads.g.doubleclick.net</domain>
         <domain includeSubdomains="true">googlesyndication.com</domain>
@@ -15,26 +19,9 @@
         <domain includeSubdomains="true">firebase.googleapis.com</domain>
         <domain includeSubdomains="true">admob.com</domain>
         <domain includeSubdomains="true">app-measurement.com</domain>
-
+        <domain includeSubdomains="true">firebaseinstallations.googleapis.com</domain>
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>
     </domain-config>
-
-    <!-- Configuración base (solo para debug) -->
-    <base-config cleartextTrafficPermitted="false">
-        <trust-anchors>
-            <certificates src="system"/>
-            <!-- Solo incluir certificados de usuario en debug -->
-            <certificates src="user" overridePins="false"/>
-        </trust-anchors>
-    </base-config>
-
-    <!-- Solo para builds de debug -->
-    <debug-overrides>
-        <trust-anchors>
-            <certificates src="system"/>
-            <certificates src="user"/>
-        </trust-anchors>
-    </debug-overrides>
 </network-security-config>

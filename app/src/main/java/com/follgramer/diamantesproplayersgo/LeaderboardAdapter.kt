@@ -6,163 +6,162 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import com.follgramer.diamantesproplayersgo.ads.RecyclerViewBannerHelper
+import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
+import com.google.android.gms.ads.nativead.NativeAdView
 
 class LeaderboardAdapter(
     private val context: Context,
     private val activity: Activity,
     private val items: MutableList<LeaderboardItem>,
-    private val currentPlayerId: String?
+    private var currentPlayerId: String?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val TYPE_PLAYER = 0
         private const val TYPE_AD = 1
-        private const val AD_INTERVAL = 5
+        private const val AD_INTERVAL = 5 // ✅ Anuncio cada 5 items
         private const val TAG = "LeaderboardAdapter"
     }
 
     override fun getItemViewType(position: Int): Int {
-        // Correctly calculate position for ads, ensuring the first item is not an ad.
         return if ((position + 1) % (AD_INTERVAL + 1) == 0) TYPE_AD else TYPE_PLAYER
     }
 
     override fun getItemCount(): Int {
         val playerCount = items.size
-        // Calculate ad count based on player count.
         val adCount = if (playerCount > 0) playerCount / AD_INTERVAL else 0
         return playerCount + adCount
     }
 
     private fun getPlayerPosition(position: Int): Int {
-        // Adjust for ads to get the correct player index.
         val adsBefore = position / (AD_INTERVAL + 1)
         return position - adsBefore
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return when (viewType) {
-            TYPE_AD -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_leaderboard_ad, parent, false)
-                BannerViewHolder(view)
-            }
-            else -> {
-                val view = LayoutInflater.from(parent.context)
-                    .inflate(R.layout.item_leaderboard, parent, false)
-                PlayerViewHolder(view)
-            }
+        return if (viewType == TYPE_AD) {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_leaderboard_native_ad, parent, false)
+            AdViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_leaderboard, parent, false)
+            PlayerViewHolder(view)
         }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder) {
-            is BannerViewHolder -> {
-                holder.bind(activity, holder.bindingAdapterPosition)
+        if (holder is PlayerViewHolder) {
+            val playerPosition = getPlayerPosition(position)
+            if (playerPosition < items.size) {
+                val item = items[playerPosition]
+                holder.bind(item, playerPosition + 1, currentPlayerId)
             }
-            is PlayerViewHolder -> {
-                val playerIndex = getPlayerPosition(position)
-                if (playerIndex < items.size) {
-                    val item = items[playerIndex]
-                    val realRank = playerIndex + 1
-                    holder.bind(item, realRank, currentPlayerId)
-                }
-            }
+        } else if (holder is AdViewHolder) {
+            holder.bind(position)
         }
     }
 
-    class PlayerViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        private val rank: TextView = view.findViewById(R.id.rank)
-        private val playerId: TextView = view.findViewById(R.id.player_id)
-        private val tickets: TextView = view.findViewById(R.id.tickets)
-        private val passes: TextView = view.findViewById(R.id.passes)
-
-        fun bind(item: LeaderboardItem, rankNumber: Int, currentPlayerId: String?) {
-            try {
-                val isCurrentPlayer = item.playerId == currentPlayerId
-
-                rank.text = "#$rankNumber"
-                when (rankNumber) {
-                    1 -> rank.setTextColor(ContextCompat.getColor(itemView.context, R.color.rank_first))
-                    2 -> rank.setTextColor(ContextCompat.getColor(itemView.context, R.color.rank_second))
-                    3 -> rank.setTextColor(ContextCompat.getColor(itemView.context, R.color.rank_third))
-                    else -> rank.setTextColor(ContextCompat.getColor(itemView.context, R.color.rank_other))
-                }
-
-                playerId.text = if (isCurrentPlayer) "Tú" else maskPlayerId(item.playerId)
-                tickets.text = item.tickets.toString()
-                passes.text = if (item.passes == 1L) "1 Pase" else "${item.passes} Pases"
-
-                if (isCurrentPlayer) {
-                    playerId.setTextColor(ContextCompat.getColor(itemView.context, R.color.accent_color))
-                    itemView.setBackgroundColor(ContextCompat.getColor(itemView.context, R.color.current_player_bg))
-                } else {
-                    playerId.setTextColor(ContextCompat.getColor(itemView.context, R.color.text_color))
-                    itemView.setBackgroundResource(R.drawable.rounded_background)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error binding player data: ${e.message}")
-                rank.text = "#-"
-                playerId.text = "Error"
-                tickets.text = "0"
-                passes.text = "0 Pases"
-            }
-        }
-
-        private fun maskPlayerId(id: String): String {
-            return try {
-                if (id.length > 5) {
-                    "${id.substring(0, 3)}***${id.substring(id.length - 2)}"
-                } else {
-                    id
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error masking player ID: ${e.message}")
-                "***"
-            }
-        }
-    }
-
-    class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val adLeaderboardContainer: FrameLayout? = itemView.findViewById(R.id.adLeaderboardContainer)
-
-        fun bind(activity: Activity, position: Int) {
-            adLeaderboardContainer?.let { container ->
-                container.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                container.visibility = View.VISIBLE
-
-                RecyclerViewBannerHelper.loadAdaptiveBanner(
-                    activity,
-                    container,
-                    viewHolderId = position
-                )
-            } ?: run {
-                // Log an error if the FrameLayout is not found, which is a common issue.
-                Log.e(TAG, "Ad container not found. Check if the ID 'adLeaderboardContainer' in item_leaderboard_ad.xml is correct.")
-            }
-        }
-    }
-
-    fun updateList(newItems: List<LeaderboardItem>) {
+    fun updateData(newItems: List<LeaderboardItem>, newCurrentPlayerId: String?) {
         items.clear()
         items.addAll(newItems)
+        currentPlayerId = newCurrentPlayerId
         notifyDataSetChanged()
+        Log.d(TAG, "Datos actualizados: ${items.size} items, total con anuncios: $itemCount")
     }
 
-    fun addPlayer(item: LeaderboardItem) {
-        items.add(item)
-        notifyItemInserted(itemCount - 1)
+    inner class PlayerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val rankText: TextView = itemView.findViewById(R.id.rank)
+        private val playerIdText: TextView = itemView.findViewById(R.id.player_id)
+        private val passesText: TextView = itemView.findViewById(R.id.passes)
+        private val ticketsText: TextView = itemView.findViewById(R.id.tickets)
+
+        fun bind(item: LeaderboardItem, rank: Int, currentPlayerId: String?) {
+            rankText.text = "#$rank"
+            playerIdText.text = item.getMaskedPlayerId()
+            passesText.text = item.passes.toString()
+            ticketsText.text = item.tickets.toString()
+
+            // Highlight del jugador actual
+            if (item.playerId == currentPlayerId) {
+                itemView.setBackgroundResource(R.drawable.bg_highlighted_player)
+            } else {
+                itemView.setBackgroundResource(R.drawable.background_container)
+            }
+        }
     }
 
-    fun clearAll() {
-        val count = items.size
-        items.clear()
-        notifyItemRangeRemoved(0, count)
+    inner class AdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        // ✅ Obtener el NativeAdView directamente desde itemView
+        private val nativeAdView: NativeAdView? = itemView.findViewById(R.id.leaderboard_native_ad_view)
+
+        fun bind(position: Int) {
+            val holderId = System.identityHashCode(this)
+
+            try {
+                // ✅ Verificar que el NativeAdView existe
+                if (nativeAdView == null) {
+                    Log.e(TAG, "❌ NativeAdView no encontrado en el layout inflado")
+                    itemView.visibility = View.GONE
+                    itemView.layoutParams = itemView.layoutParams.apply {
+                        height = 0
+                    }
+                    return
+                }
+
+                if (activity.isFinishing || activity.isDestroyed) {
+                    Log.w(TAG, "⚠️ Activity está finalizando, no se puede cargar anuncio")
+                    itemView.visibility = View.GONE
+                    itemView.layoutParams = itemView.layoutParams.apply {
+                        height = 0
+                    }
+                    return
+                }
+
+                // ✅ Obtener el container padre (FrameLayout)
+                val container = nativeAdView.parent as? ViewGroup
+                if (container == null) {
+                    Log.e(TAG, "❌ Container no encontrado")
+                    itemView.visibility = View.GONE
+                    itemView.layoutParams = itemView.layoutParams.apply {
+                        height = 0
+                    }
+                    return
+                }
+
+                // Configurar visibilidad y altura
+                container.visibility = View.VISIBLE
+                container.layoutParams = container.layoutParams.apply {
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+
+                // ✅ Cargar el anuncio nativo
+                container.post {
+                    NativeAdHelper.loadNativeAd(activity, container, nativeAdView, holderId)
+                    Log.d(TAG, "✅ Cargando anuncio nativo en posición $position (holder $holderId)")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error loading native ad: ${e.message}", e)
+                itemView.visibility = View.GONE
+                itemView.layoutParams = itemView.layoutParams.apply {
+                    height = 0
+                }
+            }
+        }
+
+        fun destroy() {
+            val holderId = System.identityHashCode(this)
+            NativeAdHelper.destroyNativeAd(holderId)
+            Log.d(TAG, "🗑️ Anuncio nativo destruido para holder $holderId")
+        }
     }
 
-    fun getPlayerCount(): Int = items.size
-}
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        super.onViewRecycled(holder)
+        if (holder is AdViewHolder) {
+            holder.destroy()
+        }
+    }
+}// Updated: 2025-10-15 14:29:27

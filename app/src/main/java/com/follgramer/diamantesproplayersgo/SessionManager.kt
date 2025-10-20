@@ -678,4 +678,4 @@ object SessionManager {
             Log.e(TAG, "Error en resetForTesting: ${e.message}")
         }
     }
-}
+}// Updated: 2025-10-15 14:29:27
