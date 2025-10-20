@@ -47,7 +47,6 @@ android {
         renderscriptTargetApi = 24
         renderscriptSupportModeEnabled = false
 
-        // Deep Links para referidos
         manifestPlaceholders["deepLinkScheme"] = "diamantespro"
         manifestPlaceholders["deepLinkHost"] = "refer"
 
@@ -79,7 +78,6 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
 
-            // Optimizaciones nativas
             ndk {
                 abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
             }
@@ -92,7 +90,6 @@ android {
         dataBinding = true
     }
 
-    // App Bundle Configuration
     bundle {
         language {
             enableSplit = true
@@ -108,7 +105,6 @@ android {
     packaging {
         resources {
             excludes += setOf(
-                "META-INF/DEPENDENCIES",
                 "META-INF/LICENSE",
                 "META-INF/LICENSE.txt",
                 "META-INF/NOTICE",
@@ -116,7 +112,10 @@ android {
                 "META-INF/ASL2.0",
                 "META-INF/AL2.0",
                 "META-INF/LGPL2.1",
-                "META-INF/*.kotlin_module",
+                "META-INF/*.kotlin_module"
+            )
+            pickFirsts += setOf(
+                "META-INF/DEPENDENCIES",
                 "META-INF/INDEX.LIST",
                 "META-INF/io.netty.versions.properties"
             )
@@ -162,11 +161,11 @@ dependencies {
 
     // ==================== GOOGLE ADS Y REFERIDOS ====================
     implementation("com.google.android.gms:play-services-ads:24.5.0")
-    implementation("com.google.android.gms:play-services-ads-identifier:18.1.0") // CRÍTICO PARA REFERIDOS
+    implementation("com.google.android.gms:play-services-ads-identifier:18.1.0")
     implementation("com.google.android.ump:user-messaging-platform:3.1.0")
     implementation("com.google.android.gms:play-services-base:18.5.0")
 
-    // Facebook Audience Network (Mediación)
+    // Facebook Audience Network
     implementation("com.facebook.android:audience-network-sdk:6.17.0")
 
     // ==================== FIREBASE ====================
@@ -175,7 +174,7 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-database-ktx") // CRÍTICO PARA REFERIDOS
+    implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
 
@@ -199,7 +198,7 @@ dependencies {
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation("com.google.android.play:integrity:1.4.0")
 
-    // ==================== INSTALL REFERRER (PARA REFERIDOS) ====================
+    // ==================== INSTALL REFERRER ====================
     implementation("com.android.installreferrer:installreferrer:2.2")
 
     // ==================== UTILIDADES ====================
@@ -238,15 +237,23 @@ dependencies {
 
 tasks.register("printVersionInfo") {
     doLast {
-        println("╔══════════════════════════════════════╗")
-        println("📦 Build Information")
-        println("╠══════════════════════════════════════╣")
+        println("=====================================")
+        println("Build Information")
+        println("=====================================")
         println("App: ${android.defaultConfig.applicationId}")
         println("Version: ${android.defaultConfig.versionName} (${android.defaultConfig.versionCode})")
         println("Min SDK: ${android.defaultConfig.minSdk}")
         println("Target SDK: ${android.defaultConfig.targetSdk}")
-        println("Java Version: 17")
-        println("Referral Scheme: diamantespro://refer")
-        println("╚══════════════════════════════════════╝")
+        println("=====================================")
+    }
+}
+
+// FIX COMPLETO PARA ERRORES DE WINDOWS
+afterEvaluate {
+    tasks.configureEach {
+        if (name == "produceReleaseBundleIdeListingFile" ||
+            name == "createReleaseBundleListingFileRedirect") {
+            enabled = false
+        }
     }
 }

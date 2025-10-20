@@ -55,16 +55,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
+import com.follgramer.diamantesproplayersgo.ads.AdFallbackStrategy
 import com.follgramer.diamantesproplayersgo.ads.AdManager
 import com.follgramer.diamantesproplayersgo.ads.AdsInit
 import com.follgramer.diamantesproplayersgo.ads.BannerHelper
 import com.follgramer.diamantesproplayersgo.ads.NativeAdHelper
-import com.follgramer.diamantesproplayersgo.util.AnalyticsManager
-import com.follgramer.diamantesproplayersgo.util.DeepLinkHandler
 import com.follgramer.diamantesproplayersgo.databinding.ActivityMainBinding
 import com.follgramer.diamantesproplayersgo.notifications.*
 import com.follgramer.diamantesproplayersgo.ui.NotificationCenterActivity
 import com.follgramer.diamantesproplayersgo.ui.Onboarding
+import com.follgramer.diamantesproplayersgo.util.AnalyticsManager
+import com.follgramer.diamantesproplayersgo.util.DeepLinkHandler
 import com.follgramer.diamantesproplayersgo.util.ReferralManager
 import com.follgramer.diamantesproplayersgo.util.ShareManager
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
@@ -541,14 +542,8 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            // ✅ VALIDACIÓN CRÍTICA: Si no hay ID, mostrar prompt inmediatamente
-            if (playerId.isEmpty()) {
-                Log.w(TAG_MAIN, "⚠️ Usuario sin ID configurado, mostrando prompt")
-                binding.root.postDelayed({
-                    showWelcomeAndPromptId()
-                }, 1000)
-            } else {
-                // ✅ AGREGAR: Verificar referido pendiente
+            // Solo verificar referido si hay ID
+            if (playerId.isNotEmpty()) {
                 DeepLinkHandler.checkPendingReferralCode(this)
             }
 
@@ -622,21 +617,6 @@ class MainActivity : AppCompatActivity() {
                 Log.e("TASKS_AD", "❌ Error: ${e.message}", e)
                 e.printStackTrace()
             }
-        }
-    }
-
-    // ✅ NUEVA FUNCIÓN: Mostrar bienvenida y prompt de ID
-    private fun showWelcomeAndPromptId() {
-        MaterialDialog(this).show {
-            title(text = "👋 ¡Bienvenido!")
-            message(text = "Para empezar a jugar y participar en el sorteo semanal, necesitas configurar tu ID de jugador único.\n\n¿Deseas configurarlo ahora?")
-            positiveButton(text = "Configurar ID") {
-                promptForPlayerId()
-            }
-            negativeButton(text = "Más tarde") {
-                // El usuario puede configurarlo después tocando en "Toca para configurar"
-            }
-            cancelable(false)
         }
     }
 
@@ -940,67 +920,68 @@ class MainActivity : AppCompatActivity() {
             notificationManager.startListening(playerId)
         }
 
-        // ✅ CRÍTICO: Cargar y mostrar la ÚLTIMA notificación al abrir la app
+        // NUEVA LÓGICA: Solo cargar notificación si fue creada después del registro del usuario
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                delay(2000) // Esperar 2 segundos después de abrir
+                delay(2000)
 
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
                 if (playerId.isEmpty()) {
-                    Log.d(TAG_MAIN, "⚠️ No hay player ID, saltando carga de última notificación")
+                    Log.d(TAG_MAIN, "⚠️ No hay player ID, saltando notificaciones")
                     return@launch
                 }
 
-                val lastNotif = database.child("appConfig").child("lastNotification")
-                    .get().await()
+                // Obtener fecha de registro del usuario
+                val playerSnapshot = database.child("players").child(playerId).get().await()
+                val registeredAt = playerSnapshot.child("registeredAt").getValue(Long::class.java) ?: 0L
+
+                // Solo mostrar notificación si existe y es posterior al registro
+                val lastNotif = database.child("appConfig").child("lastNotification").get().await()
 
                 if (lastNotif.exists()) {
-                    val data = lastNotif.value as? Map<String, Any>
-                    if (data != null) {
-                        // ✅ GENERAR ID ÚNICO PARA LA NOTIFICACIÓN
-                        val notificationId = data["id"] as? String
-                            ?: data["timestamp"]?.toString()
-                            ?: System.currentTimeMillis().toString()
+                    val notifTimestamp = lastNotif.child("timestamp").getValue(Long::class.java) ?: 0L
 
-                        // ✅ VERIFICAR SI YA FUE VISTA
-                        val wasViewed = database.child("appConfig")
-                            .child("viewedNotifications")
-                            .child(playerId)
-                            .child(notificationId)
-                            .get()
-                            .await()
-                            .getValue(Boolean::class.java) ?: false
+                    // Solo mostrar si la notificación es posterior al registro del usuario
+                    if (notifTimestamp > registeredAt && registeredAt > 0) {
+                        val data = lastNotif.value as? Map<String, Any>
+                        if (data != null) {
+                            val notificationId = data["id"] as? String ?: System.currentTimeMillis().toString()
 
-                        if (wasViewed) {
-                            Log.d(TAG_MAIN, "✅ Notificación ya vista, no mostrar")
-                            return@launch
-                        }
+                            // Verificar si ya fue vista
+                            val wasViewed = database.child("appConfig")
+                                .child("viewedNotifications")
+                                .child(playerId)
+                                .child(notificationId)
+                                .get()
+                                .await()
+                                .getValue(Boolean::class.java) ?: false
 
-                        val notificationData = AppNotificationManager.NotificationData(
-                            id = notificationId,
-                            type = data["type"] as? String ?: "general",
-                            title = data["title"] as? String ?: "Notificación",
-                            body = data["body"] as? String,
-                            message = data["message"] as? String ?: "",
-                            timestamp = data["timestamp"] as? Long ?: System.currentTimeMillis(),
-                            amount = data["amount"] as? String,
-                            unit = data["unit"] as? String,
-                            sound = true,
-                            vibrate = true,
-                            isRead = false
-                        )
+                            if (!wasViewed) {
+                                // Mostrar notificación
+                                val notificationData = AppNotificationManager.NotificationData(
+                                    id = notificationId,
+                                    type = data["type"] as? String ?: "general",
+                                    title = data["title"] as? String ?: "Notificación",
+                                    body = data["body"] as? String,
+                                    message = data["message"] as? String ?: "",
+                                    timestamp = notifTimestamp,
+                                    amount = data["amount"] as? String,
+                                    unit = data["unit"] as? String,
+                                    sound = true,
+                                    vibrate = true,
+                                    isRead = false
+                                )
 
-                        withContext(Dispatchers.Main) {
-                            // Mostrar modal con la última notificación
-                            showGeneralModal(notificationData.title, notificationData.message)
-
-                            // ✅ MARCAR COMO VISTA
-                            markNotificationAsViewed(playerId, notificationId)
+                                withContext(Dispatchers.Main) {
+                                    showGeneralModal(notificationData.title, notificationData.message)
+                                    markNotificationAsViewed(playerId, notificationId)
+                                }
+                            }
                         }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG_MAIN, "Error cargando última notificación: ${e.message}")
+                Log.e(TAG_MAIN, "Error cargando notificación: ${e.message}")
             }
         }
     }
@@ -2176,7 +2157,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.nav_share -> {
                     shareAppDirectly()
-                    return false  // ✅ No mantener selección
+                    return false
                 }
                 else -> {
                     showSectionSafely(binding.sectionHome.root)
@@ -2229,7 +2210,7 @@ class MainActivity : AppCompatActivity() {
         binding.sectionLeaderboard.root.visibility = View.GONE
         binding.sectionWinners.root.visibility = View.GONE
         binding.sectionLegal.root.visibility = View.GONE
-        binding.sectionReferrals.root.visibility = View.GONE // ← AGREGAR ESTA LÍNEA
+        binding.sectionReferrals.root.visibility = View.GONE
     }
 
     private fun showLegalModal(title: String, content: String) {
@@ -2264,31 +2245,45 @@ class MainActivity : AppCompatActivity() {
             promptForPlayerId()
             return
         }
-
         if (!isNetworkAvailable()) {
-            MaterialDialog(this).show {
-                title(text = "No connection")
-                message(text = "Connect to the internet to continue.")
-                positiveButton(text = "Understood")
-            }
+            AdFallbackStrategy.showNoInternetModal(this)
             return
         }
-
         val audioFocusGranted = requestAudioFocus()
         if (!audioFocusGranted) {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
+        // Verificar si hay rewarded disponible
+        if (!AdManager.isRewardedReady()) {
+            Log.d(TAG_ADMOB, "🔄 No hay rewarded disponible, usando fallback")
 
+            AdFallbackStrategy.handleRewardedAdUnavailable(
+                activity = this,
+                rewardType = "spins",
+                rewardAmount = 10, // Cantidad normal
+                onSuccess = {
+                    // Dar solo 3 giros como fallback
+                    val spinsToAdd = 3
+                    SessionManager.addSpins(this, spinsToAdd)
+                    currentSpins = SessionManager.getCurrentSpins(this)
+                    updateSpinCountUI()
+
+                    AnalyticsManager.logSpinsEarned(spinsToAdd, "fallback")
+                    Log.d(TAG_ADMOB, "✅ Fallback completado: $spinsToAdd giros otorgados")
+                }
+            )
+            releaseAudioFocus()
+            return
+        }
+        // Si hay rewarded, mostrarlo normalmente
         AdManager.showRewarded(this,
             onReward = { rewardItem ->
                 releaseAudioFocus()
-                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                Log.d(TAG_ADMOB, "Reward de ${rewardItem.amount} ${rewardItem.type} obtenido.")
                 val spinsToAdd = 10
                 SessionManager.addSpins(this, spinsToAdd)
                 currentSpins = SessionManager.getCurrentSpins(this)
                 updateSpinCountUI()
-
-                // ✅ AGREGAR
                 AnalyticsManager.logSpinsEarned(spinsToAdd, "rewarded_ad")
                 AnalyticsManager.logRewardedAdCompleted(spinsToAdd, "spins")
             },
@@ -2315,19 +2310,44 @@ class MainActivity : AppCompatActivity() {
             promptForPlayerId()
             return
         }
-
+        if (!isNetworkAvailable()) {
+            AdFallbackStrategy.showNoInternetModal(this)
+            return
+        }
         val audioFocusGranted = requestAudioFocus()
         if (!audioFocusGranted) {
             Log.w(TAG_ADMOB, "Audio focus not granted, continuing without audio")
         }
+        // Verificar si hay rewarded disponible
+        if (!AdManager.isRewardedReady()) {
+            Log.d(TAG_ADMOB, "🔄 No hay rewarded disponible, usando fallback")
 
+            AdFallbackStrategy.handleRewardedAdUnavailable(
+                activity = this,
+                rewardType = "tickets",
+                rewardAmount = 20, // Cantidad normal
+                onSuccess = {
+                    // Dar solo 10 tickets como fallback
+                    val ticketsToAdd = 10
+                    addTicketsToPlayer(ticketsToAdd)
+
+                    AnalyticsManager.logTicketsEarned(ticketsToAdd, "fallback")
+                    Log.d(TAG_ADMOB, "✅ Fallback completado: $ticketsToAdd tickets otorgados")
+                }
+            )
+            releaseAudioFocus()
+            return
+        }
+        // Si hay rewarded, mostrarlo normalmente
         AdManager.showRewarded(this,
             onReward = { rewardItem ->
                 releaseAudioFocus()
-
-                Log.d(TAG_ADMOB, "Reward of ${rewardItem.amount} ${rewardItem.type} obtained.")
+                Log.d(TAG_ADMOB, "Reward de ${rewardItem.amount} ${rewardItem.type} obtenido.")
                 val ticketsToAdd = if (rewardItem.amount > 0) rewardItem.amount else 20
                 addTicketsToPlayer(ticketsToAdd)
+
+                AnalyticsManager.logTicketsEarned(ticketsToAdd, "rewarded_ad")
+                AnalyticsManager.logRewardedAdCompleted(ticketsToAdd, "tickets")
             },
             onDismiss = {
                 releaseAudioFocus()
@@ -2352,7 +2372,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun spinGrid() {
-        // ✅ VALIDACIÓN CRÍTICA: Verificar ID antes de permitir girar
+        // Validación crítica: Verificar ID antes de permitir girar
         if (currentPlayerId == null || currentPlayerId.isNullOrEmpty()) {
             Log.w(TAG_MAIN, "⚠️ Intento de girar sin ID configurado")
             MaterialDialog(this).show {
@@ -2366,31 +2386,27 @@ class MainActivity : AppCompatActivity() {
             }
             return
         }
-
         if (isSpinning) return
         if (currentSpins <= 0) {
             MaterialDialog(this).show {
-                title(text = "Sin Giros!")
+                title(text = "¡Sin Giros!")
                 message(text = "Necesitas más giros para jugar. ¿Quieres ver un video para obtener más giros?")
                 positiveButton(text = "Ver Video") { requestSpinsByWatchingAd() }
                 negativeButton(text = "Ahora no")
             }
             return
         }
-
         isSpinning = true
         if (SessionManager.useSpin(this)) {
             currentSpins = SessionManager.getCurrentSpins(this)
             updateSpinCountUI()
-
             updateSpinsInFirebase(currentSpins)
         } else {
             isSpinning = false
             return
         }
-
         binding.sectionHome.spinButton.isEnabled = false
-        binding.sectionHome.spinButton.text = "SPINNING..."
+        binding.sectionHome.spinButton.text = "GIRANDO..."
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#424242"))
 
         object : CountDownTimer(3000, 80) {
@@ -2446,7 +2462,7 @@ class MainActivity : AppCompatActivity() {
     private fun resetSpinButton() {
         isSpinning = false
         binding.sectionHome.spinButton.isEnabled = true
-        binding.sectionHome.spinButton.text = "GIRAR RULETA" // No special characters
+        binding.sectionHome.spinButton.text = "GIRAR RULETA"
         binding.sectionHome.spinButton.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#00a8ff"))
     }
 
@@ -2471,10 +2487,9 @@ class MainActivity : AppCompatActivity() {
                 binding.sectionHome.myPlayerId.text = playerId
                 binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#00A8FF"))
             } else {
-                binding.sectionHome.myPlayerId.text = "Tap to configure"
+                binding.sectionHome.myPlayerId.text = "Toca para configurar"
                 binding.sectionHome.myPlayerId.setTextColor(Color.parseColor("#CCCCCC"))
             }
-
             try {
                 val editIcon = binding.sectionHome.myProgress.findViewById<ImageView>(R.id.edit_icon)
                 editIcon?.visibility = View.VISIBLE
@@ -2507,9 +2522,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun promptForPlayerId() {
         MaterialDialog(this).show {
-            title(text = if (currentPlayerId != null) "Edit Player ID" else "Configure your ID")
+            title(text = if (currentPlayerId != null) "Editar ID de Jugador" else "Configurar tu ID")
             input(
-                hint = "Enter your numeric ID",
+                hint = "Ingresa tu ID numérico",
                 prefill = currentPlayerId ?: "",
                 inputType = InputType.TYPE_CLASS_NUMBER
             ) { _, text ->
@@ -2517,16 +2532,16 @@ class MainActivity : AppCompatActivity() {
                 if (newPlayerId.length >= 5 && newPlayerId.matches(Regex("\\d+"))) {
                     if (currentPlayerId != null && currentPlayerId!!.isNotEmpty()) {
                         AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Confirm ID change")
-                            .setMessage("Are you sure you want to change the player ID from $currentPlayerId to $newPlayerId?")
-                            .setPositiveButton("Yes") { _, _ ->
+                            .setTitle("Confirmar cambio de ID")
+                            .setMessage("¿Estás seguro de cambiar el ID de $currentPlayerId a $newPlayerId?")
+                            .setPositiveButton("Sí") { _, _ ->
                                 SessionManager.clearAllData(this@MainActivity)
                                 SessionManager.setPlayerId(this@MainActivity, newPlayerId)
                                 currentPlayerId = newPlayerId
                                 updatePlayerIdUI(newPlayerId)
                                 loadUserData(newPlayerId)
                             }
-                            .setNegativeButton("Cancel", null)
+                            .setNegativeButton("Cancelar", null)
                             .show()
                     } else {
                         SessionManager.setPlayerId(this@MainActivity, newPlayerId)
@@ -2534,10 +2549,12 @@ class MainActivity : AppCompatActivity() {
                         updatePlayerIdUI(newPlayerId)
                         loadUserData(newPlayerId)
                     }
+                } else {
+                    Toast.makeText(this@MainActivity, "El ID debe tener al menos 5 dígitos", Toast.LENGTH_SHORT).show()
                 }
             }
-            positiveButton(text = "Save")
-            negativeButton(text = "Cancel")
+            positiveButton(text = "Guardar")
+            negativeButton(text = "Cancelar")
         }
     }
 
@@ -2933,11 +2950,8 @@ class MainActivity : AppCompatActivity() {
             MaterialDialog(this).show {
                 title(text = title)
                 message(text = message)
-                positiveButton(text = "ENTENDIDO") {
-                    Log.d(TAG_MAIN, "Modal cerrado por el usuario")
-                }
+                positiveButton(text = "ENTENDIDO")
                 cancelable(true)
-                cancelOnTouchOutside(false) // ✅ Forzar que el usuario toque "ENTENDIDO"
             }
         } catch (e: Exception) {
             Log.e("GENERAL_MODAL", "Error: ${e.message}")
@@ -2970,9 +2984,9 @@ class MainActivity : AppCompatActivity() {
     private fun shareAppDirectly() {
         lifecycleScope.launch {
             try {
-                com.follgramer.diamantesproplayersgo.util.ShareManager.shareApp(this@MainActivity, null)
+                ShareManager.shareApp(this@MainActivity, null)
                 val playerId = SessionManager.getPlayerId(this@MainActivity)
-                com.follgramer.diamantesproplayersgo.util.ShareManager.logShare(playerId, "app")
+                ShareManager.logShare(playerId, "app")
             } catch (e: Exception) {
                 Log.e(TAG_MAIN, "Error compartiendo app: ${e.message}")
             }
@@ -2989,11 +3003,11 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                val referralCode = com.follgramer.diamantesproplayersgo.util.ReferralManager.getReferralCode(playerId)
+                val referralCode = ReferralManager.getReferralCode(playerId)
                 binding.sectionReferrals.tvMyReferralCode.text = referralCode
 
-                val referralStats = com.follgramer.diamantesproplayersgo.util.ReferralManager.getReferralStats(playerId)
-                updateReferralStats(referralStats)
+                referralStats = ReferralManager.getReferralStats(playerId)
+                updateReferralStats()
 
                 setupReferralButtons(referralCode)
             } catch (e: Exception) {
@@ -3003,7 +3017,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateReferralStats(stats: ReferralManager.ReferralStats?) {
+    private fun updateReferralStats(stats: ReferralManager.ReferralStats? = referralStats) {
         stats?.let {
             binding.sectionReferrals.tvTotalReferrals.text = it.totalReferrals.toString()
             binding.sectionReferrals.tvTotalRewards.text = it.totalRewards.toString()
@@ -3110,5 +3124,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-}// Update: Wed Oct 15 14:19:00     2025
-// Updated: 2025-10-15 14:29:27
+}

@@ -2,30 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ==================== PERMISOS ESENCIALES ==================== -->
+    <!-- ==================== PERMISOS ESENCIALES (SOLO LOS NECESARIOS) ==================== -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <!-- PERMISOS PARA REFERIDOS -->
+    <!-- PERMISOS PARA ANUNCIOS Y REFERIDOS -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
 
-    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" android:maxSdkVersion="32" />
-
-    <uses-feature
-        android:name="android.hardware.audio.output"
-        android:required="false" />
-
     <application
         android:name=".DiamantesApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -33,11 +22,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Diamantesproplayersgo"
-        android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true"
-        android:largeHeap="true"
-        android:requestLegacyExternalStorage="false"
-        android:preserveLegacyExternalStorage="false"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="34">
@@ -90,35 +75,6 @@
             android:name="firebase_crashlytics_collection_enabled"
             android:value="true" />
 
-        <meta-data
-            android:name="firebase_messaging_auto_init_enabled"
-            android:value="true" />
-
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notification" />
-
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/accent_color" />
-
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="general_notifications" />
-
-        <!-- ==================== RECEIVER NOTIFICACIONES ==================== -->
-        <receiver
-            android:name=".NotificationReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter android:priority="1000">
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.PACKAGE_REPLACED" />
-                <data android:scheme="package" />
-            </intent-filter>
-        </receiver>
-
         <!-- ==================== ACTIVITIES ==================== -->
 
         <!-- SPLASH ACTIVITY -->
@@ -131,7 +87,7 @@
             android:theme="@style/SplashTheme"
             android:noHistory="true"
             android:clearTaskOnLaunch="true">
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -150,7 +106,7 @@
             android:clearTaskOnLaunch="false">
 
             <!-- DEEP LINKS PARA REFERIDOS -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -158,7 +114,7 @@
             </intent-filter>
 
             <!-- DEEP LINKS LEGACY PARA COMPATIBILIDAD -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -166,7 +122,7 @@
             </intent-filter>
 
             <!-- WEB LINKS DESDE PLAY STORE CON REFERRER -->
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android:intent.category.BROWSABLE" />
@@ -202,15 +158,6 @@
             android:exported="false"
             android:theme="@android:style/Theme.Translucent" />
 
-        <!-- ==================== FIREBASE MESSAGING SERVICE ==================== -->
-        <service
-            android:name=".fcm.MyFirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
         <!-- ==================== FILE PROVIDER ==================== -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -222,92 +169,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- ==================== WORKMANAGER SERVICES ==================== -->
-        <service
-            android:name="androidx.work.impl.background.systemjob.SystemJobService"
-            android:directBootAware="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            tools:replace="android:enabled,android:exported"
-            tools:targetApi="n" />
-
-        <service
-            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
-            android:directBootAware="false"
-            android:enabled="true"
-            android:exported="false"
-            tools:replace="android:enabled" />
-
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:directBootAware="false"
-            android:enabled="true"
-            android:exported="false"
-            tools:replace="android:enabled" />
-
-        <!-- ==================== WORKMANAGER RECEIVERS ==================== -->
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.BATTERY_LOW" />
-                <action android:name="android.intent.action.BATTERY_OKAY" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
-                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
-            android:directBootAware="false"
-            android:enabled="false"
-            android:exported="false"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- ==================== STARTUP PROVIDER ==================== -->
+        <!-- ==================== WORKMANAGER (SIMPLIFICADO) ==================== -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -318,11 +180,6 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-
-        <!-- ==================== PROFILING ==================== -->
-        <profileable
-            android:shell="true"
-            tools:targetApi="29" />
 
     </application>
 
